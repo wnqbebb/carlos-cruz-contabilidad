@@ -1,0 +1,21 @@
+.venv/
+node_modules/
+datos_app/
+__pycache__/
+.pytest_cache/
+*.pyc
+.env
+.env.local
+backend/.env
+frontend/.env
+frontend/.env.local
+frontend/dist/
+.vercel/
+
+# Empaquetado para el computador del cliente
+empaquetar/salida/
+empaquetar/temporal/
+*.spec.bak
+
+# Basura de compilacion que no pertenece al historial
+frontend/vite.config.ts.timestamp-*

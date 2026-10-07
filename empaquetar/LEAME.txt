@@ -1,0 +1,42 @@
+================================================================
+  CARLOS CRUZ - Contabilidad que cuadra
+================================================================
+
+COMO ABRIR EL PROGRAMA
+
+  Doble clic en  CarlosCruz.exe
+
+  Se abre una ventana negra (es el motor, no la cierre) y
+  enseguida el navegador con el programa.
+
+  Para cerrar todo: cierre la ventana negra.
+
+
+DONDE QUEDAN SUS DATOS
+
+  Documentos\Carlos Cruz\carloscruz.db
+
+  Ese archivo tiene TODOS sus clientes y toda su contabilidad.
+
+
+COPIA DE SEGURIDAD (importante)
+
+  Una vez al mes, copie el archivo carloscruz.db a una USB o a
+  una carpeta en la nube. Con eso basta: si se daña el
+  computador, se copia ese archivo de vuelta y no se pierde nada.
+
+
+SI WINDOWS MUESTRA UNA ADVERTENCIA AL ABRIRLO
+
+  Windows avisa cuando un programa no tiene firma digital de
+  pago. Pulse "Mas informacion" y despues "Ejecutar de todas
+  formas". Solo pasa la primera vez.
+
+
+NO NECESITA INTERNET
+
+  El programa funciona completo sin conexion. Internet solo hace
+  falta si se decide guardar los datos en linea.
+
+
+================================================================

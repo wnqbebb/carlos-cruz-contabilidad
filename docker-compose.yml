@@ -1,0 +1,8 @@
+services:
+  fanant:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./datos_app:/app/datos_app
+      - ./data/parametros_legales.json:/app/data/parametros_legales.json

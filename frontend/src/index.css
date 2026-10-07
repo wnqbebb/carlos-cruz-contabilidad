@@ -1,0 +1,332 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARLOS CRUZ · BASE (v2.1)
+   Aquí NO se definen colores: todos salen de styles/tokens.css.
+   Este archivo solo arma la escala tipográfica, los cinco materiales del spec,
+   el lienzo (papel + rejilla + grano) y las reglas de accesibilidad.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+html {
+  color-scheme: light;
+  -webkit-text-size-adjust: 100%;
+  background: var(--papel);
+}
+
+body {
+  margin: 0;
+  background: var(--papel);
+  color: var(--tinta);
+  font-family: var(--fuente);
+  font-size: 15px;
+  line-height: 22px;
+  letter-spacing: -0.005em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-wrap: break-word;
+}
+
+/* Todo lo propio va en la capa `components`: así cualquier utilidad de
+   Tailwind (fixed, absolute, p-*, bg-*) gana sin !important. El CSS sin capa
+   les ganaba a las utilidades y producía desbordes difíciles de ver. */
+@layer components {
+/* ═══════════════════════════════════════════════════════════════════════════
+   ESCALA TIPOGRÁFICA (spec 4.2) — valores exactos, sin adjetivos
+   ═══════════════════════════════════════════════════════════════════════════ */
+.t-display-xl {
+  font-size: clamp(64px, 8vw, 128px);
+  line-height: 0.88;
+  font-weight: 600;
+  letter-spacing: -0.05em;
+}
+.t-display {
+  font-size: clamp(48px, 5vw, 80px);
+  line-height: 0.92;
+  font-weight: 600;
+  letter-spacing: -0.045em;
+}
+.t-h1 { font-size: 32px; line-height: 36px; font-weight: 600; letter-spacing: -0.03em; }
+.t-h2 { font-size: 22px; line-height: 28px; font-weight: 600; letter-spacing: -0.02em; }
+.t-kpi {
+  font-size: 40px;
+  line-height: 44px;
+  font-weight: 500;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+}
+.t-body { font-size: 15px; line-height: 22px; font-weight: 400; letter-spacing: -0.005em; }
+.t-small { font-size: 13px; line-height: 18px; font-weight: 400; letter-spacing: 0; }
+.t-meta {
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.t-tabla { font-size: 13.5px; line-height: 20px; font-variant-numeric: tabular-nums; }
+
+/* Nombres heredados: las pantallas escritas antes los usan. Apuntan a la
+   escala nueva para que adopten el aspecto sin reescribirlas de golpe. */
+.titular { font-weight: 600; letter-spacing: -0.045em; line-height: 0.92; }
+.subtitular { font-weight: 600; letter-spacing: -0.02em; line-height: 1.25; }
+.rotulo {
+  font-family: var(--fuente-mono);
+  font-size: 11px;
+  line-height: 14px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--gris);
+}
+
+/* Cifras de dinero: Geist SANS con números tabulares, no mono (spec 4.2).
+   `nowrap` es obligatorio: sin él el navegador parte un importe a mitad. */
+.cifras {
+  font-family: var(--fuente);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  white-space: nowrap;
+}
+/* Códigos PUC, NIT y metadatos sí van en mono. */
+.codigo { font-family: var(--fuente-mono); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MATERIALES (spec 4.4) — solo estos cinco
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* 1 · Hoja: tarjetas de trabajo, tablas y formularios. */
+.material-hoja {
+  background: var(--hoja);
+  border: 1px solid var(--linea);
+  border-radius: var(--r-hoja);
+  box-shadow: var(--sombra-hoja);
+}
+
+/* 2 · Expediente: carpeta negra de ref-01. Máximo 1–2 por vista. */
+.material-expediente {
+  background: var(--tinta);
+  color: var(--sobre-tinta);
+  border-radius: var(--r-expediente);
+  box-shadow: var(--sombra-expediente);
+}
+
+/* 3 · Hundido: inputs, zona de arrastre, celdas editables. */
+.material-hundido {
+  background: var(--hoja-2);
+  box-shadow: var(--sombra-hundido);
+  border-radius: var(--r-control);
+}
+
+/* 4 · Cristal: SOLO si hay algo detrás (paleta ⌘K, modales, barra flotante,
+   preloader). Sobre papel liso no se ve: es un rectángulo blanco. */
+.material-cristal {
+  position: relative;
+  background: var(--cristal-fondo);
+  -webkit-backdrop-filter: var(--cristal-filtro);
+  backdrop-filter: var(--cristal-filtro);
+  border: 1px solid var(--cristal-borde);
+  isolation: isolate;
+}
+.material-cristal::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: var(--cristal-reflejo);
+  pointer-events: none;
+  z-index: -1;
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .material-cristal { background: var(--hoja); }
+}
+
+/* 5 · Brillo «Cuadra»: solo el estado Cuadra y el foco del elemento principal. */
+.brillo-cuadra { box-shadow: var(--brillo-cuadra); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   LIENZO: papel + rejilla + grano
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Grano de papel (ref-02, ref-05): capa fija sobre todo, no intercepta clics. */
+.grano {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.035;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
+}
+
+/* Rejilla visible (ref-08): 12 columnas alineadas EXACTAMENTE al contenedor.
+   Usa el mismo ancho máximo, márgenes y canal que `.contenedor`, así cada
+   línea cae en el borde de una columna real del contenido. */
+.rejilla {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+.rejilla > div {
+  height: 100%;
+  max-width: var(--contenedor);
+  margin: 0 auto;
+  padding: 0 var(--margen);
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  column-gap: var(--canal);
+}
+.rejilla > div > span {
+  border-left: 1px solid var(--rejilla);
+  border-right: 1px solid var(--rejilla);
+}
+@media (max-width: 899px) {
+  .rejilla > div { grid-template-columns: repeat(4, 1fr); }
+  .rejilla > div > span:nth-child(n + 5) { display: none; }
+}
+
+/* Contenedor de 12 columnas (spec 4.3). */
+.contenedor {
+  width: 100%;
+  max-width: var(--contenedor);
+  margin: 0 auto;
+  padding: 0 var(--margen);
+}
+.columnas-12 {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  column-gap: var(--canal);
+  row-gap: var(--canal);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   CONTENCIÓN: evita que un hijo largo estire la caja (causa de los desbordes)
+   ═══════════════════════════════════════════════════════════════════════════ */
+.contener { min-width: 0; max-width: 100%; }
+.contener > * { min-width: 0; }
+.recortar { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.cifra-flexible {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.cifra-flexible::-webkit-scrollbar { display: none; }
+
+.barra-fina { scrollbar-width: thin; scrollbar-color: var(--linea) transparent; }
+.barra-fina::-webkit-scrollbar { height: 8px; width: 8px; }
+.barra-fina::-webkit-scrollbar-thumb { background: var(--linea); border-radius: 999px; }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COMPONENTES DE FIRMA — lo que no cabe en una utilidad
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* EnlaceSubrayado (ref-08): en reposo, línea tenue; al pasar el cursor, la
+   línea azul de 1,5 px se dibuja de izquierda a derecha. */
+.enlace-subrayado {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--azul-tinta);
+  font-weight: 500;
+  text-decoration: none;
+  padding-bottom: 2px;
+}
+.enlace-subrayado::before,
+.enlace-subrayado::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1.5px;
+  background: currentColor;
+}
+.enlace-subrayado::before { opacity: 0.22; }
+.enlace-subrayado::after {
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--dur-media) var(--curva);
+}
+.enlace-subrayado:hover::after,
+.enlace-subrayado:focus-visible::after { transform: scaleX(1); }
+
+/* Rayado tenue: mes sin contabilizar en la tira del Tablero (spec 6.2). */
+.rayado {
+  background-color: var(--hoja);
+  background-image: repeating-linear-gradient(135deg, var(--linea) 0 1.5px, transparent 1.5px 7px);
+}
+
+/* TablaContable: totales con doble línea inferior, como el libro contable. */
+.fila-totales > * {
+  border-top: 1px solid var(--tinta);
+  border-bottom: 3px double var(--tinta);
+}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ACCESIBILIDAD (spec 9)
+   ═══════════════════════════════════════════════════════════════════════════ */
+@layer base {
+  :where(a, button, input, select, textarea, summary, [tabindex]):focus-visible {
+    outline: none;
+    box-shadow: var(--foco);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   IMPRESIÓN: estados financieros limpios, sin menús ni lienzo
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media print {
+  @page { size: letter; margin: 16mm 14mm; }
+  html, body { background: var(--blanco); }
+  .no-imprimir, .grano, .rejilla { display: none !important; }
+  .material-hoja { box-shadow: none; border: none; }
+
+  /* Si hay un estado financiero en pantalla, se imprime SOLO el documento,
+     sin menús ni barras: lo que el contador firma.
+     1. Todo lo que no es el documento, ni lo contiene, ni está dentro: fuera.
+     2. Los contenedores del documento pierden márgenes, fondos, recortes y
+        posición, para que el documento fluya por páginas carta. */
+  body:has(.documento-impresion) *:not(:has(.documento-impresion)):not(.documento-impresion):not(.documento-impresion *) {
+    display: none !important;
+  }
+  body:has(.documento-impresion) *:has(.documento-impresion) {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    background: none !important;
+    overflow: visible !important;
+    position: static !important;
+    max-width: none !important;
+    transform: none !important;
+    min-height: 0 !important;
+  }
+  .documento-impresion {
+    width: 100% !important;
+    max-width: none !important;
+    aspect-ratio: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: var(--blanco) !important;
+  }
+  .documento-impresion thead { display: table-header-group; background: none !important; }
+  .documento-impresion tr:hover { background: none !important; }
+  .documento-impresion tr { break-inside: avoid; }
+}

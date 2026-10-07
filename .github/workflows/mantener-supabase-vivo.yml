@@ -1,0 +1,33 @@
+# Mantiene despierto el proyecto de Supabase sin depender de ningún computador.
+#
+# El plan gratuito pausa un proyecto que pasa varios días sin actividad. Esta
+# tarea hace una consulta de lectura cada 3 días, que cuenta como actividad.
+#
+# Para activarla: GitHub → Settings → Secrets and variables → Actions →
+# New repository secret, con el nombre DATABASE_URL y el valor de backend/.env.
+name: Mantener Supabase vivo
+
+on:
+  schedule:
+    # 09:00 UTC (04:00 en Colombia) los días 1, 4, 7, 10… de cada mes.
+    - cron: "0 9 */3 * *"
+  workflow_dispatch: {}
+
+jobs:
+  despertar:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar lo mínimo
+        run: pip install --quiet "sqlalchemy>=2.0" "psycopg[binary]>=3.2"
+
+      - name: Consultar la base
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          ALMACENAMIENTO: supabase
+        run: python backend/mantener_vivo.py

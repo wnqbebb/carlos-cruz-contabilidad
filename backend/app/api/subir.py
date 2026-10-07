@@ -1,0 +1,275 @@
+"""Una sola puerta: suba lo que sea y el backend decide qué hacer con ello.
+
+POR QUÉ EXISTE
+Antes había dos puertas —«Importar Excel» en Clientes y «Subir» en Trabajar— y
+el contador tenía que acertar cuál. Si subía la contabilidad de un cliente en
+la carga masiva del directorio, veía «No se encontraron las columnas
+obligatorias NIT y RAZÓN SOCIAL» y se quedaba ahí.
+
+Ahora el flujo es:
+  1. `POST /api/subir`              → se leen los archivos, se clasifican y se
+                                      propone de quién son. Los bytes quedan
+                                      guardados en la sesión.
+  2. `POST /api/subir/{id}/confirmar` → el contador confirma (o crea el cliente)
+                                      y se sigue, SIN volver a pedir el archivo.
+"""
+from __future__ import annotations
+
+from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
+
+from ..contabilidad.puc import Mapeador
+from ..exactitud import a_json
+from ..importadores import clasificador as clas
+from ..importadores import clientes_excel
+from ..importadores import identidad as ident
+from ..modelos import Empresa
+from ..repositorio import alias as repo_alias
+from ..repositorio import bitacora as repo_bitacora
+from ..repositorio import clientes as repo_clientes
+from ..repositorio import sesiones
+from ..utils import nit as unit
+
+router = APIRouter(prefix="/api", tags=["subir"])
+
+EXTENSIONES = (".xlsx", ".xlsm", ".xls", ".csv", ".txt", ".pdf", ".docx", ".doc")
+MAX_ARCHIVO = 25 * 1024 * 1024
+MAX_TOTAL = 60 * 1024 * 1024
+
+
+# ── 1. subir ────────────────────────────────────────────────────────────────
+async def _leer_subida(archivos: list[UploadFile]) -> list[tuple[str, bytes]]:
+    datos: list[tuple[str, bytes]] = []
+    total = 0
+    for a in archivos:
+        nombre = a.filename or "archivo"
+        if not nombre.lower().endswith(EXTENSIONES):
+            raise HTTPException(400, {
+                "codigo": "formato_no_admitido",
+                "mensaje": (f"«{nombre}» no es un formato que se pueda leer. Se aceptan "
+                            + ", ".join(EXTENSIONES) + "."),
+                "archivo": nombre,
+            })
+        contenido = await a.read()
+        total += len(contenido)
+        if len(contenido) > MAX_ARCHIVO:
+            raise HTTPException(413, {
+                "codigo": "archivo_grande",
+                "mensaje": f"«{nombre}» pesa más de {MAX_ARCHIVO // (1024 * 1024)} MB.",
+            })
+        datos.append((nombre, contenido))
+    if not datos:
+        raise HTTPException(400, {"codigo": "sin_archivos", "mensaje": "No se recibió ningún archivo."})
+    if total > MAX_TOTAL:
+        raise HTTPException(413, {
+            "codigo": "subida_grande",
+            "mensaje": f"Entre todos pesan más de {MAX_TOTAL // (1024 * 1024)} MB. Súbalos por partes.",
+        })
+    return datos
+
+
+def _parecidos(nombre: str, limite: int = 5) -> list[dict]:
+    """Clientes que ya existen y se parecen al nombre encontrado (≥ 90 %)."""
+    if not nombre:
+        return []
+    try:
+        from rapidfuzz import fuzz
+    except ImportError:  # pragma: no cover - dependencia declarada
+        return []
+    candidatos = repo_clientes.sugerencias_busqueda(nombre, 25)
+    salida = []
+    for c in candidatos:
+        puntaje = fuzz.token_set_ratio(nombre.upper(), (c.get("titulo") or "").upper())
+        if puntaje >= 90:
+            salida.append({**c, "parecido": round(puntaje)})
+    return sorted(salida, key=lambda x: -x["parecido"])[:limite]
+
+
+def _propuesta(lectura: clas.Lectura, cliente_id: str | None) -> dict:
+    """Lo que se le muestra al contador para que confirme de un vistazo."""
+    campos = lectura.identidad
+    nit = campos.valor("nit")
+    razon = campos.valor("razon_social")
+
+    cliente = None
+    if cliente_id:
+        try:
+            cliente = repo_clientes.obtener(cliente_id)
+        except repo_clientes.ErrorCliente:
+            cliente = None
+
+    # 5 · si el NIT ya está en el directorio, es ese cliente y no hay que preguntar.
+    if cliente is None and nit:
+        iguales = repo_clientes.listar(q=unit.limpiar(nit), estado="", por_pagina=5)["clientes"]
+        exactos = [c for c in iguales if unit.limpiar(c["nit"]) == unit.limpiar(nit)]
+        if exactos:
+            cliente = exactos[0]
+
+    coincidencias = [] if cliente else _parecidos(razon)
+
+    falta = []
+    if not cliente:
+        if not razon:
+            falta.append("razon_social")
+        if not nit:
+            falta.append("nit")
+
+    formatos = sorted({h.razon for h in lectura.hojas_de(clas.CONTABILIDAD) if h.razon})
+    return {
+        "cliente": cliente,
+        "coincidencias": coincidencias,
+        "identidad": campos.a_json(),
+        "falta": falta,
+        "contenido": formatos,
+        "hojas": [
+            {"archivo": h.hoja.archivo, "hoja": h.hoja.nombre, "clase": h.clase,
+             "formato": h.formato, "razon": h.razon, "filas": h.filas_datos}
+            for h in lectura.hojas
+        ],
+        "ilegibles": lectura.ilegibles,
+    }
+
+
+@router.post("/subir")
+async def subir(archivos: list[UploadFile] = File(...), cliente_id: str = Query("")):
+    """Lee los archivos, dice qué son y de quién, y guarda los bytes para seguir."""
+    datos = await _leer_subida(archivos)
+
+    empresa, _ = (Empresa(), None)
+    mapeador = Mapeador()
+    if cliente_id:
+        try:
+            ficha = repo_clientes.obtener(cliente_id)
+            empresa = repo_clientes.a_empresa(ficha)
+            mapeador = Mapeador(repo_alias.de_cliente(empresa.nit))
+        except repo_clientes.ErrorCliente as ex:
+            raise HTTPException(404, str(ex)) from ex
+
+    lectura = clas.leer(datos, mapeador, empresa)
+    clase = lectura.clase
+
+    if clase == clas.DESCONOCIDO and lectura.ilegibles:
+        raise HTTPException(400, {
+            "codigo": "ilegible",
+            "mensaje": lectura.ilegibles[0]["motivo"],
+            "ilegibles": lectura.ilegibles,
+        })
+
+    sid = sesiones.crear({"archivos": datos, "clase": clase, "propuesta": None},
+                         cliente_id=cliente_id or None)
+    propuesta = _propuesta(lectura, cliente_id or None)
+    sesiones.actualizar(sid, propuesta=propuesta)
+
+    repo_bitacora.registrar("archivos_subidos", cliente_id or None,
+                            archivos=[n for n, _ in datos], clase=clase, subida=sid)
+
+    return a_json({"subida_id": sid, "clase": clase, **propuesta})
+
+
+# ── 2. confirmar ────────────────────────────────────────────────────────────
+@router.post("/subir/{subida_id}/confirmar")
+def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
+    """Sigue adelante con lo que se subió, sin volver a pedir el archivo.
+
+    `cuerpo` admite:
+      · `cliente_id`  → trabajar sobre un cliente que ya existe
+      · `crear`       → ficha mínima para darlo de alta ({nit, razon_social, …})
+      · `clase`       → forzar «directorio» o «contabilidad» cuando es ambiguo
+    """
+    try:
+        s = sesiones.obtener(subida_id)
+    except sesiones.SesionExpirada as ex:
+        raise HTTPException(404, {
+            "codigo": "subida_expirada",
+            "mensaje": "La subida caducó. Vuelva a arrastrar el archivo.",
+        }) from ex
+
+    archivos: list[tuple[str, bytes]] = s.get("archivos") or []
+    if not archivos:
+        raise HTTPException(400, {"codigo": "sin_archivos", "mensaje": "Esa subida ya no tiene archivos."})
+
+    clase = (cuerpo.get("clase") or s.get("clase") or clas.DESCONOCIDO).strip()
+    cliente_id = (cuerpo.get("cliente_id") or s.get("cliente_id") or "").strip()
+
+    # ── carga masiva del directorio ─────────────────────────────────────────
+    if clase == clas.DIRECTORIO:
+        informe = None
+        for nombre, contenido in archivos:
+            try:
+                informe = clientes_excel.importar(
+                    contenido, nombre,
+                    actualizar_existentes=bool(cuerpo.get("actualizar_existentes", True)),
+                    solo_revisar=bool(cuerpo.get("solo_revisar", False)),
+                )
+            except ValueError:
+                continue
+        if informe is None:
+            raise HTTPException(400, {
+                "codigo": "directorio_ilegible",
+                "mensaje": "Ninguno de los archivos tenía columnas de NIT y razón social.",
+            })
+        if not cuerpo.get("solo_revisar"):
+            repo_bitacora.registrar("clientes_importados", None, insertados=informe.get("insertados"),
+                                    actualizados=informe.get("actualizados"))
+        return {"clase": clas.DIRECTORIO, "informe": informe}
+
+    # ── contabilidad de un cliente ──────────────────────────────────────────
+    if not cliente_id:
+        ficha = dict(cuerpo.get("crear") or {})
+        if not ficha:
+            # Se reconstruye desde lo que se detectó, por si la pantalla no lo mandó.
+            propuesta = s.get("propuesta") or {}
+            campos = (propuesta.get("identidad") or {}).get("campos") or {}
+            ficha = {k: v["valor"] for k, v in campos.items() if k in ("nit", "razon_social", "dv")}
+        if not ficha.get("nit") or not ficha.get("razon_social"):
+            raise HTTPException(422, {
+                "codigo": "faltan_datos_cliente",
+                "mensaje": "Para guardar la contabilidad hace falta el nombre y el NIT o cédula del cliente.",
+                "falta": [k for k in ("razon_social", "nit") if not ficha.get(k)],
+            })
+        ficha.setdefault("_origen", "documentos")
+        try:
+            cliente = repo_clientes.crear(ficha)
+        except repo_clientes.ErrorCliente as ex:
+            # Si ya existía con ese NIT, se trabaja sobre él en vez de fallar.
+            iguales = repo_clientes.listar(q=unit.limpiar(ficha["nit"]), estado="", por_pagina=5)["clientes"]
+            exacto = next((c for c in iguales if unit.limpiar(c["nit"]) == unit.limpiar(ficha["nit"])), None)
+            if not exacto:
+                raise HTTPException(400, str(ex)) from ex
+            cliente = exacto
+        else:
+            repo_bitacora.registrar("cliente_creado", cliente["id"], nit=cliente["nit"],
+                                    razon_social=cliente["razon_social"], origen="documentos")
+        cliente_id = cliente["id"]
+
+    # Se reusa el mismo camino de siempre: los bytes ya están en memoria.
+    from .trabajo import _importar
+
+    salida = _importar(archivos, cliente_id)
+    sesiones.cerrar(subida_id)
+    return {"clase": clas.CONTABILIDAD, "cliente_id": cliente_id, **salida}
+
+
+@router.get("/subir/{subida_id}")
+def ver_subida(subida_id: str):
+    """Lo que se detectó en una subida, por si la pantalla se recargó."""
+    try:
+        s = sesiones.obtener(subida_id)
+    except sesiones.SesionExpirada as ex:
+        raise HTTPException(404, str(ex)) from ex
+    return a_json({"subida_id": subida_id, "clase": s.get("clase"), **(s.get("propuesta") or {})})
+
+
+# ── identidad suelta, para la pantalla de crear cliente ────────────────────
+@router.post("/identidad")
+async def solo_identidad(archivos: list[UploadFile] = File(...)):
+    """Lee documentos y devuelve la ficha que se puede deducir de ellos.
+
+    No guarda nada: la usa el formulario de cliente nuevo para llenarse solo.
+    """
+    datos = await _leer_subida(archivos)
+    lectura = clas.leer(datos)
+    return a_json({
+        "identidad": lectura.identidad.a_json(),
+        "sugerido_del_nombre": ident.nombre_desde_archivo(datos[0][0]),
+        "ilegibles": lectura.ilegibles,
+    })

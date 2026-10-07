@@ -1,0 +1,43 @@
+# ─────────────────────────────────────────────────────────────────────────────
+#  CARLOS CRUZ · backend en Render
+#
+#  Render se usa porque el motor contable necesita un proceso SIEMPRE ENCENDIDO:
+#  guarda la sesión de trabajo en memoria (ver app/repositorio/sesiones.py) y
+#  procesa Excel grandes, dos cosas que no caben en una función serverless.
+#
+#  Despliegue:
+#    1. Subir el repositorio a GitHub.
+#    2. En Render: New → Blueprint → elegir el repositorio.
+#    3. Llenar las variables marcadas como sync:false con los valores de Supabase.
+#    4. Copiar la URL que asigna Render y ponerla en Vercel como VITE_API,
+#       y en CORS_ORIGENES de aquí la URL que asigna Vercel.
+# ─────────────────────────────────────────────────────────────────────────────
+services:
+  - type: web
+    name: carloscruz-api
+    runtime: python
+    plan: free
+    region: oregon
+    buildCommand: pip install -r backend/requirements.txt
+    startCommand: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/salud
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.7"
+      - key: ALMACENAMIENTO
+        value: supabase
+      # Supabase → Project Settings → Database → Connection string (URI).
+      # Use el puerto 6543 (pooler) y agregue ?sslmode=require
+      - key: DATABASE_URL
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_ANON_KEY
+        sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
+      - key: CLAVE_SESION
+        generateValue: true
+      # URL del frontend en Vercel, separadas por coma si hay varias.
+      - key: CORS_ORIGENES
+        sync: false

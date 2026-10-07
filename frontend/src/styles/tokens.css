@@ -1,0 +1,171 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   CARLOS CRUZ · TOKENS — fuente única de verdad del diseño (v2.1)
+
+   Ningún componente usa un hex ni una clase de paleta de Tailwind directamente.
+   Todo color, sombra, radio y fuente sale de aquí. `npm run lint:diseno` falla
+   si aparece uno fuera de este archivo.
+
+   Contrastes verificados en docs/diseno/CONTRASTES.md.
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Geist autoalojada: nada de CDN. Subconjunto latino (incluye á, é, ñ, ü). */
+@import "@fontsource/geist-sans/latin-400.css";
+@import "@fontsource/geist-sans/latin-500.css";
+@import "@fontsource/geist-sans/latin-600.css";
+@import "@fontsource/geist-mono/latin-400.css";
+@import "@fontsource/geist-mono/latin-500.css";
+
+:root {
+  /* ── Superficies ─────────────────────────────────────────────────────── */
+  --papel: #f2efe9;          /* lienzo general (ref-05) */
+  --hoja: #fbfaf7;           /* tarjetas de trabajo */
+  --hoja-2: #f7f5f0;         /* zonas hundidas, hover de fila */
+  --blanco: #ffffff;         /* solo impresión y texto sobre azul/rojo */
+  --tinta: #141414;          /* texto principal y Expediente */
+  --tinta-2: #1f1f1f;        /* hover sobre tinta */
+  --grafito: #3a3a38;        /* texto secundario */
+  --gris: #6b6a66;           /* metadatos — 4,72:1 sobre papel */
+  --linea: rgba(20, 20, 20, 0.09);
+  /* Rejilla al 8 %: decisión del usuario en la Fase 0. El spec pedía 5 % y
+     ref-08 mide ~21 %; al 5 % casi no se veía, al 21 % compite con las cifras. */
+  --rejilla: rgba(20, 20, 20, 0.08);
+
+  /* Texto sobre tinta (dentro del Expediente) */
+  --sobre-tinta: #f5f3ee;
+  --sobre-tinta-2: #a9a79f;  /* 7,65:1 sobre --tinta */
+
+  /* ── Acento: dos azules, cada uno en su sitio (decisión de la Fase 0) ── */
+  --azul: #2347d6;           /* botón principal y estado «Cuadra» — 6,22:1 */
+  --azul-tinta: #2038a2;     /* subrayados y enlaces, medido de ref-08 */
+  --azul-suave: #e7ecfb;
+
+  /* ── Semántica contable: solo para su significado ────────────────────── */
+  --rojo: #c21f17;           /* pérdida, descuadre, crítico (texto) — 5,22:1 */
+  --rojo-cartel: #d7261e;    /* rellenos de alerta crítica (ref-02) */
+  --rojo-suave: #fbe9e7;
+  --ambar: #a84f06;          /* advertencias — 4,83:1 */
+  --ambar-suave: #fbf0e3;
+  /* Positivo = --tinta o --azul. NO existe verde en esta aplicación. */
+
+  /* ── Esferas de cliente (ref-04): solo colores de la paleta, sin verde ── */
+  --esfera-1: #2347d6;
+  --esfera-2: #a84f06;
+  --esfera-3: #9d174d;
+  --esfera-4: #d7261e;
+  --esfera-5: #2038a2;
+  --esfera-6: #e3a35a;
+
+  /* ── Radios ──────────────────────────────────────────────────────────── */
+  --r-chip: 8px;
+  --r-control: 12px;
+  --r-hoja: 18px;
+  --r-expediente: 26px;
+  --r-pildora: 999px;
+
+  /* ── Materiales (ref-05 y ref-07): solo estos cinco ──────────────────── */
+  --sombra-hoja:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 1px 2px rgba(20, 20, 20, 0.04),
+    0 12px 32px -18px rgba(20, 20, 20, 0.18);
+  --sombra-expediente:
+    0 40px 80px -40px rgba(20, 20, 20, 0.55),
+    0 0 90px -30px rgba(255, 140, 100, 0.22);
+  --sombra-hundido:
+    inset 0 1px 2px rgba(20, 20, 20, 0.07),
+    inset 0 0 0 1px rgba(20, 20, 20, 0.08);
+  /* Estado financiero sobre hoja: sombra Hoja grande (spec 6.5). */
+  --sombra-documento:
+    0 1px 0 rgba(255, 255, 255, 0.8) inset,
+    0 2px 4px rgba(20, 20, 20, 0.05),
+    0 40px 70px -36px rgba(20, 20, 20, 0.32);
+  --cristal-fondo: rgba(251, 250, 247, 0.62);
+  --cristal-borde: rgba(255, 255, 255, 0.65);
+  /* En variable a propósito: si se escribe literal, Lightning CSS fusiona
+     backdrop-filter con su versión -webkit- y Edge/Chrome se quedan sin desenfoque. */
+  --cristal-filtro: blur(22px) saturate(1.4);
+  --cristal-reflejo: linear-gradient(180deg, rgba(255, 255, 255, 0.55), transparent 40%);
+  --brillo-cuadra:
+    0 0 0 1px rgba(35, 71, 214, 0.35),
+    0 0 28px rgba(35, 71, 214, 0.28);
+  --foco: 0 0 0 2px var(--papel), 0 0 0 4px var(--azul);
+
+  /* El Expediente es un SVG con pestaña: `box-shadow` dibujaría un rectángulo.
+     Estas sombras siguen la silueta (filter: drop-shadow). Mismos valores
+     visuales que --sombra-expediente / --sombra-hoja. */
+  --filtro-expediente:
+    drop-shadow(0 26px 30px rgba(20, 20, 20, 0.30))
+    drop-shadow(0 0 34px rgba(255, 140, 100, 0.20));
+  --filtro-hoja:
+    drop-shadow(0 1px 1px rgba(20, 20, 20, 0.05))
+    drop-shadow(0 10px 14px rgba(20, 20, 20, 0.07));
+  --expediente-pestana: 22px;     /* alto de la pestaña (spec 4.5) */
+  --expediente-rampa: 30px;       /* borde inclinado de la pestaña (ref-01) */
+
+  /* Velo para modales: tinta translúcida. */
+  --velo: rgba(20, 20, 20, 0.32);
+
+  /* ── Tipografía ──────────────────────────────────────────────────────── */
+  --fuente: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
+  --fuente-mono: "Geist Mono", ui-monospace, "Cascadia Mono", monospace;
+
+  /* ── Rejilla de página ───────────────────────────────────────────────── */
+  --contenedor: 1440px;
+  --margen: 40px;
+  --canal: 24px;
+
+  /* ── Movimiento ──────────────────────────────────────────────────────── */
+  --dur-rapida: 150ms;
+  --dur-media: 300ms;
+  --curva: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (max-width: 899px) {
+  :root { --margen: 20px; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   Tailwind v4 lee SOLO de aquí. `inline` hace que la utilidad use la variable
+   en vez de copiar el valor: cambiar un token cambia todas las pantallas.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@theme inline {
+  --color-*: initial;   /* se borra la paleta de Tailwind: no hay slate, indigo, etc. */
+  --color-papel: var(--papel);
+  --color-hoja: var(--hoja);
+  --color-hoja-2: var(--hoja-2);
+  --color-tinta: var(--tinta);
+  --color-tinta-2: var(--tinta-2);
+  --color-grafito: var(--grafito);
+  --color-gris: var(--gris);
+  --color-linea: var(--linea);
+  --color-rejilla: var(--rejilla);
+  --color-sobre-tinta: var(--sobre-tinta);
+  --color-sobre-tinta-2: var(--sobre-tinta-2);
+  --color-azul: var(--azul);
+  --color-azul-tinta: var(--azul-tinta);
+  --color-azul-suave: var(--azul-suave);
+  --color-rojo: var(--rojo);
+  --color-rojo-cartel: var(--rojo-cartel);
+  --color-rojo-suave: var(--rojo-suave);
+  --color-ambar: var(--ambar);
+  --color-ambar-suave: var(--ambar-suave);
+  --color-transparent: transparent;
+  --color-current: currentColor;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --font-sans: var(--fuente);
+  --font-mono: var(--fuente-mono);
+
+  --radius-chip: var(--r-chip);
+  --radius-control: var(--r-control);
+  --radius-hoja: var(--r-hoja);
+  --radius-expediente: var(--r-expediente);
+
+  --shadow-hoja: var(--sombra-hoja);
+  --shadow-expediente: var(--sombra-expediente);
+  --shadow-hundido: var(--sombra-hundido);
+  --shadow-cuadra: var(--brillo-cuadra);
+  --shadow-documento: var(--sombra-documento);
+
+  --breakpoint-escritorio: 56.25rem;   /* 900 px. En rem: si no, Tailwind no lo ordena junto a sm/md/lg y pierde */
+}
