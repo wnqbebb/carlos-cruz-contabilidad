@@ -1,4 +1,5 @@
 import { ArrowLeft, ChevronDown, Upload } from "lucide-react";
+import { Cabecera } from "../componentes/Marco";
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { clientes as api, puerta } from "../api";
@@ -152,14 +153,12 @@ export function ClienteEditor() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <div>
-          <EnlaceSubrayado a={esNuevo ? "/clientes" : `/clientes/${id}`}>
-            <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {esNuevo ? "Clientes" : "Volver a la ficha"}
-          </EnlaceSubrayado>
-          <h1 className="t-display mt-5 text-tinta">{esNuevo ? "Nuevo cliente" : "Editar ficha"}</h1>
-        </div>
-      </div>
+      <Cabecera>
+        <EnlaceSubrayado a={esNuevo ? "/clientes" : `/clientes/${id}`}>
+          <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> {esNuevo ? "Clientes" : "Volver a la ficha"}
+        </EnlaceSubrayado>
+        <h1 className="t-display mt-5 text-tinta">{esNuevo ? "Nuevo cliente" : "Editar ficha"}</h1>
+      </Cabecera>
 
       {error && (
         <Aviso tono="rojo" titulo="No se pudo guardar" onCerrar={() => setError("")}>
@@ -324,11 +323,11 @@ function ZonaDocumentos({
           <Upload size={20} strokeWidth={1.5} aria-hidden className="text-grafito" />
         )}
       </span>
-      <span className="min-w-0 flex-1">
+      <span className="min-w-0 flex-1 basis-[220px]">
         <span className="t-h2 block text-tinta">{leyendo ? "Leyendo los documentos…" : titulo}</span>
         <span className="t-small mt-1 block text-grafito">{texto}</span>
       </span>
-      <span className="codigo text-[12px] text-gris">.docx · .pdf · .xlsx</span>
+      <span className="codigo hidden text-[12px] text-gris sm:inline">.docx · .pdf · .xlsx</span>
       <input
         ref={entrada}
         type="file"

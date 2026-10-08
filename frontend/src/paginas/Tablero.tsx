@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { marcarTableroListo, useAparicion } from "../animacion";
 import { analisis } from "../api";
 import { useContador } from "../contador";
-import { useMetaPagina } from "../componentes/Marco";
+import { Cabecera, useMetaPagina } from "../componentes/Marco";
 import { BotonSubirArchivo, ZonaSubida } from "../componentes/Subir";
 import { clases, fecha, fechaLarga } from "../formato";
 import type { MesTablero, Tablero as DatosTablero, Tarea } from "../tipos";
@@ -77,7 +77,8 @@ export function Tablero() {
 
   return (
     <div className="space-y-16 escritorio:space-y-20">
-      {/* ── 1. saludo, fecha y subir ─────────────────────────────────────── */}
+      {/* ── 1. saludo, fecha y subir: en la franja de cabecera ───────────── */}
+      <Cabecera>
       <section aria-labelledby="saludo" className="columnas-12 items-end">
         <div className="col-span-12 escritorio:col-span-5">
           <p className="t-meta text-gris">{fechaLarga(datos.hoy)}</p>
@@ -98,6 +99,7 @@ export function Tablero() {
           <ZonaSubida className="min-h-[220px]" />
         </div>
       </section>
+      </Cabecera>
 
       {/* ── 2. cuatro indicadores ───────────────────────────────────────── */}
       <section aria-label="Indicadores de la cartera" className="grid grid-cols-2 gap-4 escritorio:grid-cols-4">

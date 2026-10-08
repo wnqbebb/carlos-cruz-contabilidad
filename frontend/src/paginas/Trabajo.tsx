@@ -2,7 +2,7 @@ import { Check, Search } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { analisis, clientes as apiClientes, trabajo as apiTrabajo, ErrorApi } from "../api";
-import { useMetaPagina } from "../componentes/Marco";
+import { Cabecera, useMetaPagina } from "../componentes/Marco";
 import { Aviso, Cargando } from "../componentes/ui";
 import { clases, periodoCorto } from "../formato";
 import type { Cliente, Importacion, Peticion, Resultado } from "../tipos";
@@ -180,6 +180,8 @@ export function Trabajo() {
 
   return (
     <div className="space-y-10">
+      {/* Banda de taller (8.2): título y regla graduada 01–07 sobre la franja oscura. */}
+      <Cabecera>
       <div className="flex flex-wrap items-end justify-between gap-6">
         <TituloPagina
           subtitulo={
@@ -204,7 +206,10 @@ export function Trabajo() {
         )}
       </div>
 
-      <PasoAPaso actual={actual} disponible={disponible} onIr={irA} />
+      <div className="mt-8">
+        <PasoAPaso actual={actual} disponible={disponible} onIr={irA} />
+      </div>
+      </Cabecera>
 
       {error && (
         <Aviso tono="rojo" titulo="No se pudo calcular" onCerrar={() => setError("")}>
@@ -385,7 +390,7 @@ function ElegirCliente({ onElegir }: { onElegir: (id: string) => void }) {
         </p>
       </div>
 
-      <label className="material-hundido flex h-14 max-w-2xl items-center gap-3 rounded-full px-5">
+      <label className="flex h-14 max-w-2xl items-center gap-3 rounded-full border border-borde-campo bg-campo px-5">
         <Search size={20} strokeWidth={1.5} aria-hidden className="shrink-0 text-gris" />
         <input
           value={q}

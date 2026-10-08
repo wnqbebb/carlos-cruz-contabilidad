@@ -1,4 +1,4 @@
-import { LayoutGrid, PenLine, Plus, Search, Settings2, Users } from "lucide-react";
+import { LayoutGrid, Monitor, Moon, PenLine, Plus, Search, Settings2, Sun, Users } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -6,15 +6,19 @@ import {
   useEffect,
   useId,
   useLayoutEffect,
+  useMemo,
   useRef,
   useState,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { sistema } from "../api";
 import { clases } from "../formato";
 import type { Salud } from "../tipos";
-import { BotonAcento, Flip, MetaEncabezado, sinMovimiento, DURACION } from "../ui";
+import { colorCliente } from "../colorCliente";
+import { useTema, type PreferenciaTema } from "../tema";
+import { BotonAcento, Flip, Interruptor, MetaEncabezado, sinMovimiento, DURACION } from "../ui";
 import { Buscador, useAtajoBuscador } from "./Buscador";
 import { Logotipo, MARCA, Monograma, useFirmaContador } from "./Marca";
 
@@ -51,6 +55,15 @@ function seccionDe(ruta: string): { indice: string; nombre: string } {
   return { indice: "—", nombre: "Página no encontrada" };
 }
 
+/** Identidad de la página (8.2): la clave que leen los tokens en `data-seccion`. */
+function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" | "trabajar" | "parametros" {
+  if (ruta.startsWith("/trabajo")) return "trabajar";
+  if (ruta.startsWith("/parametros")) return "parametros";
+  if (/^\/clientes\/[0-9a-f-]{8,}$/i.test(ruta)) return "ficha";
+  if (ruta.startsWith("/clientes")) return "clientes";
+  return "tablero";
+}
+
 const hoyLargo = () =>
   new Intl.DateTimeFormat("es-CO", { day: "numeric", month: "short", year: "numeric" })
     .format(new Date())
@@ -70,14 +83,46 @@ export function useMetaPagina(texto: string | null | undefined) {
   }, [texto, fijar]);
 }
 
+/* ── Cabecera de cada página (8.2) ──────────────────────────────────────────
+   La franja de cabecera es del marco (tono de la sección, rejilla, número de
+   índice gigante); el contenido lo pone cada página con <Cabecera>, que lo
+   lleva a la franja por un portal. Así el título queda sobre el tono. */
+const ContextoCabecera = createContext<{
+  hueco: HTMLElement | null;
+  fijarCliente: (nit: string | null) => void;
+}>({ hueco: null, fijarCliente: () => {} });
+
+/** El título y lo que acompaña al título de una página: va en la franja de cabecera. */
+export function Cabecera({ children }: { children: ReactNode }) {
+  const { hueco } = useContext(ContextoCabecera);
+  return hueco ? createPortal(children, hueco) : null;
+}
+
+/** Desde la ficha: pinta la cabecera, la píldora y el foco con el color del cliente (8.3). */
+export function useColorCliente(nit: string | null | undefined) {
+  const { fijarCliente } = useContext(ContextoCabecera);
+  useEffect(() => {
+    fijarCliente(nit || null);
+    return () => fijarCliente(null);
+  }, [nit, fijarCliente]);
+}
+
 export function Marco({ children }: { children: ReactNode }) {
   const { cargo, tp } = useFirmaContador();
+  const [hueco, setHueco] = useState<HTMLElement | null>(null);
+  const [nitCliente, setNitCliente] = useState<string | null>(null);
+  const valorCabecera = useMemo(() => ({ hueco, fijarCliente: setNitCliente }), [hueco]);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [salud, setSalud] = useState<Salud | null>(null);
   const [comprobado, setComprobado] = useState<number | null>(null);
   const [metaPagina, setMetaPagina] = useState<string | null>(null);
   const ubicacion = useLocation();
   const seccion = seccionDe(ubicacion.pathname);
+  const clave = claveSeccion(ubicacion.pathname);
+  const varsCliente = useMemo(
+    () => (nitCliente && clave === "ficha" ? colorCliente(nitCliente).vars : null),
+    [nitCliente, clave],
+  );
 
   const abrirBuscador = useCallback(() => setBuscadorAbierto(true), []);
   useAtajoBuscador(abrirBuscador);
@@ -106,7 +151,13 @@ export function Marco({ children }: { children: ReactNode }) {
 
   return (
     <ContextoMeta.Provider value={setMetaPagina}>
-      <div className="min-h-screen escritorio:pl-[248px]">
+     <ContextoCabecera.Provider value={valorCabecera}>
+      <div
+        data-seccion={clave}
+        data-cliente-color={varsCliente ? "" : undefined}
+        style={(varsCliente ?? undefined) as React.CSSProperties | undefined}
+        className="min-h-screen escritorio:pl-[248px]"
+      >
         <a
           href="#contenido"
           className="sr-only z-[80] rounded-full bg-tinta px-5 py-3 text-sobre-tinta focus:not-sr-only focus:fixed focus:top-3 focus:left-3"
@@ -116,7 +167,7 @@ export function Marco({ children }: { children: ReactNode }) {
         <div className="grano" aria-hidden />
 
         {/* ── barra lateral (escritorio) ─────────────────────────────── */}
-        <aside className="no-imprimir fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col border-r border-linea escritorio:flex">
+        <aside className="no-imprimir fixed inset-y-0 left-0 z-40 hidden w-[248px] flex-col border-r border-linea bg-barra escritorio:flex">
           <Link to="/" aria-label={`${MARCA}, ir al tablero`} className="block px-6 pt-7 pb-8">
             <Logotipo />
           </Link>
@@ -130,7 +181,6 @@ export function Marco({ children }: { children: ReactNode }) {
 
         {/* ── columna de contenido ───────────────────────────────────── */}
         <div className="relative flex min-h-screen min-w-0 flex-col">
-          <Rejilla />
 
           <div className="contenedor no-imprimir sticky top-0 z-30 pt-3 pb-3 escritorio:pt-5">
             <header className="flex items-center gap-3">
@@ -145,7 +195,7 @@ export function Marco({ children }: { children: ReactNode }) {
                 className="material-cristal flex h-11 min-w-0 flex-1 items-center gap-3 rounded-full px-4 text-left text-gris transition-colors hover:text-tinta escritorio:max-w-[420px]"
               >
                 <Search size={18} strokeWidth={1.5} aria-hidden className="shrink-0" />
-                <span className="t-body recortar flex-1">Buscar cliente, NIT o acción</span>
+                <span className="t-body recortar hidden flex-1 sm:inline">Buscar cliente, NIT o acción</span>
                 <kbd className="codigo hidden rounded-chip border border-linea px-1.5 py-0.5 text-[11px] text-gris sm:inline">
                   Ctrl K
                 </kbd>
@@ -158,6 +208,7 @@ export function Marco({ children }: { children: ReactNode }) {
                     Nuevo periodo
                   </BotonAcento>
                 </span>
+                <SelectorTema />
                 <span
                   title={[MARCA, cargo, tp].filter(Boolean).join(" · ")}
                   className="grid h-11 w-11 place-items-center rounded-full border border-linea bg-hoja text-[13px] font-semibold tracking-[-0.02em] text-tinta"
@@ -169,15 +220,24 @@ export function Marco({ children }: { children: ReactNode }) {
             </header>
           </div>
 
-          <div className="contenedor relative z-10 pt-3 escritorio:pt-6">
-            <MetaEncabezado
-              columnas={[
-                cargo ? `${MARCA} — ${cargo}` : MARCA,
-                tp,
-                `Índice ${seccion.indice} — ${seccion.nombre}`,
-                metaPagina ?? hoyLargo(),
-              ]}
-            />
+          <div
+            data-banda={clave === "trabajar" ? "taller" : undefined}
+            data-cliente={varsCliente ? "" : undefined}
+            className="franja-cabecera -mt-[68px] overflow-hidden pt-[68px] escritorio:-mt-[80px] escritorio:pt-[80px]"
+          >
+            <Rejilla />
+            <span aria-hidden className="indice-gigante">{seccion.indice}</span>
+            <div className="contenedor relative z-10 pt-3 escritorio:pt-6">
+              <MetaEncabezado
+                columnas={[
+                  cargo ? `${MARCA} — ${cargo}` : MARCA,
+                  tp,
+                  `Índice ${seccion.indice} — ${seccion.nombre}`,
+                  metaPagina ?? hoyLargo(),
+                ]}
+              />
+            </div>
+            <div ref={setHueco} className="contenedor contener relative z-10 pt-8 pb-10 empty:pb-6 empty:pt-0" />
           </div>
 
           {sinBase && (
@@ -209,6 +269,7 @@ export function Marco({ children }: { children: ReactNode }) {
 
         <Buscador abierto={buscadorAbierto} onCerrar={() => setBuscadorAbierto(false)} />
       </div>
+     </ContextoCabecera.Provider>
     </ContextoMeta.Provider>
   );
 }
@@ -268,13 +329,13 @@ function NavegacionLateral() {
             aria-current={es ? "page" : undefined}
             className={clases(
               "relative flex h-11 items-center rounded-full px-4 text-[15px] font-medium transition-colors duration-200",
-              es ? "text-sobre-tinta" : "text-grafito hover:bg-hoja-2 hover:text-tinta",
+              es ? "text-sobre-acento" : "text-grafito hover:bg-hoja-2 hover:text-tinta",
             )}
           >
-            {es && <span data-flip-id={id} aria-hidden className="absolute inset-0 rounded-full bg-tinta" />}
+            {es && <span data-flip-id={id} aria-hidden className="absolute inset-0 rounded-full bg-acento transition-colors duration-[400ms]" />}
             <span className="relative">
               {s.texto}
-              <span aria-hidden className={clases("codigo relative -top-[0.55em] ml-[0.25em] text-[0.62em]", es ? "text-sobre-tinta-2" : "text-gris")}>
+              <span aria-hidden className={clases("codigo relative -top-[0.55em] ml-[0.25em] text-[0.62em]", es ? "text-sobre-acento" : "text-gris")}>
                 {s.indice}
               </span>
             </span>
@@ -304,10 +365,10 @@ function NavegacionMovil() {
             aria-current={es ? "page" : undefined}
             className={clases(
               "relative flex flex-col items-center gap-0.5 rounded-full py-2 transition-colors",
-              es ? "text-sobre-tinta" : "text-grafito",
+              es ? "text-sobre-acento" : "text-grafito",
             )}
           >
-            {es && <span data-flip-id={id} aria-hidden className="absolute inset-0 rounded-full bg-tinta" />}
+            {es && <span data-flip-id={id} aria-hidden className="absolute inset-0 rounded-full bg-acento transition-colors duration-[400ms]" />}
             <s.icono size={20} strokeWidth={1.5} aria-hidden className="relative" />
             <span className="relative text-[11px] font-medium leading-4">{s.texto}</span>
           </Link>
@@ -364,5 +425,48 @@ function Rejilla() {
         {Array.from({ length: 12 }, (_, i) => <span key={i} />)}
       </div>
     </div>
+  );
+}
+
+/* ── Claro⁰¹ | Oscuro⁰² | Sistema⁰³ (8.4) ──────────────────────────────── */
+const OPCIONES_TEMA: { valor: PreferenciaTema; texto: string; icono: typeof Sun }[] = [
+  { valor: "claro", texto: "Claro", icono: Sun },
+  { valor: "oscuro", texto: "Oscuro", icono: Moon },
+  { valor: "sistema", texto: "Sistema", icono: Monitor },
+];
+
+function SelectorTema() {
+  const [tema, setTema] = useTema();
+  return (
+    <>
+      <span className="hidden sm:contents">
+        <Interruptor
+          etiqueta="Modo de color"
+          tamano="sm"
+          valor={tema}
+          onCambio={setTema}
+          opciones={OPCIONES_TEMA.map((o) => ({ valor: o.valor, texto: o.texto }))}
+        />
+      </span>
+      {/* En el teléfono no cabe el texto: solo el ícono, con su nombre accesible. */}
+      <span className="contents sm:hidden">
+      <Interruptor
+        etiqueta="Modo de color"
+        tamano="sm"
+        valor={tema}
+        onCambio={setTema}
+        opciones={OPCIONES_TEMA.map((o, i) => ({
+          valor: o.valor,
+          indice: String(i + 1).padStart(2, "0"),
+          texto: (
+            <>
+              <o.icono size={14} strokeWidth={1.5} aria-hidden className="inline align-[-2px]" />
+              <span className="sr-only">{o.texto}</span>
+            </>
+          ),
+        }))}
+      />
+      </span>
+    </>
   );
 }

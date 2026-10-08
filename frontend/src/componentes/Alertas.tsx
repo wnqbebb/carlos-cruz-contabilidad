@@ -25,7 +25,7 @@ export function ListaAlertas({ alertas, limite }: { alertas: Alerta[]; limite?: 
         {(["todas", "error", "advertencia", "info"] as const).map((f) => (
           <button key={f} onClick={() => setFiltro(f)}
             className={clases("rounded-full px-3 py-1 text-xs font-medium ring-1 ring-inset transition",
-              filtro === f ? "bg-tinta text-white ring-tinta" : "bg-papel text-grafito ring-linea hover:bg-hoja")}>
+              filtro === f ? "bg-tinta text-sobre-tinta ring-tinta" : "bg-papel text-grafito ring-linea hover:bg-hoja")}>
             {f === "todas" ? `Todas (${alertas.length})` : `${PLURAL[f]} (${conteo[f]})`}
           </button>
         ))}

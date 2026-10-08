@@ -1,11 +1,13 @@
 /* ═══════════════════════════════════════════════════════════════════════════
-   CARLOS CRUZ · TOKENS — fuente única de verdad del diseño (v2.1)
+   CARLOS CRUZ · TOKENS — fuente única de verdad del diseño (v2.2)
 
    Ningún componente usa un hex ni una clase de paleta de Tailwind directamente.
    Todo color, sombra, radio y fuente sale de aquí. `npm run lint:diseno` falla
-   si aparece uno fuera de este archivo.
+   si aparece uno fuera de este archivo, y también si un token de color no
+   tiene su valor en el modo oscuro.
 
-   Contrastes verificados en docs/diseno/CONTRASTES.md.
+   Contrastes medidos en los dos modos: docs/diseno/CONTRASTES.md
+   (se regeneran con `node scripts/contrastes.mjs`).
    ═══════════════════════════════════════════════════════════════════════════ */
 
 /* Geist autoalojada: nada de CDN. Subconjunto latino (incluye á, é, ñ, ü). */
@@ -16,36 +18,63 @@
 @import "@fontsource/geist-mono/latin-500.css";
 
 :root {
-  /* ── Superficies ─────────────────────────────────────────────────────── */
-  --papel: #f2efe9;          /* lienzo general (ref-05) */
-  --hoja: #fbfaf7;           /* tarjetas de trabajo */
-  --hoja-2: #f7f5f0;         /* zonas hundidas, hover de fila */
-  --blanco: #ffffff;         /* solo impresión y texto sobre azul/rojo */
-  --tinta: #141414;          /* texto principal y Expediente */
-  --tinta-2: #1f1f1f;        /* hover sobre tinta */
-  --grafito: #3a3a38;        /* texto secundario */
-  --gris: #6b6a66;           /* metadatos — 4,72:1 sobre papel */
-  --linea: rgba(20, 20, 20, 0.09);
-  /* Rejilla al 8 %: decisión del usuario en la Fase 0. El spec pedía 5 % y
-     ref-08 mide ~21 %; al 5 % casi no se veía, al 21 % compite con las cifras. */
-  --rejilla: rgba(20, 20, 20, 0.08);
+  /* ── Planos (v2.2 · 8.1): tres superficies que se distinguen sin sombra ── */
+  --lienzo: #e8e4dc;          /* fondo de la aplicación */
+  --barra: #f3f0ea;           /* barra lateral */
+  /* El encargo pedía hoja #FFFDF9 y hoja-2 #F5F2EC, pero con campo #FFFFFF el
+     campo sobre la hoja medía 1,02:1 y el mínimo pedido es 1,10:1. Se baja la
+     hoja lo justo (1,11:1) y la hoja-2 queda entre la hoja y el lienzo. */
+  --hoja: #f6f3ed;            /* tarjetas de trabajo */
+  --hoja-2: #efebe4;          /* zonas secundarias, hover de fila */
+  --campo: #ffffff;           /* fondo de los campos de formulario */
+  --papel: var(--lienzo);     /* nombre anterior del lienzo: se conserva */
+  --blanco: #ffffff;          /* solo impresión */
+  --tinta: #141414;           /* texto principal y Expediente */
+  --tinta-2: #1f1f1f;         /* hover sobre tinta */
+  --grafito: #3a3a38;         /* texto secundario y etiquetas */
+  --gris: #5c5b55;            /* metadatos: 4,5:1 también sobre las cabeceras de sección */
+  --linea: rgba(20, 20, 20, 0.1);
+  --linea-fuerte: rgba(20, 20, 20, 0.18);
+  --borde-campo: rgba(20, 20, 20, 0.24);
+  /* Rejilla solo en la franja de cabecera y en el preloader (8.1): 5 %. */
+  --rejilla: rgba(20, 20, 20, 0.05);
 
-  /* Texto sobre tinta (dentro del Expediente) */
+  /* Texto sobre tinta (dentro del Expediente) y sobre azul o rojo sólidos. */
   --sobre-tinta: #f5f3ee;
-  --sobre-tinta-2: #a9a79f;  /* 7,65:1 sobre --tinta */
+  --sobre-tinta-2: #a9a79f;
+  --sobre-color: #ffffff;
 
-  /* ── Acento: dos azules, cada uno en su sitio (decisión de la Fase 0) ── */
-  --azul: #2347d6;           /* botón principal y estado «Cuadra» — 6,22:1 */
-  --azul-tinta: #2038a2;     /* subrayados y enlaces, medido de ref-08 */
+  /* ── Acento: dos azules, cada uno en su sitio ───────────────────────── */
+  --azul: #2347d6;            /* botón principal y estado «Cuadra» */
+  --azul-tinta: #2038a2;      /* subrayados y enlaces */
   --azul-suave: #e7ecfb;
 
   /* ── Semántica contable: solo para su significado ────────────────────── */
-  --rojo: #c21f17;           /* pérdida, descuadre, crítico (texto) — 5,22:1 */
-  --rojo-cartel: #d7261e;    /* rellenos de alerta crítica (ref-02) */
+  --rojo: #c21f17;
+  --rojo-cartel: #d7261e;
   --rojo-suave: #fbe9e7;
-  --ambar: #a84f06;          /* advertencias — 4,83:1 */
+  --ambar: #a84f06;
   --ambar-suave: #fbf0e3;
   /* Positivo = --tinta o --azul. NO existe verde en esta aplicación. */
+
+  /* ── Identidad de cada sección (8.2) ───────────────────────────────── */
+  --cabecera-tablero: transparent;
+  --cabecera-clientes: rgba(32, 56, 162, 0.06);    /* velo de azul tinta al 6 % */
+  --cabecera-parametros: #e6e7e9;                  /* gris frío */
+  --frio-oscuro: #4a505c;                          /* píldora de Parámetros */
+  /* Banda de taller (Trabajar): oscura en los dos modos, con su propio texto. */
+  --banda-taller: #24221f;
+  --banda-texto: #f2efe9;
+  --banda-texto-2: #c9c4ba;
+  --banda-linea: rgba(242, 239, 233, 0.14);
+  --banda-azul: #8fa6ff;
+  --banda-azul-tinta: #a9bbff;
+  --banda-rojo: #ff7b70;
+  /* Muestras del catálogo: una hoja oscura para ver el color de cliente en oscuro. */
+  --muestra-oscura: #1b1b19;
+  --muestra-clara: #f6f3ed;
+  /* Número de índice gigante de la cabecera: solo el contorno. */
+  --indice-contorno: rgba(20, 20, 20, 0.16);
 
   /* ── Esferas de cliente (ref-04): solo colores de la paleta, sin verde ── */
   --esfera-1: #2347d6;
@@ -54,6 +83,11 @@
   --esfera-4: #d7261e;
   --esfera-5: #2038a2;
   --esfera-6: #e3a35a;
+  --esfera-brillo: 1;
+  /* Serie principal de las gráficas; en la ficha, el color del cliente. */
+  --serie-1: var(--azul);
+  /* Texto sobre el color profundo de un cliente: claro en los dos modos. */
+  --sobre-profundo: #f5f3ee;
 
   /* ── Radios ──────────────────────────────────────────────────────────── */
   --r-chip: 8px;
@@ -62,23 +96,22 @@
   --r-expediente: 26px;
   --r-pildora: 999px;
 
-  /* ── Materiales (ref-05 y ref-07): solo estos cinco ──────────────────── */
+  /* ── Materiales (ref-05 y ref-07) ────────────────────────────────────── */
   --sombra-hoja:
     0 1px 0 rgba(255, 255, 255, 0.8) inset,
-    0 1px 2px rgba(20, 20, 20, 0.04),
-    0 12px 32px -18px rgba(20, 20, 20, 0.18);
+    0 1px 2px rgba(20, 20, 20, 0.05),
+    0 12px 32px -18px rgba(20, 20, 20, 0.2);
   --sombra-expediente:
     0 40px 80px -40px rgba(20, 20, 20, 0.55),
     0 0 90px -30px rgba(255, 140, 100, 0.22);
   --sombra-hundido:
     inset 0 1px 2px rgba(20, 20, 20, 0.07),
     inset 0 0 0 1px rgba(20, 20, 20, 0.08);
-  /* Estado financiero sobre hoja: sombra Hoja grande (spec 6.5). */
   --sombra-documento:
     0 1px 0 rgba(255, 255, 255, 0.8) inset,
     0 2px 4px rgba(20, 20, 20, 0.05),
     0 40px 70px -36px rgba(20, 20, 20, 0.32);
-  --cristal-fondo: rgba(251, 250, 247, 0.62);
+  --cristal-fondo: rgba(246, 243, 237, 0.62);
   --cristal-borde: rgba(255, 255, 255, 0.65);
   /* En variable a propósito: si se escribe literal, Lightning CSS fusiona
      backdrop-filter con su versión -webkit- y Edge/Chrome se quedan sin desenfoque. */
@@ -87,22 +120,25 @@
   --brillo-cuadra:
     0 0 0 1px rgba(35, 71, 214, 0.35),
     0 0 28px rgba(35, 71, 214, 0.28);
-  --foco: 0 0 0 2px var(--papel), 0 0 0 4px var(--azul);
-
-  /* El Expediente es un SVG con pestaña: `box-shadow` dibujaría un rectángulo.
-     Estas sombras siguen la silueta (filter: drop-shadow). Mismos valores
-     visuales que --sombra-expediente / --sombra-hoja. */
   --filtro-expediente:
-    drop-shadow(0 26px 30px rgba(20, 20, 20, 0.30))
-    drop-shadow(0 0 34px rgba(255, 140, 100, 0.20));
+    drop-shadow(0 26px 30px rgba(20, 20, 20, 0.3))
+    drop-shadow(0 0 34px rgba(255, 140, 100, 0.2));
   --filtro-hoja:
     drop-shadow(0 1px 1px rgba(20, 20, 20, 0.05))
     drop-shadow(0 10px 14px rgba(20, 20, 20, 0.07));
-  --expediente-pestana: 22px;     /* alto de la pestaña (spec 4.5) */
-  --expediente-rampa: 30px;       /* borde inclinado de la pestaña (ref-01) */
-
-  /* Velo para modales: tinta translúcida. */
+  --expediente-pestana: 22px;
+  --expediente-rampa: 30px;
   --velo: rgba(20, 20, 20, 0.32);
+  /* Grano de papel: oscuro que multiplica en claro, claro que ilumina en oscuro. */
+  --grano-opacidad: 0.035;
+  --grano-mezcla: multiply;
+  --grano-invertir: 0;
+
+  /* Acento de la sección activa: lo fija `data-seccion` (8.2) o el cliente (8.3). */
+  --acento: var(--tinta);
+  --sobre-acento: var(--sobre-tinta);
+  --cabecera-fondo: var(--cabecera-tablero);
+  --foco: 0 0 0 2px var(--lienzo), 0 0 0 4px var(--azul);
 
   /* ── Tipografía ──────────────────────────────────────────────────────── */
   --fuente: "Geist Sans", ui-sans-serif, system-ui, sans-serif;
@@ -116,7 +152,151 @@
   /* ── Movimiento ──────────────────────────────────────────────────────── */
   --dur-rapida: 150ms;
   --dur-media: 300ms;
+  --dur-cabecera: 400ms;
   --curva: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODO OSCURO (8.4). Todo token de color tiene aquí su valor. Solo en pantalla:
+   la impresión y el PDF son siempre en claro.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media screen {
+  :root[data-tema="oscuro"] {
+    --lienzo: #0e0e0d;
+    --barra: #1a1a18;          /* el #151514 del encargo medía 1,06:1 sobre el lienzo */
+    --hoja: #1b1b19;
+    --hoja-2: #23231f;
+    --campo: #0f0f0e;          /* el #121211 del encargo medía 1,09:1 sobre la hoja */
+    --papel: var(--lienzo);
+    --blanco: #ffffff;
+    --tinta: #edeae4;
+    --tinta-2: #ffffff;
+    --grafito: #bdb9b0;
+    --gris: #94908a;
+    --linea: rgba(255, 255, 255, 0.1);
+    --linea-fuerte: rgba(255, 255, 255, 0.18);
+    --borde-campo: rgba(255, 255, 255, 0.18);
+    --rejilla: rgba(255, 255, 255, 0.05);
+
+    --sobre-tinta: #141412;
+    --sobre-tinta-2: #4f4c46;
+    --sobre-color: #0e0e0d;
+
+    --azul: #8fa6ff;
+    --azul-tinta: #a9bbff;
+    --azul-suave: #1d2236;
+
+    --rojo: #ff7b70;
+    --rojo-cartel: #ff6a5f;
+    --rojo-suave: #2b1715;
+    --ambar: #f2a65a;
+    --ambar-suave: #2a1f13;
+
+    --cabecera-tablero: transparent;
+    --cabecera-clientes: rgba(143, 166, 255, 0.07);
+    --cabecera-parametros: #1c1e22;
+    --frio-oscuro: #aeb6c4;
+    --banda-taller: #2a2824;
+    --banda-texto: #f2efe9;
+    --banda-texto-2: #c9c4ba;
+    --banda-linea: rgba(242, 239, 233, 0.14);
+    --banda-azul: #8fa6ff;
+    --banda-azul-tinta: #a9bbff;
+    --banda-rojo: #ff7b70;
+    --muestra-oscura: #1b1b19;
+    --muestra-clara: #f6f3ed;
+    --indice-contorno: rgba(255, 255, 255, 0.14);
+
+    --esfera-1: #4c6bff;
+    --esfera-2: #d9752a;
+    --esfera-3: #d0458a;
+    --esfera-4: #ff5a50;
+    --esfera-5: #6e86f5;
+    --esfera-6: #f2b877;
+    --esfera-brillo: 1.15;
+    --serie-1: var(--azul);
+    --sobre-profundo: #f5f3ee;
+
+    /* Profundidad por bordes y un leve brillo, no por sombras. */
+    --sombra-hoja: 0 0 0 1px rgba(255, 255, 255, 0.02), 0 1px 2px rgba(0, 0, 0, 0.35);
+    --sombra-expediente: 0 30px 60px -40px rgba(0, 0, 0, 0.8);
+    --sombra-hundido: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+    --sombra-documento: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 24px 48px -30px rgba(0, 0, 0, 0.7);
+    --cristal-fondo: rgba(27, 27, 25, 0.66);
+    --cristal-borde: rgba(255, 255, 255, 0.08);
+    --cristal-filtro: blur(22px) saturate(1.2);
+    --cristal-reflejo: linear-gradient(180deg, rgba(255, 255, 255, 0.06), transparent 40%);
+    --brillo-cuadra:
+      0 0 0 1px rgba(143, 166, 255, 0.4),
+      0 0 24px rgba(143, 166, 255, 0.22);
+    --filtro-expediente: drop-shadow(0 20px 26px rgba(0, 0, 0, 0.6));
+    --filtro-hoja: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.4));
+    --velo: rgba(0, 0, 0, 0.55);
+    --grano-opacidad: 0.05;
+    --grano-mezcla: screen;
+    --grano-invertir: 1;
+
+    --acento: var(--tinta);
+    --sobre-acento: var(--sobre-tinta);
+    --cabecera-fondo: var(--cabecera-tablero);
+    --foco: 0 0 0 2px var(--lienzo), 0 0 0 4px var(--azul);
+    color-scheme: dark;
+  }
+}
+
+/* ── Identidad por sección (8.2): la fija `data-seccion` en el marco ──── */
+[data-seccion="tablero"] { --cabecera-fondo: var(--cabecera-tablero); --acento: var(--tinta); --sobre-acento: var(--sobre-tinta); }
+[data-seccion="clientes"] { --cabecera-fondo: var(--cabecera-clientes); --acento: var(--azul-tinta); --sobre-acento: var(--sobre-color); }
+[data-seccion="trabajar"] { --cabecera-fondo: var(--banda-taller); --acento: var(--grafito); --sobre-acento: var(--sobre-tinta); }
+[data-seccion="parametros"] { --cabecera-fondo: var(--cabecera-parametros); --acento: var(--frio-oscuro); --sobre-acento: var(--sobre-color); }
+/* La ficha de un cliente: su color, calculado de su esfera (8.3, `colorCliente.ts`). */
+[data-seccion="ficha"] {
+  --serie-1: var(--cliente-tono, var(--azul));
+  --cabecera-fondo: var(--cliente-velo, var(--cabecera-clientes));
+  --acento: var(--cliente-texto, var(--azul-tinta));
+  --sobre-acento: var(--sobre-color);
+  --foco: 0 0 0 2px var(--lienzo), 0 0 0 4px var(--cliente-tono, var(--azul));
+}
+
+/* Color de un cliente (8.3): `colorCliente.ts` entrega los dos modos y aquí se
+   elige. Lo lleva cualquier elemento con `data-cliente-color` (la ficha, la
+   pestaña de su carpeta, las muestras del catálogo). */
+[data-cliente-color] {
+  --cliente-tono: var(--cliente-tono-c);
+  --cliente-profundo: var(--cliente-profundo-c);
+  --cliente-velo: var(--cliente-velo-c);
+  --cliente-velo-fuerte: var(--cliente-velo-fuerte-c);
+  --cliente-texto: var(--cliente-texto-c);
+}
+@media screen {
+  :root[data-tema="oscuro"] [data-cliente-color],
+  :root[data-tema="oscuro"][data-cliente-color] {
+    --cliente-tono: var(--cliente-tono-o);
+    --cliente-profundo: var(--cliente-profundo-o);
+    --cliente-velo: var(--cliente-velo-o);
+    --cliente-velo-fuerte: var(--cliente-velo-fuerte-o);
+    --cliente-texto: var(--cliente-texto-o);
+  }
+}
+
+/* La banda de taller redefine el texto dentro de ella: es oscura en los dos modos. */
+[data-banda="taller"] {
+  /* Sobre la banda oscura, los azules y el rojo son los del modo oscuro. */
+  --azul: var(--banda-azul);
+  --azul-tinta: var(--banda-azul-tinta);
+  --rojo: var(--banda-rojo);
+  --sobre-color: var(--banda-taller);
+  --tinta: var(--banda-texto);
+  --grafito: var(--banda-texto-2);
+  --gris: var(--banda-texto-2);
+  --linea: var(--banda-linea);
+  --rejilla: var(--banda-linea);
+  --indice-contorno: var(--banda-linea);
+  --sobre-tinta: var(--banda-taller);
+  --sobre-tinta-2: var(--banda-texto-2);
+  --hoja: rgba(255, 255, 255, 0.06);
+  --cristal-fondo: rgba(255, 255, 255, 0.06);
+  --cristal-borde: rgba(255, 255, 255, 0.12);
 }
 
 @media (max-width: 899px) {
@@ -129,17 +309,23 @@
    ═══════════════════════════════════════════════════════════════════════════ */
 @theme inline {
   --color-*: initial;   /* se borra la paleta de Tailwind: no hay slate, indigo, etc. */
+  --color-lienzo: var(--lienzo);
+  --color-barra: var(--barra);
   --color-papel: var(--papel);
   --color-hoja: var(--hoja);
   --color-hoja-2: var(--hoja-2);
+  --color-campo: var(--campo);
   --color-tinta: var(--tinta);
   --color-tinta-2: var(--tinta-2);
   --color-grafito: var(--grafito);
   --color-gris: var(--gris);
   --color-linea: var(--linea);
+  --color-linea-fuerte: var(--linea-fuerte);
+  --color-borde-campo: var(--borde-campo);
   --color-rejilla: var(--rejilla);
   --color-sobre-tinta: var(--sobre-tinta);
   --color-sobre-tinta-2: var(--sobre-tinta-2);
+  --color-sobre-color: var(--sobre-color);
   --color-azul: var(--azul);
   --color-azul-tinta: var(--azul-tinta);
   --color-azul-suave: var(--azul-suave);
@@ -148,10 +334,12 @@
   --color-rojo-suave: var(--rojo-suave);
   --color-ambar: var(--ambar);
   --color-ambar-suave: var(--ambar-suave);
+  --color-acento: var(--acento);
+  --color-sobre-acento: var(--sobre-acento);
+  --color-cliente: var(--cliente-tono, var(--azul));
+  --color-cliente-profundo: var(--cliente-profundo, var(--tinta));
   --color-transparent: transparent;
   --color-current: currentColor;
-  --color-white: #ffffff;
-  --color-black: #000000;
 
   --font-sans: var(--fuente);
   --font-mono: var(--fuente-mono);

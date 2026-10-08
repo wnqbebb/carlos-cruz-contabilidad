@@ -23,7 +23,7 @@ export type EstadoInsignia =
 
 const ESTILO: Record<EstadoInsignia, { clase: string; texto: string; icono?: ReactNode }> = {
   cuadra: {
-    clase: "bg-azul text-white brillo-cuadra",
+    clase: "bg-azul text-sobre-color brillo-cuadra",
     texto: "Cuadra",
     icono: <Check size={14} strokeWidth={2} aria-hidden />,
   },

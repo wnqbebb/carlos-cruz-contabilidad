@@ -1,6 +1,7 @@
 import { ArrowUpRight } from "lucide-react";
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
+import { colorCliente } from "../colorCliente";
 import { clases } from "../formato";
 import { DURACION, gsap, sinMovimiento } from "./movimiento";
 
@@ -69,6 +70,7 @@ export function Expediente({
   flecha = true,
   className,
   etiquetaAccesible,
+  nitCliente,
 }: {
   variante?: Variante;
   /** Texto pequeño sobre la pestaña (p. ej. «01 • RESULTADO»). */
@@ -84,6 +86,8 @@ export function Expediente({
   className?: string;
   /** Nombre accesible cuando el contenido no basta (p. ej. solo cifras). */
   etiquetaAccesible?: string;
+  /** NIT del cliente: la pestaña lleva una franja con su color (8.3). */
+  nitCliente?: string;
 }) {
   const caja = useRef<HTMLDivElement>(null);
   const trazo = useRef<SVGPathElement>(null);
@@ -163,6 +167,11 @@ export function Expediente({
           strokeWidth={1}
           vectorEffect="non-scaling-stroke"
         />
+        {/* Franja del color del cliente sobre la pestaña (8.3). */}
+        {nitCliente && medida.w > 0 && (() => {
+          const x = inicioPestana(medida.w, Math.min(R, medida.w / 4)) + RAMPA;
+          return <rect x={x} y={1} width={Math.max(0, medida.w - x - 16)} height={3} rx={1.5} fill="var(--cliente-tono)" />;
+        })()}
       </svg>
 
       {/* Etiqueta sobre la pestaña, alineada a su inicio */}
@@ -210,6 +219,9 @@ export function Expediente({
       className,
     ),
     "aria-label": etiquetaAccesible,
+    ...(nitCliente
+      ? { "data-cliente-color": "", style: colorCliente(nitCliente).vars as React.CSSProperties }
+      : {}),
   };
 
   if (a) return <Link to={a} {...comunes} ref={caja as never}>{cuerpo}</Link>;

@@ -1,4 +1,5 @@
 import { Plus, X } from "lucide-react";
+import { Cabecera } from "../componentes/Marco";
 import { useCallback, useEffect, useState } from "react";
 import { sistema } from "../api";
 import { Campo, estiloCampo, estiloCampoAuto } from "../componentes/ui";
@@ -109,9 +110,11 @@ export function Parametros() {
 
   return (
     <div className="space-y-14">
-      <TituloPagina subtitulo="Base con la que se liquida la nómina de todos los clientes. El SMMLV y el auxilio de transporte los fija un decreto cada año; aquí se registran.">
-        Parámetros
-      </TituloPagina>
+      <Cabecera>
+        <TituloPagina subtitulo="Base con la que se liquida la nómina de todos los clientes. El SMMLV y el auxilio de transporte los fija un decreto cada año; aquí se registran.">
+          Parámetros
+        </TituloPagina>
+      </Cabecera>
 
       {/* ── valores vigentes por año ──────────────────────────────────── */}
       <section aria-labelledby="titulo-vigentes" className="space-y-6">

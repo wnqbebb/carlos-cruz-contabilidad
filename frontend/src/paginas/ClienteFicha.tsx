@@ -2,7 +2,7 @@ import { ArrowLeft, Download, History, PenLine } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { analisis, clientes as api, descargas, trabajo as apiTrabajo } from "../api";
-import { useMetaPagina } from "../componentes/Marco";
+import { Cabecera, useColorCliente, useMetaPagina } from "../componentes/Marco";
 import { EnLinea } from "../componentes/EnLinea";
 import { BotonSubirArchivo } from "../componentes/Subir";
 import { clases, esCero, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
@@ -127,6 +127,8 @@ export function ClienteFicha() {
   }, [cargar]);
 
   const ultimo = serie.length ? serie[serie.length - 1] : null;
+  // 8.3: la cabecera, la píldora, las pestañas y el foco toman el color del cliente.
+  useColorCliente(cliente?.nit);
   useMetaPagina(ultimo ? `Corte ${fechaLarga(ultimo.hasta)}` : null);
 
   if (error && /no existe/i.test(error)) {
@@ -151,12 +153,14 @@ export function ClienteFicha() {
 
   return (
     <div className="space-y-12">
+      <Cabecera>
       <CabeceraCliente
         cliente={cliente}
         onCambio={async (campo, valor) => {
           setCliente(await api.actualizar(id, { [campo]: valor }));
         }}
       />
+      </Cabecera>
 
       {cliente.estado === "archivado" && (
         <Aviso tono="ambar" titulo="Este cliente está archivado">

@@ -114,7 +114,7 @@ export function ResultadoGuardado({
                 className={clases(
                   "shrink-0 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200",
                   p.id === periodoId
-                    ? "bg-tinta text-white shadow-md "
+                    ? "bg-tinta text-sobre-tinta shadow-md "
                     : "border border-linea bg-hoja text-grafito hover:bg-hoja-2 hover:text-tinta",
                 )}
               >
@@ -267,9 +267,9 @@ function PanelCifras({ datos, periodo }: { datos: Resultado; periodo: Periodo })
 
         <div className="grid gap-4 sm:grid-cols-2">
           <div
-            className={clases("@container p-5", perdida ? "rounded-hoja bg-rojo-cartel text-white" : "material-expediente")}
+            className={clases("@container p-5", perdida ? "rounded-hoja bg-rojo-cartel text-sobre-color" : "material-expediente")}
           >
-            <p className={clases("t-meta", perdida ? "text-white/85" : "text-sobre-tinta-2")}>
+            <p className={clases("t-meta", perdida ? "text-sobre-color" : "text-sobre-tinta-2")}>
               {perdida ? "Pérdida del periodo" : "Utilidad del periodo"}
             </p>
             <p className="mt-3">

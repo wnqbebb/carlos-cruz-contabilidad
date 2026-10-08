@@ -3,10 +3,22 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <meta name="theme-color" content="#f2efe9" />
+    <meta name="theme-color" content="#e8e4dc" />
     <meta name="description" content="Carlos Cruz — contabilidad que cuadra. Balance, estados financieros, nómina e inventario de todos sus clientes, con precisión decimal exacta." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-
+    <!-- Modo claro, oscuro o el del sistema (8.4), ANTES de pintar: así no
+         hay un destello claro al abrir en oscuro. Lo mismo hace src/tema.ts. -->
+    <script>
+      (function () {
+        try {
+          var p = localStorage.getItem("cc-tema") || "sistema";
+          var oscuro = p === "oscuro" || (p === "sistema" && matchMedia("(prefers-color-scheme: dark)").matches);
+          document.documentElement.setAttribute("data-tema", oscuro ? "oscuro" : "claro");
+        } catch (e) {
+          document.documentElement.setAttribute("data-tema", "claro");
+        }
+      })();
+    </script>
 
     <title>Carlos Cruz · Contabilidad que cuadra</title>
   </head>

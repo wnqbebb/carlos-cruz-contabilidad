@@ -120,6 +120,35 @@ for (const absoluta of archivos) {
   }
 }
 
+/* ── Modo oscuro completo (v2.2 · 8.4) ────────────────────────────────────
+   Todo token de color del :root claro debe tener su valor en el bloque
+   `:root[data-tema="oscuro"]`. Si falta uno, en oscuro se vería el color claro
+   (texto oscuro sobre fondo oscuro, por ejemplo) y nadie lo notaría a tiempo. */
+const SIN_COLOR = /^--(r-|fuente|contenedor|margen|canal|dur-|curva|expediente-|cristal-filtro)/;
+{
+  const tokens = readFileSync(join(SRC, "styles", "tokens.css"), "utf8").replace(/\/\*[\s\S]*?\*\//g, "");
+  const bloque = (inicio) => {
+    const i = tokens.indexOf(inicio);
+    if (i < 0) return "";
+    let nivel = 0;
+    for (let j = tokens.indexOf("{", i); j < tokens.length; j++) {
+      if (tokens[j] === "{") nivel++;
+      if (tokens[j] === "}" && --nivel === 0) return tokens.slice(i, j);
+    }
+    return "";
+  };
+  const nombres = (texto) => new Set([...texto.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]));
+  const claros = nombres(bloque(":root {"));
+  const oscuros = nombres(bloque(':root[data-tema="oscuro"]'));
+  for (const t of claros) {
+    if (SIN_COLOR.test(t) || oscuros.has(t)) continue;
+    hallazgos.push({
+      rel: "src/styles/tokens.css", linea: 0, texto: t,
+      regla: { id: "token-sin-oscuro", porque: "Cada token de color necesita su valor en :root[data-tema=\"oscuro\"] (spec 8.4)." },
+    });
+  }
+}
+
 if (!hallazgos.length) {
   console.log("lint:diseno ✓  sin infracciones en src/ (" + archivos.length + " archivos revisados)");
   process.exit(0);

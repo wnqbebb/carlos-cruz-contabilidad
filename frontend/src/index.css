@@ -11,12 +11,12 @@
 html {
   color-scheme: light;
   -webkit-text-size-adjust: 100%;
-  background: var(--papel);
+  background: var(--lienzo);
 }
 
 body {
   margin: 0;
-  background: var(--papel);
+  background: var(--lienzo);
   color: var(--tinta);
   font-family: var(--fuente);
   font-size: 15px;
@@ -112,7 +112,21 @@ body {
   box-shadow: var(--sombra-expediente);
 }
 
-/* 3 · Hundido: inputs, zona de arrastre, celdas editables. */
+/* En la ficha de un cliente la carpeta héroe es su color profundo, con un
+   borde un poco más claro (8.3; en oscuro, 8.4). */
+/* Las utilidades (text-sobre-tinta…) ganan a esta capa: por eso se redefinen
+   las VARIABLES dentro de la carpeta, no las clases. */
+[data-seccion="ficha"][data-cliente-color] .material-expediente {
+  --sobre-tinta: var(--sobre-profundo);
+  --sobre-tinta-2: color-mix(in srgb, var(--sobre-profundo) 72%, transparent);
+  --tinta: var(--sobre-profundo);
+  background: var(--cliente-profundo);
+  color: var(--sobre-profundo);
+  box-shadow: var(--sombra-expediente), inset 0 0 0 1px var(--cliente-velo-fuerte);
+}
+
+/* 3 · Hundido: zona de arrastre y celdas editables. Los CAMPOS de formulario
+   ya no son hundidos (8.1): fondo --campo y borde --borde-campo. */
 .material-hundido {
   background: var(--hoja-2);
   box-shadow: var(--sombra-hundido);
@@ -155,8 +169,9 @@ body {
   inset: 0;
   z-index: 60;
   pointer-events: none;
-  opacity: 0.035;
-  mix-blend-mode: multiply;
+  opacity: var(--grano-opacidad);
+  mix-blend-mode: var(--grano-mezcla);
+  filter: invert(var(--grano-invertir));
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='220' height='220' filter='url(%23g)'/%3E%3C/svg%3E");
 }
 
@@ -256,6 +271,63 @@ body {
 .enlace-subrayado:hover::after,
 .enlace-subrayado:focus-visible::after { transform: scaleX(1); }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   CABECERA DE SECCIÓN (8.2): cada página se reconoce al instante
+   ═══════════════════════════════════════════════════════════════════════════ */
+/* La franja empieza detrás de la barra superior y llega hasta debajo del
+   título. Su tono lo da la sección (o el cliente) y cambia en 0,4 s. */
+.franja-cabecera {
+  position: relative;
+  background-color: var(--cabecera-fondo);
+  transition: background-color var(--dur-cabecera) var(--curva), color var(--dur-cabecera) var(--curva);
+  color: var(--tinta);
+}
+.franja-cabecera > .rejilla { z-index: 0; }
+/* Número de índice gigante, solo el contorno, a la derecha (display-xl). */
+.indice-gigante {
+  position: absolute;
+  right: var(--margen);
+  bottom: 18px;
+  font-size: clamp(96px, 14vw, 220px);
+  line-height: 0.8;
+  font-weight: 600;
+  letter-spacing: -0.06em;
+  color: transparent;
+  -webkit-text-stroke: 1.5px var(--indice-contorno);
+  pointer-events: none;
+  user-select: none;
+  z-index: 0;
+}
+/* Velo del cliente que nace desde la posición de su esfera (8.3). */
+.franja-cabecera[data-cliente]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(70% 120% at 88% 40%, var(--cliente-velo-fuerte, transparent), transparent 70%);
+  pointer-events: none;
+}
+
+/* Pestañas (8.1): activa en tinta 600 con subrayado de 2 px en el color de
+   la sección o del cliente; inactivas en grafito 500; hover, subrayado de 1 px. */
+.pestana {
+  position: relative;
+  color: var(--grafito);
+  font-weight: 500;
+}
+.pestana::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -1px;
+  height: 0;
+  background: var(--tinta);
+  transition: height var(--dur-rapida) var(--curva);
+}
+.pestana:hover::after { height: 1px; }
+.pestana[aria-selected="true"] { color: var(--tinta); font-weight: 600; }
+.pestana[aria-selected="true"]::after { height: 2px; background: var(--acento); }
+
 /* Rayado tenue: mes sin contabilizar en la tira del Tablero (spec 6.2). */
 .rayado {
   background-color: var(--hoja);
@@ -293,7 +365,8 @@ body {
 @media print {
   @page { size: letter; margin: 16mm 14mm; }
   html, body { background: var(--blanco); }
-  .no-imprimir, .grano, .rejilla { display: none !important; }
+  .no-imprimir, .grano, .rejilla, .indice-gigante { display: none !important; }
+  .franja-cabecera { background: none !important; }
   .material-hoja { box-shadow: none; border: none; }
 
   /* Si hay un estado financiero en pantalla, se imprime SOLO el documento,

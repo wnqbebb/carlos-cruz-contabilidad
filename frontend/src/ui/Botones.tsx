@@ -40,7 +40,7 @@ const BASE =
 
 const VARIANTES = {
   primario: "bg-tinta text-sobre-tinta hover:bg-tinta-2",
-  acento: "bg-azul text-white hover:bg-azul-tinta",
+  acento: "bg-azul text-sobre-color hover:bg-azul-tinta",
   fantasma: "border border-linea bg-transparent text-tinta hover:border-tinta/30 hover:bg-hoja",
 } as const;
 

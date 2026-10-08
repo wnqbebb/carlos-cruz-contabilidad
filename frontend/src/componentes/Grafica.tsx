@@ -18,7 +18,8 @@ import { Rotulo } from "./ui";
      calcular píxeles, nunca para mostrar una cifra.
    ═══════════════════════════════════════════════════════════════════════════ */
 
-const SERIE_1 = "var(--azul)";
+// Las series toman el color del cliente dentro de su ficha (8.3): --serie-1.
+const SERIE_1 = "var(--serie-1)";
 const SERIE_2 = "var(--ambar)";
 const SERIE_3 = "var(--esfera-3)";
 const POSITIVO = "var(--azul-tinta)";
@@ -92,8 +93,8 @@ export function GraficaEvolucion({ puntos }: { puntos: Punto[] }) {
         <svg viewBox={`0 0 ${A} ${H}`} preserveAspectRatio="none" role="img" aria-labelledby={idT} className="h-[150px] w-full">
           <defs>
             <linearGradient id={idDeg} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--azul)" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="var(--azul)" stopOpacity="0" />
+              <stop offset="0%" stopColor="var(--serie-1)" stopOpacity="0.28" />
+              <stop offset="100%" stopColor="var(--serie-1)" stopOpacity="0" />
             </linearGradient>
           </defs>
 

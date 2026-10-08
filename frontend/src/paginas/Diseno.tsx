@@ -1,4 +1,6 @@
 import { Download, Plus } from "lucide-react";
+import { colorCliente } from "../colorCliente";
+import { Cabecera } from "../componentes/Marco";
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { LEMA, Logotipo, Monograma } from "../componentes/Marca";
 import { cmp, sumar } from "../formato";
@@ -104,6 +106,9 @@ function Muestra({ nombre }: { nombre: string }) {
   );
 }
 
+/** Ocho NIT distintos para ver el color de cliente (8.3). */
+const MUESTRAS_CLIENTE = ["[NIT]", "900123456", "805004321", "900555111", "811222333", "890300279", "900777111", "1112223334"];
+
 export function Diseno() {
   const avisar = useAvisos();
   const [vista, setVista] = useState<"expedientes" | "tabla">("expedientes");
@@ -129,14 +134,11 @@ export function Diseno() {
 
   return (
     <div className="space-y-14 pb-16">
-      <div className="space-y-8 pt-2">
-        <MetaEncabezado
-          columnas={["Carlos Cruz — Sistema de diseño", "Versión 2.1", "Índice 00 — Catálogo", "Uso interno"]}
-        />
+      <Cabecera>
         <TituloPagina subtitulo="Cada componente de firma con todos sus estados. Si algo se ve distinto en otra pantalla, la fuente de verdad es esta página y styles/tokens.css.">
           Catálogo
         </TituloPagina>
-      </div>
+      </Cabecera>
 
       <Bloque indice={0} titulo="Marca" nota="Monograma: «CC» en Geist 600 sobre tinta, con una cuenta T mínima debajo. Reglas en docs/diseno/MARCA.md.">
         <div className="flex flex-wrap items-end gap-10">
@@ -238,6 +240,42 @@ export function Diseno() {
           <div className="flex items-center gap-3">
             {NITS.map(([nit, nombre]) => <EsferaCliente key={nit} nit={nit} nombre={nombre} tamano={32} />)}
           </div>
+        </div>
+      </Bloque>
+
+      <Bloque
+        indice={5}
+        titulo="Color de cliente"
+        nota="Sacado de la esfera, en OKLCH (8.3): tono L 0,55 · profundo L 0,28 · velo · texto ajustado a 4,5:1. Nunca a menos de 20° del rojo. Arriba en claro, abajo en oscuro."
+      >
+        <div className="grid gap-4 sm:grid-cols-2 escritorio:grid-cols-4">
+          {MUESTRAS_CLIENTE.map((nit) => {
+            const c = colorCliente(nit);
+            return (
+              <div key={nit} data-cliente-color="" style={c.vars as React.CSSProperties} className="overflow-hidden rounded-hoja border border-linea">
+                {(["c", "o"] as const).map((m) => (
+                  <div key={m} className="space-y-2 p-4" style={{ background: m === "c" ? "var(--muestra-clara)" : "var(--muestra-oscura)" }}>
+                    <div className="flex items-center gap-3">
+                      <EsferaCliente nit={nit} tamano={32} />
+                      <span className="codigo text-[11px]" style={{ color: `var(--cliente-texto-${m})` }}>
+                        {nit} · {Math.round(c.tono)}° · {(m === "c" ? c.contrasteClaro : c.contrasteOscuro).toFixed(1)}:1
+                      </span>
+                    </div>
+                    <div className="flex gap-1.5">
+                      {["tono", "profundo", "velo", "texto"].map((k) => (
+                        <span
+                          key={k}
+                          title={`--cliente-${k}`}
+                          className="h-6 flex-1 rounded-chip border border-linea"
+                          style={{ background: `var(--cliente-${k}-${m})` }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
         </div>
       </Bloque>
 

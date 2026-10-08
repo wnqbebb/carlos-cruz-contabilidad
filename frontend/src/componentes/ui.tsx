@@ -32,13 +32,13 @@ type Tamano = "sm" | "md" | "lg";
    «solido» es el BotonPrimario de tinta del spec. */
 const ESTILO_VARIANTE: Record<Variante, string> = {
   solido: "bg-tinta text-sobre-tinta hover:bg-tinta-2",
-  lima: "bg-azul text-white hover:bg-azul-tinta",
+  lima: "bg-azul text-sobre-color hover:bg-azul-tinta",
   contorno: "border border-linea bg-transparent text-tinta hover:border-tinta/30 hover:bg-hoja",
   fantasma: "text-grafito hover:bg-hoja-2 hover:text-tinta",
-  peligro: "bg-rojo text-white hover:bg-rojo-cartel",
-  primario: "bg-azul text-white hover:bg-azul-tinta",
+  peligro: "bg-rojo text-sobre-color hover:bg-rojo-cartel",
+  primario: "bg-azul text-sobre-color hover:bg-azul-tinta",
   secundario: "border border-linea bg-transparent text-tinta hover:border-tinta/30 hover:bg-hoja",
-  exito: "bg-azul text-white hover:bg-azul-tinta",
+  exito: "bg-azul text-sobre-color hover:bg-azul-tinta",
 };
 
 const ESTILO_TAMANO: Record<Tamano, string> = {
@@ -223,8 +223,10 @@ export function Dinero({ valor, className }: { valor: string | number | null | u
 }
 
 /* ── formulario: campos Hundidos (spec 4.4) ────────────────────────────── */
+// Campos (8.1): fondo --campo y borde de 1 px --borde-campo. Se abandona el
+// «hundido» gris sobre gris, que no se distinguía de la tarjeta.
 const BASE_CAMPO =
-  "h-11 rounded-control border-0 bg-hoja-2 px-4 text-[15px] text-tinta shadow-hundido " +
+  "h-11 rounded-control border border-borde-campo bg-campo px-4 text-[15px] text-tinta " +
   "placeholder:text-gris transition-shadow focus:outline-none focus-visible:shadow-[var(--foco)]";
 
 export const estiloCampo = "w-full " + BASE_CAMPO;
@@ -248,7 +250,7 @@ export function Campo({
 }) {
   return (
     <label className={clases("block", className)}>
-      <span className="t-meta mb-2 block text-gris">
+      <span className="t-meta mb-2 block text-grafito">
         {etiqueta}
         {obligatorio && (
           <span className="ml-1 text-rojo" aria-label="obligatorio">
@@ -327,8 +329,8 @@ export function Pestanas<T extends string>({
             tabIndex={activo ? 0 : -1}
             onClick={() => elegir(o.id)}
             className={clases(
-              "relative flex shrink-0 items-center gap-2 pt-1 pb-3 text-[15px] font-medium transition-colors duration-200",
-              activo ? "text-tinta" : "text-grafito hover:text-tinta",
+              "pestana flex shrink-0 items-center gap-2 pt-1 pb-3 text-[15px] transition-colors duration-200",
+              !activo && "hover:text-tinta",
             )}
           >
             <span>
@@ -338,12 +340,17 @@ export function Pestanas<T extends string>({
               </span>
             </span>
             {o.cuenta !== undefined && o.cuenta > 0 && (
-              <span className="cifras rounded-full border border-linea px-1.5 text-[11px] leading-[18px] text-grafito">
+              <span
+                className={clases(
+                  "cifras rounded-full px-1.5 text-[11px] leading-[18px]",
+                  activo ? "bg-acento text-sobre-acento" : "bg-hoja-2 text-grafito",
+                )}
+              >
                 {o.cuenta}
               </span>
             )}
             {activo && (
-              <span data-flip-id={idFlip} aria-hidden className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-tinta" />
+              <span data-flip-id={idFlip} aria-hidden className="absolute inset-x-0 -bottom-px z-10 h-0.5 rounded-full bg-acento" />
             )}
           </button>
         );

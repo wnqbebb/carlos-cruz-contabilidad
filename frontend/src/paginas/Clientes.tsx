@@ -1,4 +1,5 @@
 import { ArrowDownWideNarrow, ArrowLeft, ArrowRight, ArrowUpNarrowWide, Search, Upload } from "lucide-react";
+import { Cabecera } from "../componentes/Marco";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { clientes as api, descargas } from "../api";
@@ -137,7 +138,8 @@ export function Clientes() {
   };
   return (
     <div className="space-y-10">
-      {/* ── título y acciones ───────────────────────────────────────── */}
+      {/* ── título y acciones, en la franja de cabecera (8.2) ───────── */}
+      <Cabecera>
       <div className="flex flex-wrap items-end justify-between gap-6">
         <TituloPagina
           subtitulo={
@@ -167,6 +169,7 @@ export function Clientes() {
           <BotonSubirArchivo />
         </div>
       </div>
+      </Cabecera>
 
       {/* ── controles ───────────────────────────────────────────────── */}
       <div className="space-y-4">
@@ -184,7 +187,7 @@ export function Clientes() {
         </div>
 
         <div className="flex flex-col gap-3 escritorio:flex-row escritorio:items-center">
-          <label className="material-hundido flex h-11 min-w-0 shrink-0 items-center gap-3 rounded-full px-4 escritorio:flex-1">
+          <label className="flex h-11 min-w-0 shrink-0 items-center gap-3 rounded-full border border-borde-campo bg-campo px-4 escritorio:flex-1">
             <Search size={18} strokeWidth={1.5} aria-hidden className="shrink-0 text-gris" />
             <input
               value={q}
@@ -308,6 +311,7 @@ function RejillaExpedientes({
             etiqueta={`${c.sigla || "Cliente"} — ${String(desde + i + 1).padStart(3, "0")}`}
             a={`/clientes/${c.id}`}
             className="h-full"
+            nitCliente={c.nit}
             etiquetaAccesible={`Abrir el expediente de ${c.razon_social}`}
           >
             <div className="flex items-start gap-3">
