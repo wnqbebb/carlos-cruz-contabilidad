@@ -10,6 +10,7 @@ from decimal import Decimal
 from .contabilidad import ajustes as aj
 from .contabilidad import cierre as ci
 from .contabilidad import estados as ef
+from .contabilidad import libros as libros_oficiales
 from .contabilidad import validaciones as val
 from .contabilidad.mayor import SIN_MAPEAR, CuentaMayor, construir_mayor, reporte_balance_prueba, reporte_libro_mayor
 from .contabilidad.puc import Mapeador, puc
@@ -336,9 +337,24 @@ def calcular(paquete: Paquete, empresa: Empresa, config: Config, decisiones: dic
         "flujo_efectivo": rep_fe,
         "indicadores": rep_ind,
         "libro_mayor": reporte_libro_mayor(mayor_aj, periodo),
+        # Libros oficiales (H05, H06): el diario con los ajustes aceptados, que es
+        # lo que queda registrado, y el mayor y balances del balance ajustado.
+        "libro_diario": libros_oficiales.reporte_libro_diario(movs + lineas_ajuste, periodo),
+        "mayor_balances": libros_oficiales.reporte_mayor_balances(mayor_aj, periodo),
     }
     if productos:
         reportes.update(_reportes_inventario(productos, venc, fisico, corte))
+    else:
+        # Todos los entregables aparecen siempre; si no hay con qué hacerlos, se
+        # dice por qué en vez de mostrar ceros inventados.
+        k = Constructor()
+        k.agregar("nota", {"descripcion": "El archivo no trae movimientos de inventario (compras y ventas con cantidades) "
+                                          "ni un conteo físico: no hay kardex que valorizar. Si el negocio maneja "
+                                          "mercancía, súbalos y el saldo saldrá aquí."})
+        reportes["inventario_saldos"] = reporte(
+            "inventario_saldos", "SALDOS DE INVENTARIO", corte,
+            [col("codigo", "Código", ancho=12), col("descripcion", "Producto", ancho=60),
+             col("saldo_total", "Saldo valorizado", "dinero")], k.filas)
     if liqs:
         r1, r2 = reporte_nomina(liqs, periodo)
         reportes["nomina_devengados"], reportes["nomina_apropiaciones"] = r1, r2

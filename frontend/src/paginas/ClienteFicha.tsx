@@ -1,7 +1,7 @@
-import { ArrowLeft, History, PenLine } from "lucide-react";
+import { ArrowLeft, Download, History, PenLine } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { analisis, clientes as api, trabajo as apiTrabajo } from "../api";
+import { analisis, clientes as api, descargas, trabajo as apiTrabajo } from "../api";
 import { useMetaPagina } from "../componentes/Marco";
 import { BotonSubirArchivo } from "../componentes/Subir";
 import { clases, esCero, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
@@ -11,14 +11,15 @@ import type {
   Cierre,
   Cliente,
   InformeSugerencias,
-  PaginaMovimientos,
   Periodo,
+  Resultado,
   Severidad,
   Sugerencia,
   VersionPeriodo,
 } from "../tipos";
 import { GraficaHistorico, TablaHistorico } from "../componentes/Grafica";
 import { PanelMetricas } from "../componentes/PanelMetricas";
+import { LibroDiario as LibroDiarioOficial } from "../componentes/LibroDiario";
 import { ResultadoGuardado } from "../componentes/ResultadoGuardado";
 import {
   Aviso,
@@ -27,6 +28,7 @@ import {
   Cifra,
   Dialogo,
   Dinero,
+  Enlace,
   Insignia,
   Pestanas,
   Rotulo,
@@ -243,7 +245,7 @@ export function ClienteFicha() {
         {vista === "socios" && <Socios cliente={cliente} />}
 
         {/* ── 07 libro diario ────────────────────────────────────────── */}
-        {vista === "movimientos" && <LibroDiario clienteId={id} />}
+        {vista === "movimientos" && <LibroDiarioFicha periodos={periodos} />}
 
         {/* ── 08 actividad ───────────────────────────────────────────── */}
         {vista === "actividad" && <Actividad clienteId={id} />}
@@ -570,111 +572,98 @@ function ListaPeriodos({
 }
 
 /* ── libro diario ────────────────────────────────────────────────────── */
-function LibroDiario({ clienteId }: { clienteId: string }) {
+function LibroDiarioFicha({ periodos }: { periodos: Periodo[] }) {
+  const calculados = periodos.filter((p) => p.estado !== "borrador");
+  const [periodoId, setPeriodoId] = useState(calculados[0]?.id ?? "");
   const [cuenta, setCuenta] = useState("");
-  const [pagina, setPagina] = useState(1);
-  const [datos, setDatos] = useState<PaginaMovimientos | null>(null);
-  const [cargando, setCargando] = useState(true);
+  const [datos, setDatos] = useState<Resultado | null>(null);
+  const [cargando, setCargando] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
+    if (!calculados.length) return;
+    if (!calculados.some((p) => p.id === periodoId)) setPeriodoId(calculados[0].id);
+  }, [calculados, periodoId]);
+
+  useEffect(() => {
+    if (!periodoId) return;
     let vivo = true;
     setCargando(true);
-    const t = setTimeout(() => {
-      analisis
-        .movimientos(clienteId, { cuenta, pagina, por_pagina: 100 })
-        .then((d) => vivo && setDatos(d))
-        .finally(() => vivo && setCargando(false));
-    }, cuenta ? 250 : 0);
+    setError("");
+    analisis
+      .resultadoDePeriodo(periodoId)
+      .then((r) => vivo && setDatos(r.resultado))
+      .catch((e) => vivo && setError((e as Error).message))
+      .finally(() => vivo && setCargando(false));
     return () => {
       vivo = false;
-      clearTimeout(t);
     };
-  }, [clienteId, cuenta, pagina]);
+  }, [periodoId]);
 
-  useEffect(() => setPagina(1), [cuenta]);
+  if (!calculados.length) {
+    return (
+      <Vacio titulo="Sin libro diario todavía">
+        Este cliente aún no tiene periodos calculados. Suba sus archivos y el libro diario se arma solo.
+      </Vacio>
+    );
+  }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <input
-          value={cuenta}
-          onChange={(e) => setCuenta(e.target.value.replace(/\D/g, ""))}
-          placeholder="Filtrar por cuenta PUC: 1, 11, 1105…"
-          inputMode="numeric"
-          aria-label="Filtrar por cuenta"
-          className={clases(estiloCampo, "cifras max-w-xs")}
-        />
-        {datos && (
-          <Rotulo>
-            {datos.total.toLocaleString("es-CO")} movimiento(s) · débitos {pesos(datos.suma_debito)} ·
-            créditos {pesos(datos.suma_credito)}
-            {datos.suma_debito === datos.suma_credito ? " · cuadra" : " · NO CUADRA"}
-          </Rotulo>
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <Rotulo className="mb-2 block">Periodo</Rotulo>
+          <div className="barra-fina flex gap-2 overflow-x-auto pb-1">
+            {calculados.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setPeriodoId(p.id)}
+                aria-pressed={p.id === periodoId}
+                className={clases(
+                  "shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-200",
+                  p.id === periodoId
+                    ? "bg-tinta text-sobre-tinta"
+                    : "border border-linea bg-hoja text-grafito hover:bg-hoja-2 hover:text-tinta",
+                )}
+              >
+                {periodoCorto(p.desde, p.hasta)}
+                {p.estado === "cerrado" && <span className="ml-1.5 text-[11px] opacity-70">· cerrado</span>}
+              </button>
+            ))}
+          </div>
+        </div>
+        {periodoId && (
+          <div className="flex flex-wrap gap-2">
+            <Enlace href={descargas.libro(periodoId, "libro-diario", "excel")} variante="contorno" tamano="sm">
+              <Download size={16} strokeWidth={1.5} aria-hidden /> Libro diario · Excel
+            </Enlace>
+            <Enlace href={descargas.libro(periodoId, "libro-diario", "pdf")} variante="contorno" tamano="sm">
+              <Download size={16} strokeWidth={1.5} aria-hidden /> PDF
+            </Enlace>
+            <Enlace href={descargas.libro(periodoId, "mayor-balances", "excel")} variante="contorno" tamano="sm">
+              <Download size={16} strokeWidth={1.5} aria-hidden /> Mayor y balances · Excel
+            </Enlace>
+            <Enlace href={descargas.libro(periodoId, "mayor-balances", "pdf")} variante="contorno" tamano="sm">
+              <Download size={16} strokeWidth={1.5} aria-hidden /> PDF
+            </Enlace>
+          </div>
         )}
       </div>
 
-      {cargando && !datos && <Cargando texto="Cargando movimientos" />}
+      <input
+        value={cuenta}
+        onChange={(e) => setCuenta(e.target.value.replace(/\D/g, ""))}
+        placeholder="Filtrar por cuenta PUC: 1, 11, 1105…"
+        inputMode="numeric"
+        aria-label="Filtrar por cuenta"
+        className={clases(estiloCampo, "cifras max-w-xs")}
+      />
 
-      {datos && datos.movimientos.length === 0 && (
-        <Vacio titulo="Sin movimientos">
-          {cuenta
-            ? `Ninguna cuenta empieza por ${cuenta}.`
-            : "Este cliente aún no tiene movimientos guardados. Calcule un periodo para generarlos."}
-        </Vacio>
-      )}
-
-      {datos && datos.movimientos.length > 0 && (
-        <>
-          <Tarjeta sinRelleno>
-            <Tabla>
-              <thead>
-                <tr>
-                  <Th>Fecha</Th>
-                  <Th>Cuenta</Th>
-                  <Th>Descripción</Th>
-                  <Th>Tercero</Th>
-                  <Th derecha>Débito</Th>
-                  <Th derecha>Crédito</Th>
-                </tr>
-              </thead>
-              <tbody>
-                {datos.movimientos.map((m) => (
-                  <tr key={m.id} className="transition hover:bg-hoja">
-                    <Td className="cifras whitespace-nowrap text-grafito">{fecha(m.fecha) || "—"}</Td>
-                    <Td>
-                      <span className="cifras font-medium">{m.cuenta}</span>
-                      <span className="ml-2 text-xs text-grafito">{m.nombre_cuenta}</span>
-                    </Td>
-                    <Td className="text-grafito">{m.descripcion || m.comprobante || "—"}</Td>
-                    <Td className="text-grafito">{m.tercero_nombre || "—"}</Td>
-                    {/* `esCero` y no `!== "0"`: la base devuelve los ceros como "0.00". */}
-                    <Td derecha>{esCero(m.debito) ? <span className="text-gris">—</span> : <Dinero valor={m.debito} />}</Td>
-                    <Td derecha>{esCero(m.credito) ? <span className="text-gris">—</span> : <Dinero valor={m.credito} />}</Td>
-                  </tr>
-                ))}
-              </tbody>
-            </Tabla>
-          </Tarjeta>
-
-          {datos.paginas > 1 && (
-            <div className="flex items-center justify-between gap-3">
-              <Boton variante="contorno" tamano="sm" disabled={pagina <= 1} onClick={() => setPagina(pagina - 1)}>
-                ← Anterior
-              </Boton>
-              <Rotulo>
-                {pagina} / {datos.paginas}
-              </Rotulo>
-              <Boton
-                variante="contorno"
-                tamano="sm"
-                disabled={pagina >= datos.paginas}
-                onClick={() => setPagina(pagina + 1)}
-              >
-                Siguiente →
-              </Boton>
-            </div>
-          )}
-        </>
+      {error && <Aviso tono="rojo" titulo="No se pudo abrir el libro">{error}</Aviso>}
+      {cargando && !datos && <Cargando texto="Abriendo el libro diario" />}
+      {datos?.reportes?.libro_diario && (
+        <LibroDiarioOficial rep={datos.reportes.libro_diario} origenes={datos.origenes} filtroCuenta={cuenta} />
       )}
     </div>
   );

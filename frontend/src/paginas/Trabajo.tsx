@@ -56,6 +56,8 @@ const PASO_DE_PESTAÑA: Record<Pestaña, number> = {
   nomina: 6,
   auditoria: 6,
   mayor: 6,
+  diario: 6,
+  mayorbal: 6,
 };
 const PESTAÑA_DE_PASO: Record<number, Pestaña> = { 3: "prueba", 4: "ajustes", 5: "definitivo", 6: "estados" };
 

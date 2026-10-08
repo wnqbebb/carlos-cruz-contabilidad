@@ -281,3 +281,27 @@ def test_api(tmp_path):
     r = c.post("/api/importar/demo")
     assert r.status_code == 200
     assert c.get("/api/plantilla").status_code == 200
+
+
+# ─ cifras de control de FANANT enero 2025 (docs/v22/fase-2.md) ─────────────
+CIERRE_FANANT = {
+    "110505": ("37144505", "0"), "237005": ("0", "56940"), "237006": ("0", "7430.67"), "237010": ("0", "56940"),
+    "238030": ("0", "227760"), "240805": ("2280", "0"), "2505": ("0", "1509620"), "2510": ("0", "135237.55"),
+    "2515": ("0", "16235"), "2520": ("0", "135237.55"), "2525": ("0", "59359.95"), "3105": ("0", "37800000"),
+    "3610": ("2857975.72", "0"),
+}
+
+
+def test_cifras_de_control_fanant_enero_2025(detectar, empresa):
+    """El recálculo con los archivos reales sigue dando el cierre del 6 de octubre, centavo a centavo.
+
+    Se calcula en memoria: la base real no se toca. Con la causación de nómina aceptada (como en el
+    cierre original) y la reclasificación del IVA sin aplicar, los 13 saldos son idénticos.
+    """
+    dets = detectar("CONTABILIDAD.xls", "NOMINA__enero__2025.xlsx")
+    _, res = _calcular(dets, empresa, decisiones={"nomina_causacion": True, "recl_iva": False})
+    saldos = {s["codigo"]: (s["debito"], s["credito"]) for s in res["saldos_siguiente"]}
+    assert {k: (D(a), D(b)) for k, (a, b) in saldos.items()} == {k: (D(a), D(b)) for k, (a, b) in CIERRE_FANANT.items()}
+    r = res["resumen"]
+    assert (r["total_activo"], r["total_pasivo"], r["total_patrimonio"]) == (D("37144505"), D("2202480.72"), D("34942024.28"))
+    assert r["utilidad_neta"] == D("-2857975.72") and r["ingresos"] == D("22641")

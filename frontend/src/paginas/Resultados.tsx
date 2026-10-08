@@ -3,6 +3,7 @@ import { useMemo, useState } from "react";
 import { api, descargas } from "../api";
 import { ListaAlertas } from "../componentes/Alertas";
 import { CuentasT } from "../componentes/CuentasT";
+import { LibroDiario } from "../componentes/LibroDiario";
 import { Reporte, tituloLegible } from "../componentes/Reporte";
 import { AnilloBalance, BarrasDesglose, Medidor } from "../componentes/Grafica";
 import { Aviso, Boton, Enlace, Insignia, Pestanas, Rotulo, Tarjeta, Vacio } from "../componentes/ui";
@@ -12,7 +13,7 @@ import { BotonFantasma, Cifra as CifraExacta, InsigniaEstado, useAvisos } from "
 
 export type Pestaña =
   | "resumen" | "prueba" | "ajustes" | "trabajo" | "definitivo"
-  | "estados" | "inventario" | "nomina" | "auditoria" | "mayor";
+  | "estados" | "inventario" | "nomina" | "auditoria" | "mayor" | "diario" | "mayorbal";
 
 function Kpi({ titulo, valor }: { titulo: string; valor: Monto }) {
   return (
@@ -88,6 +89,8 @@ export function Resultados({
     { id: "inventario", texto: "Inventarios", cuenta: res.inventario.productos.length },
     { id: "nomina", texto: "Nómina", cuenta: res.nomina.auditoria.length },
     { id: "auditoria", texto: "Auditoría EF", cuenta: res.auditoria_ef.reduce((s, a) => s + a.hallazgos.length, 0) },
+    { id: "diario", texto: "Libro diario" },
+    { id: "mayorbal", texto: "Mayor y balances" },
     { id: "mayor", texto: "Libro mayor y cuentas T" },
   ];
 
@@ -231,6 +234,12 @@ export function Resultados({
             ))}
           {pestaña === "nomina" && <Nomina res={res} />}
           {pestaña === "auditoria" && <AuditoriaEF res={res} />}
+          {pestaña === "diario" && res.reportes.libro_diario && (
+            <LibroDiario rep={res.reportes.libro_diario} origenes={res.origenes} />
+          )}
+          {pestaña === "mayorbal" && res.reportes.mayor_balances && (
+            <Reporte rep={res.reportes.mayor_balances} contrarias={contrarias} />
+          )}
           {pestaña === "mayor" && (
             <div className="space-y-8">
               <div>

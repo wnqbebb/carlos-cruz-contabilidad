@@ -394,7 +394,8 @@ def guardar_movimientos(cliente_id: str, periodo_id: str, movs: Iterable[dict], 
 
 
 def movimientos(cliente_id: str, cuenta: str = "", desde: date | None = None,
-                hasta: date | None = None, pagina: int = 1, por_pagina: int = 200) -> dict:
+                hasta: date | None = None, pagina: int = 1, por_pagina: int = 200,
+                periodo_id: str = "") -> dict:
     """Libro diario consultable por cuenta y fecha, siempre paginado."""
     por_pagina = max(1, min(int(por_pagina or 200), 2000))
     pagina = max(1, int(pagina or 1))
@@ -405,12 +406,15 @@ def movimientos(cliente_id: str, cuenta: str = "", desde: date | None = None,
         filtros.append(TM.c.fecha >= desde)
     if hasta:
         filtros.append(TM.c.fecha <= hasta)
+    if periodo_id:
+        filtros.append(TM.c.periodo_id == periodo_id)
     donde = and_(*filtros)
     with lectura() as cn:
         total = int(cn.execute(select(func.count()).select_from(TM).where(donde)).scalar_one())
-        sumas = cn.execute(
-            select(func.sum(TM.c.debito), func.sum(TM.c.credito)).where(donde)
-        ).one()
+        # Las sumas se hacen en Python con Decimal: en SQLite el dinero es texto y
+        # SUM() lo convierte a float (la regla de exactitud lo prohíbe).
+        importes = cn.execute(select(TM.c.debito, TM.c.credito).where(donde)).all()
+        sumas = (sum((D(a) for a, _ in importes), Decimal("0")), sum((D(b) for _, b in importes), Decimal("0")))
         filas = cn.execute(
             select(TM).where(donde)
             .order_by(TM.c.fecha.asc().nullslast(), TM.c.id.asc())
@@ -437,6 +441,13 @@ def movimientos(cliente_id: str, cuenta: str = "", desde: date | None = None,
         "suma_credito": _txt(sumas[1]) or "0",
         "movimientos": lineas,
     }
+
+
+def movimientos_de_periodo(periodo_id: str) -> list[dict]:
+    """Todo el libro diario guardado de un periodo, en el orden en que se registró."""
+    with lectura() as cn:
+        filas = cn.execute(select(TM).where(TM.c.periodo_id == periodo_id).order_by(TM.c.id.asc())).all()
+    return [dict(f._mapping) for f in filas]
 
 
 # ── cierres ─────────────────────────────────────────────────────────────────

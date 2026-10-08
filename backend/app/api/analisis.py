@@ -4,6 +4,8 @@ from __future__ import annotations
 from fastapi import APIRouter, HTTPException, Query
 from fastapi.responses import Response
 
+from ..contabilidad import libros
+from ..exactitud import a_json
 from ..exportar import excel, pdf
 from ..inteligencia import sugerencias as sug
 from ..modelos import Empresa
@@ -45,10 +47,12 @@ def movimientos_del_cliente(
     hasta: str = Query(""),
     pagina: int = Query(1, ge=1),
     por_pagina: int = Query(200, ge=1, le=2000),
+    periodo_id: str = Query("", description="Solo el libro diario de ese periodo"),
 ):
     _cliente(cliente_id)
     return repo.movimientos(cliente_id, cuenta=cuenta, desde=parse_fecha(desde),
-                            hasta=parse_fecha(hasta), pagina=pagina, por_pagina=por_pagina)
+                            hasta=parse_fecha(hasta), pagina=pagina, por_pagina=por_pagina,
+                            periodo_id=periodo_id)
 
 
 @router.get("/clientes/{cliente_id}/sugerencias")
@@ -72,7 +76,27 @@ def resultado_del_periodo(periodo_id: str):
     datos = repo.resultado(periodo_id)
     if not datos:
         raise HTTPException(404, "Ese periodo no tiene un resultado guardado. Vuelva a calcularlo.")
-    return datos
+    return {**datos, "resultado": completar_libros(datos["resultado"], periodo_id)}
+
+
+LIBROS = {"libro-diario": ("libro_diario", "Libro_diario"), "mayor-balances": ("mayor_balances", "Mayor_y_balances")}
+
+
+@router.get("/periodos/{periodo_id}/{libro}/{formato}")
+def libro_del_periodo(periodo_id: str, libro: str, formato: str):
+    """Un libro oficial suelto, en Excel o PDF: libro-diario o mayor-balances."""
+    if libro not in LIBROS or formato not in ("excel", "pdf"):
+        raise HTTPException(404, "Libro o formato desconocido.")
+    clave, base = LIBROS[libro]
+    resultado, empresa, _ = _resultado_guardado(periodo_id)
+    rep = resultado["reportes"].get(clave)
+    if not rep:
+        raise HTTPException(404, "Ese periodo no tiene con qué armar el libro.")
+    if formato == "pdf":
+        return Response(pdf.generar(resultado, empresa, [clave]), media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="{_nombre_archivo(empresa, base, "pdf")}"'})
+    return Response(excel.reporte_suelto(rep, empresa), media_type=XLSX,
+                    headers={"Content-Disposition": f'attachment; filename="{_nombre_archivo(empresa, base, "xlsx")}"'})
 
 
 @router.get("/periodos/{periodo_id}/versiones")
@@ -184,9 +208,26 @@ def _resultado_guardado(periodo_id: str) -> tuple[dict, Empresa, dict]:
             404,
             "Ese periodo no tiene un resultado guardado. Vuelva a calcularlo desde «Trabajar».",
         )
-    resultado = datos["resultado"]
+    resultado = completar_libros(datos["resultado"], periodo_id)
     empresa = Empresa.desde_dict(resultado.get("empresa") or {})
     return resultado, empresa, datos
+
+
+def completar_libros(resultado: dict, periodo_id: str) -> dict:
+    """Los periodos guardados antes de la v2.2 no traen los libros oficiales.
+
+    Se arman con lo que sí está guardado: el diario con los movimientos de la
+    base y el mayor y balances con el balance de prueba ajustado. Nada se
+    inventa: si no hay movimientos, el libro lo dice.
+    """
+    reportes = dict(resultado.get("reportes") or {})
+    periodo = (resultado.get("resumen") or {}).get("periodo", "")
+    if "libro_diario" not in reportes:
+        movs = libros.movimientos_desde_guardados(repo.movimientos_de_periodo(periodo_id))
+        reportes["libro_diario"] = a_json(libros.reporte_libro_diario(movs, periodo))
+    if "mayor_balances" not in reportes and reportes.get("balance_ajustado"):
+        reportes["mayor_balances"] = a_json(libros.mayor_balances_desde_balance(reportes["balance_ajustado"], periodo))
+    return {**resultado, "reportes": reportes}
 
 
 def _nombre_archivo(empresa: Empresa, base: str, ext: str) -> str:

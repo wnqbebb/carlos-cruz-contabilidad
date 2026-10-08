@@ -33,25 +33,29 @@ from ..contabilidad.mayor import CuentaMayor
 from ..modelos import Alerta, Empresa
 from ..utils.numeros import CERO
 
-# ── paleta ejecutiva moderna ───────────────────────────────────────────────
-TINTA = "0F172A"        # Slate 900
-TINTA_MEDIA = "475569"  # Slate 600
-HUESO = "F8FAFC"        # Slate 50
-LIMA = "4338CA"         # Indigo corporate header
-LIMA_PALIDA = "EEF2FF"  # Ice-indigo
-VERDE = "059669"        # Emerald 600
-VERDE_PALIDO = "ECFDF5"
-ROJO = "DC2626"         # Rose 600
-ROJO_PALIDO = "FEF2F2"
-AMBAR_PALIDO = "FFFBEB"
-AZUL_PALIDO = "EFF6FF"
+# ── paleta: los mismos tokens de la interfaz (frontend/src/styles/tokens.css) ──
+# H14: el Excel usaba índigo y verde del diseño viejo. En esta aplicación no
+# existe el verde: lo positivo va en tinta o en azul, lo negativo en rojo.
+TINTA = "141414"           # --tinta
+TINTA_MEDIA = "3A3A38"     # --grafito
+HUESO = "F7F5F0"           # --hoja-2: encabezados de columna y secciones
+ACENTO = "E7ECFB"          # --azul-suave: totales y bandas (con texto en tinta)
+ACENTO_PALIDO = "FBFAF7"   # --hoja: subtotales
+AZUL_MARCA = "2347D6"      # --azul: «cuadra», positivo
+POSITIVO = AZUL_MARCA
+POSITIVO_PALIDO = "E7ECFB"
+ROJO = "C21F17"            # --rojo
+ROJO_PALIDO = "FBE9E7"     # --rojo-suave
+AMBAR = "A84F06"           # --ambar
+AMBAR_PALIDO = "FBF0E3"    # --ambar-suave
+AZUL_PALIDO = "E7ECFB"
 BLANCO = "FFFFFF"
 
 FMT_DINERO = '#,##0.00;[Red]-#,##0.00;"—"'
 FMT_NUM = '#,##0.##;[Red]-#,##0.##;"—"'
 FMT_PCT = '0.0%'
 
-_FINA = Side(style="thin", color="E5E5DD")
+_FINA = Side(style="thin", color="DEDBD3")
 _MEDIA = Side(style="medium", color=TINTA)
 BORDE = Border(left=_FINA, right=_FINA, top=_FINA, bottom=_FINA)
 BORDE_SUP = Border(top=_MEDIA)
@@ -128,7 +132,7 @@ def _titulo_hoja(ws: Worksheet, empresa: Empresa, titulo: str, subtitulo: str, n
 
     # Banda lima debajo del título: separa la cabecera del contenido.
     for j in range(1, ncols + 1):
-        ws.cell(5, j).fill = PatternFill("solid", fgColor=LIMA)
+        ws.cell(5, j).fill = PatternFill("solid", fgColor=ACENTO)
     ws.row_dimensions[5].height = 4
 
     fila = 6
@@ -229,10 +233,10 @@ def bloque_reporte(ws: Worksheet, rep: dict, fila: int, *, con_banda: bool = Tru
                 celda.fill = PatternFill("solid", fgColor=HUESO)
             elif tipo == "subtotal":
                 celda.font = Font(bold=True, color=TINTA)
-                celda.fill = PatternFill("solid", fgColor=LIMA_PALIDA)
+                celda.fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
             elif tipo == "total":
                 celda.font = Font(bold=True, size=11, color=TINTA)
-                celda.fill = PatternFill("solid", fgColor=LIMA)
+                celda.fill = PatternFill("solid", fgColor=ACENTO)
                 celda.border = Border(left=_FINA, right=_FINA, top=_MEDIA, bottom=_MEDIA)
             elif tipo == "nota":
                 celda.font = Font(italic=True, size=9, color=ROJO)
@@ -248,8 +252,8 @@ def bloque_reporte(ws: Worksheet, rep: dict, fila: int, *, con_banda: bool = Tru
     if verif and "cuadra" in verif:
         ok = _cuadra(verif["cuadra"])
         c = ws.cell(r, 1, "VERIFICACIÓN: " + ("CUADRA" if ok else "NO CUADRA — REVISAR"))
-        c.font = Font(bold=True, color=VERDE if ok else ROJO)
-        c.fill = PatternFill("solid", fgColor=VERDE_PALIDO if ok else ROJO_PALIDO)
+        c.font = Font(bold=True, color=POSITIVO if ok else ROJO)
+        c.fill = PatternFill("solid", fgColor=POSITIVO_PALIDO if ok else ROJO_PALIDO)
         ws.merge_cells(start_row=r, start_column=1, end_row=r, end_column=max(n, 3))
         r += 1
         # Detalle numérico de la verificación, cuando lo trae.
@@ -281,6 +285,17 @@ def escribir_reporte(ws: Worksheet, rep: dict, empresa: Empresa) -> None:
     if rep.get("firmas"):
         firmas(ws, fila, empresa, n)
     _imprimir(ws, horizontal=bool(rep.get("horizontal")))
+
+
+def reporte_suelto(rep: dict, empresa: Empresa) -> bytes:
+    """Un libro de Excel con un solo informe (el libro diario, el mayor y balances…)."""
+    wb = Workbook()
+    ws = wb.active
+    ws.title = rep["titulo"][:31].title()
+    escribir_reporte(ws, rep, empresa)
+    buf = io.BytesIO()
+    wb.save(buf)
+    return buf.getvalue()
 
 
 def _imprimir(ws: Worksheet, horizontal: bool = False, repetir_filas: str = "1:7") -> None:
@@ -320,7 +335,7 @@ def _portada(ws: Worksheet, res: dict, empresa: Empresa, hojas: list[tuple[str, 
     ws.cell(2, 2, "CARLOS CRUZ").font = Font(bold=True, size=20, color=TINTA)
     ws.cell(3, 2, "Contabilidad que cuadra").font = Font(size=10, italic=True, color=TINTA_MEDIA)
     for j in (2, 3, 4, 5):
-        ws.cell(4, j).fill = PatternFill("solid", fgColor=LIMA)
+        ws.cell(4, j).fill = PatternFill("solid", fgColor=ACENTO)
     ws.row_dimensions[4].height = 5
 
     ws.cell(6, 2, empresa.razon_social).font = Font(bold=True, size=14, color=TINTA)
@@ -367,8 +382,8 @@ def _portada(ws: Worksheet, res: dict, empresa: Empresa, hojas: list[tuple[str, 
         es_utilidad = "Utilidad" in etiqueta
         if es_utilidad:
             neg = isinstance(_d(valor), Decimal) and _d(valor) < CERO
-            c.font = Font(size=11, bold=True, color=ROJO if neg else VERDE)
-            c.fill = PatternFill("solid", fgColor=ROJO_PALIDO if neg else VERDE_PALIDO)
+            c.font = Font(size=11, bold=True, color=ROJO if neg else POSITIVO)
+            c.fill = PatternFill("solid", fgColor=ROJO_PALIDO if neg else POSITIVO_PALIDO)
         ws.cell(fila, 2).border = Border(bottom=_FINA)
         ws.cell(fila, 3).border = Border(bottom=_FINA)
         fila += 1
@@ -387,8 +402,8 @@ def _portada(ws: Worksheet, res: dict, empresa: Empresa, hojas: list[tuple[str, 
         ok = _cuadra(r[clave])
         ws.cell(fila, 2, etiqueta).font = Font(size=10)
         c = ws.cell(fila, 3, "CUADRA" if ok else "NO CUADRA")
-        c.font = Font(bold=True, size=10, color=VERDE if ok else ROJO)
-        c.fill = PatternFill("solid", fgColor=VERDE_PALIDO if ok else ROJO_PALIDO)
+        c.font = Font(bold=True, size=10, color=POSITIVO if ok else ROJO)
+        c.fill = PatternFill("solid", fgColor=POSITIVO_PALIDO if ok else ROJO_PALIDO)
         c.alignment = Alignment(horizontal="center")
         fila += 1
 
@@ -411,7 +426,7 @@ def _portada(ws: Worksheet, res: dict, empresa: Empresa, hojas: list[tuple[str, 
     # ── índice navegable (columna E) ───────────────────────────────────────
     f = 6
     ws.cell(f, 5, "CONTENIDO DEL LIBRO").font = Font(bold=True, size=11, color=TINTA)
-    ws.cell(f, 5).fill = PatternFill("solid", fgColor=LIMA)
+    ws.cell(f, 5).fill = PatternFill("solid", fgColor=ACENTO)
     f += 2
     for nombre, descripcion in hojas:
         c = ws.cell(f, 5, nombre)
@@ -509,7 +524,7 @@ def hoja_saldos(ws: Worksheet, saldos: list[dict]) -> None:
     for j, t in enumerate(("Código PUC", "Nombre cuenta", "Saldo débito", "Saldo crédito"), 1):
         c = ws.cell(4, j, t)
         c.font = Font(bold=True, size=9, color=TINTA)
-        c.fill = PatternFill("solid", fgColor=LIMA)
+        c.fill = PatternFill("solid", fgColor=ACENTO)
         c.border = Border(bottom=_MEDIA)
     for i, s in enumerate(saldos, 5):
         ws.cell(i, 1, s["codigo"]).border = BORDE
@@ -527,7 +542,7 @@ def hoja_saldos(ws: Worksheet, saldos: list[dict]) -> None:
             c.value = f"=SUM({col}5:{col}{final})"
             c.number_format = FMT_DINERO
             c.font = Font(bold=True)
-            c.fill = PatternFill("solid", fgColor=LIMA)
+            c.fill = PatternFill("solid", fgColor=ACENTO)
         ws.cell(final + 2, 2, "Diferencia (debe ser cero)").font = Font(size=9, color=TINTA_MEDIA)
         c = ws[f"C{final + 2}"]
         c.value = f"=C{final + 1}-D{final + 1}"
@@ -559,7 +574,7 @@ def _hoja_ajustes(ws: Worksheet, ajustes: list[dict], empresa: Empresa, periodo:
         aceptado = bool(a.get("aceptado"))
         c = ws.cell(fila, 1, f"{a['titulo']}  —  {'ACEPTADO' if aceptado else 'NO APLICADO'}  ({a['tipo']})")
         c.font = Font(bold=True, size=10, color=TINTA if aceptado else TINTA_MEDIA)
-        c.fill = PatternFill("solid", fgColor=LIMA_PALIDA if aceptado else HUESO)
+        c.fill = PatternFill("solid", fgColor=ACENTO_PALIDO if aceptado else HUESO)
         ws.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=6)
         fila += 1
 
@@ -595,10 +610,10 @@ def _hoja_ajustes(ws: Worksheet, ajustes: list[dict], empresa: Empresa, periodo:
             c.value = f"=SUM({col}{ini}:{col}{fila - 1})"
             c.number_format = FMT_DINERO
             c.font = Font(bold=True)
-            c.fill = PatternFill("solid", fgColor=LIMA)
+            c.fill = PatternFill("solid", fgColor=ACENTO)
         c = ws.cell(fila, 6)
         c.value = f"=IF(ROUND(D{fila}-E{fila},2)=0,\"CUADRA\",\"NO CUADRA\")"
-        c.font = Font(bold=True, size=9, color=VERDE)
+        c.font = Font(bold=True, size=9, color=POSITIVO)
         fila += 3
     _imprimir(ws)
 
@@ -609,7 +624,7 @@ def _hoja_notas(ws: Worksheet, notas: list[dict], empresa: Empresa, periodo: str
     for n in notas:
         c = ws.cell(fila, 1, n["titulo"])
         c.font = Font(bold=True, size=11, color=TINTA)
-        c.fill = PatternFill("solid", fgColor=LIMA_PALIDA)
+        c.fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
         fila += 1
         for p in n.get("parrafos", []):
             c = ws.cell(fila, 1, p)
@@ -644,7 +659,7 @@ def _hoja_kardex(ws: Worksheet, productos: list[dict], empresa: Empresa,
         c = ws.cell(fila, 1, f"{p['codigo']} — {p['descripcion']}"
                              + (f" ({p['laboratorio']})" if p.get("laboratorio") else ""))
         c.font = Font(bold=True, size=10, color=TINTA)
-        c.fill = PatternFill("solid", fgColor=LIMA_PALIDA)
+        c.fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
         ws.merge_cells(start_row=fila, start_column=1, end_row=fila, end_column=13)
         fila += 1
         for j, t in enumerate(titulos, 1):
@@ -670,7 +685,7 @@ def _hoja_kardex(ws: Worksheet, productos: list[dict], empresa: Empresa,
         c = ws.cell(fila, 13, _num(p.get("saldo_total")))
         c.number_format = FMT_DINERO
         c.font = Font(bold=True, size=9)
-        c.fill = PatternFill("solid", fgColor=LIMA)
+        c.fill = PatternFill("solid", fgColor=ACENTO)
         fila += 2
     _imprimir(ws, horizontal=True)
     return fila
@@ -759,7 +774,7 @@ def hoja_formato_contador(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa:
                 ws[f"{col_val}{fila}"] = f"=SUM({col_val}{inicio}:{col_val}{fila - 1})"
                 ws[f"{col_lab}{fila}"].font = negrita
                 ws[f"{col_val}{fila}"].font = negrita
-                ws[f"{col_val}{fila}"].fill = PatternFill("solid", fgColor=LIMA_PALIDA)
+                ws[f"{col_val}{fila}"].fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
                 totales.append(f"{col_val}{fila}")
             elif regla == "UTILIDAD":
                 ws[f"{col_val}{fila}"] = float(res["utilidad_neta"])
@@ -778,7 +793,7 @@ def hoja_formato_contador(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa:
     ws[f"F{f_der}"] = "=" + "+".join(t_der)
     for celda in (f"B{f_izq}", f"C{f_izq}", f"E{f_der}", f"F{f_der}"):
         ws[celda].font = Font(bold=True, size=11)
-        ws[celda].fill = PatternFill("solid", fgColor=LIMA)
+        ws[celda].fill = PatternFill("solid", fgColor=ACENTO)
     ws[f"C{f_izq}"].number_format = ws[f"F{f_der}"].number_format = FMT_DINERO
 
     fila_total = max(f_izq, f_der)
@@ -808,7 +823,7 @@ def hoja_formato_contador(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa:
     ws[f"K{f}"] = (f"=SUM(J{lineas_ing[0]}:J{lineas_ing[-1]})-J{f_dev}" if lineas_ing else f"=-J{f_dev}")
     ws[f"K{f}"].number_format = FMT_DINERO
     ws[f"K{f}"].font = negrita
-    ws[f"K{f}"].fill = PatternFill("solid", fgColor=LIMA_PALIDA)
+    ws[f"K{f}"].fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
     f_ing = f
     f += 2
 
@@ -829,7 +844,7 @@ def hoja_formato_contador(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa:
         ws[f"K{f}"] = f"=SUM(J{primera}:J{ultima})" if ultima >= primera else 0
         ws[f"K{f}"].number_format = FMT_DINERO
         ws[f"K{f}"].font = negrita
-        ws[f"K{f}"].fill = PatternFill("solid", fgColor=LIMA_PALIDA)
+        ws[f"K{f}"].fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
         total = f
         f += 2
         return total, ultima
@@ -843,7 +858,7 @@ def hoja_formato_contador(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa:
     ws[f"K{f}"] = f"=K{f_ing}-K{f_costo}-K{f_admin}-K{f_ventas}"
     ws[f"K{f}"].number_format = FMT_DINERO
     ws[f"K{f}"].font = Font(bold=True, size=11)
-    ws[f"K{f}"].fill = PatternFill("solid", fgColor=LIMA)
+    ws[f"K{f}"].fill = PatternFill("solid", fgColor=ACENTO)
     f_oper = f
     f += 2
 
@@ -871,7 +886,7 @@ def hoja_formato_contador(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa:
     ws[f"K{f}"] = f"=K{f_antes}-J{f_imp}"
     ws[f"K{f}"].number_format = FMT_DINERO
     ws[f"K{f}"].font = Font(bold=True, size=12)
-    ws[f"K{f}"].fill = PatternFill("solid", fgColor=LIMA)
+    ws[f"K{f}"].fill = PatternFill("solid", fgColor=ACENTO)
 
     firmas(ws, max(fila_total, f) + 2, empresa, 6)
     _imprimir(ws, horizontal=True, repetir_filas="1:6")
@@ -894,6 +909,14 @@ GRUPOS: list[tuple[str, str, tuple[str, ...], bool]] = [
     ("Hoja de trabajo",
      "Las 12 columnas oficiales: prueba, ajustes, ajustado, resultados y balance general.",
      ("hoja_trabajo",), True),
+    ("Libro diario",
+     "Libro diario oficial: cada comprobante en orden cronológico, con sus líneas, su total y el origen "
+     "de cada registro en el archivo del cliente.",
+     ("libro_diario",), True),
+    ("Mayor y balances",
+     "Libro mayor y balances oficial: por cuenta, saldo anterior, movimientos y nuevo saldo, con "
+     "subtotales por grupo y por clase.",
+     ("mayor_balances",), True),
     ("Libro mayor",
      "Movimiento detallado de cada cuenta, con saldo inicial, movimientos y saldo final.",
      ("libro_mayor",), True),
@@ -1016,9 +1039,10 @@ def libro_completo(res: dict, empresa: Empresa) -> bytes:
     _portada(portada, res, empresa, indice)
 
     # Color de pestaña por grupo, para ubicarse de un golpe.
-    colores = {"Portada": LIMA, "Estados financieros": TINTA, "Indicadores": TINTA,
-               "Balances": "5F5F57", "Hoja de trabajo": "5F5F57", "Libro mayor": "5F5F57",
-               "Alertas": ROJO, "Auditoría": ROJO, "Notas": VERDE, "Ajustes": "9C6200"}
+    colores = {"Portada": AZUL_MARCA, "Estados financieros": TINTA, "Indicadores": TINTA,
+               "Balances": TINTA_MEDIA, "Hoja de trabajo": TINTA_MEDIA, "Libro mayor": TINTA_MEDIA,
+               "Libro diario": TINTA_MEDIA, "Mayor y balances": TINTA_MEDIA,
+               "Alertas": ROJO, "Auditoría": ROJO, "Notas": AZUL_MARCA, "Ajustes": AMBAR}
     for hoja in wb.worksheets:
         hoja.sheet_properties.tabColor = colores.get(hoja.title, "BFBFBF")
 

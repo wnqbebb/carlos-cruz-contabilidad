@@ -24,6 +24,7 @@ const GRUPOS: { id: string; texto: string; claves: string[] }[] = [
     claves: ["inventario_saldos", "inventario_vencimientos", "inventario_fisico"] },
   { id: "nomina", texto: "Nómina y Seguridad Social", claves: ["nomina_devengados", "nomina_apropiaciones"] },
   { id: "depreciacion", texto: "Depreciación de activos", claves: ["depreciacion"] },
+  { id: "mayorbal", texto: "Mayor y balances", claves: ["mayor_balances"] },
   { id: "mayor", texto: "Libro mayor y cuentas T", claves: ["libro_mayor"] },
 ];
 
@@ -128,10 +129,10 @@ export function ResultadoGuardado({
 
         {periodoId && (
           <div className="flex flex-wrap gap-2.5">
-            <Enlace href={descargas.excelPeriodo(periodoId)} variante="lima" tamano="sm">
+            <Enlace href={descargas.excelPeriodo(periodoId)} variante="solido" tamano="sm">
               <Download size={16} strokeWidth={1.5} aria-hidden /> Excel completo
             </Enlace>
-            <Enlace href={descargas.pdfPeriodo(periodoId)} variante="solido" tamano="sm">
+            <Enlace href={descargas.pdfPeriodo(periodoId)} variante="contorno" tamano="sm">
               <Download size={16} strokeWidth={1.5} aria-hidden /> PDF para firmar
             </Enlace>
             <Enlace href={descargas.saldosPeriodo(periodoId)} variante="contorno" tamano="sm">

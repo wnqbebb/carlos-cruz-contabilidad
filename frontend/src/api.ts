@@ -247,6 +247,9 @@ export const descargas = {
   excelPeriodo: (periodoId: string) => `${BASE}/api/periodos/${periodoId}/excel`,
   pdfPeriodo: (periodoId: string) => `${BASE}/api/periodos/${periodoId}/pdf`,
   saldosPeriodo: (periodoId: string) => `${BASE}/api/periodos/${periodoId}/saldos`,
+  /** Un libro oficial suelto: «libro-diario» o «mayor-balances», en «excel» o «pdf». */
+  libro: (periodoId: string, libro: "libro-diario" | "mayor-balances", formato: "excel" | "pdf") =>
+    `${BASE}/api/periodos/${periodoId}/${libro}/${formato}`,
 };
 
 /** Alias de compatibilidad con las pantallas del flujo antiguo. */
