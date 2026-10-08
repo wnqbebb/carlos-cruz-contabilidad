@@ -402,7 +402,7 @@ def socios_de_tabla(h: Hoja) -> list[dict]:
                 aporte = parse_numero(h.texto(rr, c_tot)) or Decimal(0)
                 socio["comprometido"] = socio["pagado"] = format(aporte, "f")
             if c_pct is not None:
-                pct = parse_numero(h.texto(rr, c_pct))
+                pct = parse_numero(h.texto(rr, c_pct).replace("%", "").strip())
                 if pct is not None:
                     socio["participacion"] = format(pct / 100 if pct > 1 else pct, "f")
             socios.append(socio)

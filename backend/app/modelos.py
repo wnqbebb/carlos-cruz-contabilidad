@@ -133,6 +133,8 @@ class Empresa:
     periodo_desde: date = date(2025, 1, 1)
     periodo_hasta: date = date(2025, 1, 31)
     demo: bool = False
+    tipo_persona: str = "juridica"
+    tipo_sociedad: str = ""
 
     @classmethod
     def desde_dict(cls, d: dict) -> "Empresa":

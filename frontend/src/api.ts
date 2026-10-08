@@ -123,6 +123,10 @@ export const clientes = {
   } = {}) => pedir<PaginaClientes>(`/api/clientes${qs(p)}`),
 
   obtener: (id: string) => pedir<Cliente>(`/api/clientes/${id}`),
+  /** Clientes marcados como demostración: los únicos que borra «Eliminar clientes de demostración». */
+  demostracion: () => pedir<{ clientes: { id: string; razon_social: string; nit: string }[] }>("/api/clientes/demostracion"),
+  eliminarDemostracion: () =>
+    pedir<{ eliminados: number; clientes: string[] }>("/api/clientes/demostracion/eliminar", { method: "POST" }),
   crear: (datos: Partial<Cliente>) => pedir<Cliente>("/api/clientes", { method: "POST", ...json(datos) }),
   actualizar: (id: string, datos: Partial<Cliente>) =>
     pedir<Cliente>(`/api/clientes/${id}`, { method: "PATCH", ...json(datos) }),

@@ -325,7 +325,7 @@ function Recientes({ datos }: { datos: DatosTablero }) {
             >
               <div className="flex items-center gap-3">
                 <EsferaCliente nit={c.nit} nombre={c.razon_social} tamano={56} />
-                <p className="t-small line-clamp-2 min-w-0 font-semibold text-tinta">{c.razon_social}</p>
+                <p className="t-small line-clamp-2 min-w-0 font-semibold text-tinta [overflow-wrap:normal] hyphens-auto">{c.razon_social}</p>
               </div>
               <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-linea pt-3">
                 {c.estado_trabajo === "atrasado" ? (

@@ -303,14 +303,15 @@ def plantilla_csv() -> bytes:
                 "REPRESENTANTE LEGAL", "CC REPRESENTANTE", "FECHA CONSTITUCION",
                 "CAPITAL SUSCRITO", "HONORARIOS MES", "PERIODICIDAD", "ESTADO",
                 "ETIQUETAS", "NOTAS"]
+    # Filas de ejemplo inventadas (ningún dato es de un cliente real).
     ejemplos = [
-        ["[NIT]", "FARMACIA NATURISTA ANTARES SAS", "FANANT", "Jurídica", "Responsable de IVA", "3",
-         "4773", "Calle 8 No 9-86 B/ El Limonar", "Guacarí", "Valle del Cauca", "3001234567",
-         "fanant2024@gmail.com", "Adriana Durán Jaramillo", "[CEDULA]", "2024-11-26",
-         "30000000", "300000", "Mensual", "Activo", "Farmacia;Guacarí", "Cliente desde la constitución"],
-        ["[CEDULA]", "CRUZ CAICEDO CARLOS ARTURO", "", "Natural", "No responsable de IVA", "3",
+        ["900123456", "TIENDA EJEMPLO S.A.S.", "EJEMPLO", "Jurídica", "Responsable de IVA", "3",
+         "4711", "Calle 1 No. 2-3", "Guacarí", "Valle del Cauca", "3000000000",
+         "contacto@ejemplo.com", "Nombre Apellido Ejemplo", "1000000001", "2024-01-15",
+         "10000000", "300000", "Mensual", "Activo", "Comercio;Ejemplo", "Fila de ejemplo: bórrela"],
+        ["1000000002", "PERSONA NATURAL EJEMPLO", "", "Natural", "No responsable de IVA", "3",
          "6920", "", "Guacarí", "Valle del Cauca", "", "", "", "", "",
-         "0", "0", "Anual", "Activo", "Persona natural", ""],
+         "0", "0", "Anual", "Activo", "Persona natural", "Fila de ejemplo: bórrela"],
     ]
     salida = io.StringIO()
     escritor = csv.writer(salida, delimiter=";", lineterminator="\r\n")

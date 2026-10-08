@@ -149,12 +149,26 @@ def titulos_periodo(titulos: list[str], desde: date, hasta: date) -> list[Alerta
     return alertas
 
 
+# Norma que fija la causal de disolución por pérdidas, según el tipo de sociedad.
+NORMA_DISOLUCION = {
+    "SAS": ("Ley 1258 de 2008, art. 34 num. 7", "La asamblea puede enervarla dentro de los 18 meses siguientes a que "
+               "reconozca su ocurrencia (art. 35)."),
+    "SA": ("Código de Comercio, art. 457 num. 2", "Los administradores deben convocar a la asamblea; las medidas para "
+             "restablecer el patrimonio se toman dentro de los 6 meses siguientes (art. 458)."),
+    "LTDA": ("Código de Comercio, art. 370", ""),
+}
+
+
 def disolucion(total_patrimonio: Decimal, empresa: Empresa) -> list[Alerta]:
-    if empresa.capital_suscrito and total_patrimonio < empresa.capital_suscrito * Decimal("0.5"):
+    if empresa.tipo_persona == "natural" or not empresa.capital_suscrito:
+        return []
+    if total_patrimonio < empresa.capital_suscrito * Decimal("0.5"):
+        norma, plazo = NORMA_DISOLUCION.get(empresa.tipo_sociedad.upper().replace(" ", "").replace(".", ""),
+                                            ("pérdidas que reducen el patrimonio neto por debajo del 50 % del capital", ""))
         return [Alerta("DISOLUCION", "error",
-                       f"Causal de disolución (art. 38-6 de los estatutos): el patrimonio neto {pesos(total_patrimonio)} es inferior "
-                       f"al 50 % del capital suscrito ({pesos(empresa.capital_suscrito * Decimal('0.5'))}). La asamblea tiene 18 meses "
-                       f"para enervarla (art. 39).")]
+                       f"Causal de disolución ({norma}): el patrimonio neto {pesos(total_patrimonio)} es inferior "
+                       f"al 50 % del capital suscrito ({pesos(empresa.capital_suscrito * Decimal('0.5'))}). "
+                       f"{plazo} Confirme lo que dicen los estatutos de la sociedad.".replace("  ", " "))]
     return []
 
 
@@ -163,8 +177,8 @@ def rep_legal_en_nomina(empleados: list[Empleado], empresa: Empresa) -> list[Ale
     for e in empleados:
         if empresa.rep_legal and fuzz.token_set_ratio(normalizar(e.nombre), normalizar(empresa.rep_legal)) >= 90:
             alertas.append(Alerta("E17", "info",
-                                  f"{e.nombre} es la representante legal y figura en nómina: el art. 28 de los estatutos exige que la "
-                                  f"asamblea apruebe su remuneración (conserve el acta como soporte)."))
+                                  f"{e.nombre} es representante legal y figura en nómina: revise en los estatutos qué órgano aprueba "
+                                  f"su remuneración y conserve el acta como soporte."))
     return alertas
 
 

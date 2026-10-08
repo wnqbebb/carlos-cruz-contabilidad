@@ -281,6 +281,7 @@ def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
                                     razon_social=cliente["razon_social"], origen="documentos",
                                     campos=sorted(k for k in ficha if not k.startswith("_")))
         cliente_id = cliente["id"]
+        repo_bitacora.asociar_subida(subida_id, cliente_id)
 
     # Se reusa el mismo camino de siempre: los bytes ya están en memoria.
     from .trabajo import _importar

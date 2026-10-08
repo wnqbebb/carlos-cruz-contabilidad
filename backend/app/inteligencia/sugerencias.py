@@ -22,7 +22,7 @@ Cada sugerencia devuelve:
 """
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, timedelta
 from decimal import Decimal
 
 from ..repositorio import clientes as repo_clientes
@@ -139,6 +139,8 @@ def _ficha_incompleta(cliente: dict) -> list[dict]:
             ("direccion", "dirección"), ("municipio", "municipio"), ("ciiu", "actividad CIIU"),
             ("rep_legal", "representante legal"), ("email", "correo electrónico"),
         ) if not str(cliente.get(campo) or "").strip()
+        # Una persona natural firma ella misma: no tiene representante legal.
+        and not (campo == "rep_legal" and cliente.get("tipo_persona") == "natural")
     ]
     if not faltantes:
         return []
@@ -220,8 +222,9 @@ def _atraso(cliente: dict, historia: list[dict], hoy: date) -> list[dict]:
             "Suba el primer archivo del cliente para arrancar su historia contable.",
         )]
     ultimo = historia[-1]
-    atraso = _meses_entre(date.fromisoformat(ultimo["hasta"]), hoy)
-    if atraso <= tolerancia:
+    # Se cuentan los meses YA TERMINADOS sin contabilizar: el mes en curso todavía no se puede cerrar.
+    atraso = _meses_entre(date.fromisoformat(ultimo["hasta"]), hoy.replace(day=1) - timedelta(days=1))
+    if atraso < tolerancia:
         return []
     return [_sug(
         "ATRASADO", "alta" if atraso <= tolerancia * 3 else "critica",

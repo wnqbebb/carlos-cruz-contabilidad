@@ -313,7 +313,8 @@ def firmas(ws: Worksheet, r: int, empresa: Empresa, ncols: int) -> None:
     c2 = max(4, ncols - 1)
     r += 2
     for col, lineas in (
-        (1, [empresa.rep_legal or "", f"Representante legal — C.C. {empresa.rep_legal_cc or ''}"]),
+        (1, [empresa.rep_legal or "", f"{'Titular' if empresa.tipo_persona == 'natural' else 'Representante legal'}"
+                                      f" — C.C. {empresa.rep_legal_cc or ''}"]),
         (c2, [empresa.contador or "", f"Contador público — T.P. {empresa.contador_tp or ''}"]),
     ):
         ws.cell(r, col, "_______________________________").font = Font(color=TINTA_MEDIA)

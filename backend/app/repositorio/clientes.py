@@ -17,6 +17,7 @@ from sqlalchemy import Text, and_, delete, func, insert, or_, select, update
 
 from ..config import ES_POSTGRES
 from ..db import conexion, lectura
+from ..esquema import bitacora as TB
 from ..esquema import clientes as T
 from ..esquema import periodos as TP
 from ..esquema import socios as TS
@@ -212,6 +213,31 @@ def eliminar(cliente_id: str) -> dict:
         ).scalar_one()
         cn.execute(delete(T).where(T.c.id == cliente_id))
         return {"ok": True, "razon_social": fila.razon_social, "periodos_borrados": int(periodos_borrados)}
+
+
+def de_demostracion() -> list[dict]:
+    """Clientes marcados como demostración (`demo`), los únicos que se pueden borrar en bloque."""
+    with lectura() as cn:
+        filas = cn.execute(select(T.c.id, T.c.razon_social, T.c.nit).where(T.c.demo.is_(True))
+                           .order_by(T.c.razon_social)).all()
+    return [{"id": str(f.id), "razon_social": f.razon_social, "nit": f.nit} for f in filas]
+
+
+def eliminar_demostracion() -> dict:
+    """Borra los clientes de demostración con toda su contabilidad y su rastro en la bitácora.
+
+    El filtro va en la misma sentencia de borrado (`demo` verdadero): un cliente
+    real, como FANANT, no puede caer aquí aunque cambie la lista entre la lectura
+    y el borrado.
+    """
+    demo = de_demostracion()
+    ids = [c["id"] for c in demo]
+    if not ids:
+        return {"ok": True, "eliminados": 0, "clientes": []}
+    with conexion() as cn:
+        cn.execute(delete(TB).where(TB.c.cliente_id.in_(ids)))
+        borrados = cn.execute(delete(T).where(and_(T.c.id.in_(ids), T.c.demo.is_(True)))).rowcount
+    return {"ok": True, "eliminados": int(borrados or 0), "clientes": [c["razon_social"] for c in demo]}
 
 
 def archivar(cliente_id: str, archivado: bool = True) -> dict:
@@ -444,7 +470,18 @@ def a_empresa(cliente: dict, desde: date | None = None, hasta: date | None = Non
         "valor_nominal_accion": cliente.get("valor_nominal_accion", "0"),
         "accionistas": cliente.get("socios", []),
         "demo": cliente.get("demo", False),
+        "tipo_persona": cliente.get("tipo_persona") or "juridica",
+        "tipo_sociedad": cliente.get("tipo_sociedad") or "",
     }
+    # Firmas: sin contador en la ficha, firma el contador de la aplicación; una
+    # persona natural firma ella misma (no tiene representante legal).
+    if not datos["contador"]:
+        from .. import contador as datos_contador
+
+        c = datos_contador.leer()
+        datos["contador"], datos["contador_tp"] = c.get("nombre", ""), datos["contador_tp"] or c.get("tarjeta_profesional", "")
+    if datos["tipo_persona"] == "natural" and not datos["rep_legal"]:
+        datos["rep_legal"], datos["rep_legal_cc"] = datos["razon_social"], datos["rep_legal_cc"] or datos["nit"]
     if desde:
         datos["periodo_desde"] = desde
     if hasta:

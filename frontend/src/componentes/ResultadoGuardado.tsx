@@ -104,7 +104,8 @@ export function ResultadoGuardado({
     <div className="space-y-6">
       {/* ── selector de periodo y descargas rápidas ───────────────────── */}
       <div className="material-hoja p-5 flex flex-wrap items-center justify-between gap-4">
-        <div>
+        {/* `min-w-0 max-w-full`: con muchos meses la fila se desplaza en vez de ensanchar la página. */}
+        <div className="min-w-0 max-w-full">
           <Rotulo className="mb-2 block text-gris">Seleccionar Periodo Contable</Rotulo>
           <div className="barra-fina flex gap-2 overflow-x-auto pb-1">
             {calculados.map((p) => (

@@ -409,7 +409,9 @@ def calcular(paquete: Paquete, empresa: Empresa, config: Config, decisiones: dic
 
 
 def _reportes_inventario(productos: dict, venc: list[dict], fisico: list[dict], corte: str) -> dict:
-    cols = [col("codigo", "Código", ancho=12), col("descripcion", "Producto", ancho=36), col("laboratorio", "Laboratorio"),
+    # «Laboratorio» (o marca) solo aparece si algún producto lo trae.
+    marca = [col("laboratorio", "Laboratorio")] if any(p.laboratorio for p in productos.values()) else []
+    cols = [col("codigo", "Código", ancho=12), col("descripcion", "Producto", ancho=36), *marca,
             col("saldo_cant", "Cantidad", "numero"), col("costo_promedio", "Costo promedio", "dinero"),
             col("saldo_total", "Saldo valorizado", "dinero"), col("costo_ventas", "Costo de ventas", "dinero")]
     k = Constructor()

@@ -33,6 +33,21 @@ def listar(
                        descendente=descendente, pagina=pagina, por_pagina=por_pagina)
 
 
+@router.get("/demostracion")
+def demostracion():
+    """Clientes de demostración cargados (los que borra «Eliminar clientes de demostración»)."""
+    return {"clientes": repo.de_demostracion()}
+
+
+@router.post("/demostracion/eliminar")
+def eliminar_demostracion():
+    salida = repo.eliminar_demostracion()
+    if salida["eliminados"]:
+        bitacora.registrar("clientes_demo_eliminados", None, eliminados=salida["eliminados"],
+                           clientes=salida["clientes"])
+    return salida
+
+
 @router.get("/resumen")
 def resumen():
     """Conteos de la cartera y del trabajo contable, para el tablero."""

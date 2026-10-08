@@ -275,7 +275,7 @@ function MiniTexto({ rotulo, texto, nota }: { rotulo: string; texto: string; not
   return (
     <div className="contener">
       <Rotulo className="block">{rotulo}</Rotulo>
-      <p className="mt-1.5 text-lg font-bold capitalize leading-none text-tinta">{texto}</p>
+      <p className="mt-1.5 text-lg font-bold leading-none text-tinta first-letter:uppercase">{texto}</p>
       {nota && <p className="mt-1 text-[11px] text-gris">{nota}</p>}
     </div>
   );

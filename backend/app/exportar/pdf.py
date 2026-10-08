@@ -115,10 +115,14 @@ def _tabla(rep: dict, ancho_total: float) -> Table:
     return t
 
 
+def _cargo_firma(empresa: Empresa) -> str:
+    return "Titular" if empresa.tipo_persona == "natural" else "Representante legal"
+
+
 def _firmas(empresa: Empresa) -> Table:
     t = Table([["_" * 34, "", "_" * 34],
                [empresa.rep_legal, "", empresa.contador],
-               [f"Representante legal — C.C. {empresa.rep_legal_cc}", "", f"Contador público — T.P. {empresa.contador_tp}"]],
+               [f"{_cargo_firma(empresa)} — C.C. {empresa.rep_legal_cc}", "", f"Contador público — T.P. {empresa.contador_tp}"]],
               colWidths=[7.5 * cm, 2 * cm, 7.5 * cm])
     t.setStyle(TableStyle([("FONTSIZE", (0, 0), (-1, -1), 8.5), ("FONTNAME", (0, 1), (-1, 1), "Helvetica-Bold"),
                            ("ALIGN", (0, 0), (-1, -1), "CENTER"), ("TOPPADDING", (0, 0), (-1, 0), 28)]))

@@ -1,0 +1,867 @@
+﻿Fecha;Comprobante;Cuenta;Nombre de la cuenta;Tercero;Detalle;Débito;Crédito
+2025-01-02;CA-0001;111005;Bancos - moneda nacional;;Asiento de apertura;30.000.000;0
+2025-01-02;CA-0001;154005;Flota y equipo de transporte;;Asiento de apertura;270.000.000;0
+2025-01-02;CA-0001;210510;Bancos nacionales;;Asiento de apertura;0;120.000.000
+2025-01-02;CA-0001;310505;Capital autorizado;;Asiento de apertura;0;180.000.000
+2025-01-08;FV-0001;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.237.600;0
+2025-01-08;FV-0001;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.237.600
+2025-01-15;FV-0002;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.342.600;0
+2025-01-15;FV-0002;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.342.600
+2025-01-22;FV-0003;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.895.000;0
+2025-01-22;FV-0003;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.895.000
+2025-01-06;CE-2501-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.184.500;0
+2025-01-06;CE-2501-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.184.500
+2025-01-06;CE-2501-PEA;519595;Otros gastos diversos;;Peajes del mes;1.166.100;0
+2025-01-06;CE-2501-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.166.100
+2025-01-18;CE-2501-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.202.000;0
+2025-01-18;CE-2501-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.202.000
+2025-01-31;CE-2501-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-01-31;CE-2501-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-01-31;CE-2501-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-01-31;CE-2501-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-01-31;CE-2501-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-01-31;CE-2501-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-01-02;CE-2501-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-01-02;CE-2501-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-01-26;CE-2501-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.440.000;0
+2025-01-26;CE-2501-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-01-26;CE-2501-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.440.000
+2025-01-31;NC-2501-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-01-31;NC-2501-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-01-31;CE-2501-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-01-31;CE-2501-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-01-31;CE-2501-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-01-31;NC-2501-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-01-31;NC-2501-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-02-10;RC-2502-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.165.224;0
+2025-02-10;RC-2502-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);72.376;0
+2025-02-10;RC-2502-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.237.600
+2025-02-10;RC-2502-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.299.174;0
+2025-02-10;RC-2502-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);43.426;0
+2025-02-10;RC-2502-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.342.600
+2025-02-10;RC-2502-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.866.050;0
+2025-02-10;RC-2502-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);28.950;0
+2025-02-10;RC-2502-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.895.000
+2025-02-15;CE-2502-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-02-15;CE-2502-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-02-08;FV-0004;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.256.000;0
+2025-02-08;FV-0004;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.256.000
+2025-02-15;FV-0005;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.353.600;0
+2025-02-15;FV-0005;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.353.600
+2025-02-22;FV-0006;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.902.400;0
+2025-02-22;FV-0006;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.902.400
+2025-02-06;CE-2502-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.192.600;0
+2025-02-06;CE-2502-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.192.600
+2025-02-06;CE-2502-PEA;519595;Otros gastos diversos;;Peajes del mes;1.234.800;0
+2025-02-06;CE-2502-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.234.800
+2025-02-18;CE-2502-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.399.600;0
+2025-02-18;CE-2502-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.399.600
+2025-02-28;CE-2502-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-02-28;CE-2502-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-02-28;CE-2502-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-02-28;CE-2502-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-02-28;CE-2502-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-02-28;CE-2502-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-02-02;CE-2502-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-02-02;CE-2502-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-02-26;CE-2502-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.416.000;0
+2025-02-26;CE-2502-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-02-26;CE-2502-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.416.000
+2025-02-28;NC-2502-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-02-28;NC-2502-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-02-28;CE-2502-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-02-28;CE-2502-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-02-28;CE-2502-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-02-28;NC-2502-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-02-28;NC-2502-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-03-01;RC-2503-SOC;111005;Bancos - moneda nacional;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;15.000.000;0
+2025-03-01;RC-2503-SOC;235505;Deudas con accionistas o socios;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;0;15.000.000
+2025-03-10;RC-2503-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.183.440;0
+2025-03-10;RC-2503-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);72.560;0
+2025-03-10;RC-2503-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.256.000
+2025-03-10;RC-2503-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.310.064;0
+2025-03-10;RC-2503-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);43.536;0
+2025-03-10;RC-2503-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.353.600
+2025-03-10;RC-2503-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.873.376;0
+2025-03-10;RC-2503-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);29.024;0
+2025-03-10;RC-2503-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.902.400
+2025-03-15;CE-2503-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-03-15;CE-2503-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-03-08;FV-0007;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;8.181.800;0
+2025-03-08;FV-0007;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;8.181.800
+2025-03-15;FV-0008;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.909.100;0
+2025-03-15;FV-0008;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.909.100
+2025-03-22;FV-0009;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;3.272.700;0
+2025-03-22;FV-0009;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;3.272.700
+2025-03-06;CE-2503-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.600.000;0
+2025-03-06;CE-2503-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.600.000
+2025-03-06;CE-2503-PEA;519595;Otros gastos diversos;;Peajes del mes;1.056.000;0
+2025-03-06;CE-2503-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.056.000
+2025-03-18;CE-2503-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.729.500;0
+2025-03-18;CE-2503-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.729.500
+2025-03-31;CE-2503-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-03-31;CE-2503-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-03-31;CE-2503-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-03-31;CE-2503-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-03-31;CE-2503-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-03-31;CE-2503-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-03-02;CE-2503-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-03-02;CE-2503-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-03-26;CE-2503-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.392.000;0
+2025-03-26;CE-2503-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-03-26;CE-2503-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.392.000
+2025-03-31;NC-2503-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-03-31;NC-2503-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-03-31;CE-2503-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-03-31;CE-2503-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-03-31;CE-2503-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-03-31;NC-2503-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-03-31;NC-2503-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-04-10;RC-2504-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);8.099.982;0
+2025-04-10;RC-2504-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);81.818;0
+2025-04-10;RC-2504-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;8.181.800
+2025-04-10;RC-2504-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.860.009;0
+2025-04-10;RC-2504-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);49.091;0
+2025-04-10;RC-2504-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.909.100
+2025-04-10;RC-2504-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);3.239.973;0
+2025-04-10;RC-2504-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);32.727;0
+2025-04-10;RC-2504-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;3.272.700
+2025-04-15;CE-2504-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-04-15;CE-2504-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-04-08;FV-0010;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;12.513.400;0
+2025-04-08;FV-0010;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;12.513.400
+2025-04-15;FV-0011;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;7.508.000;0
+2025-04-15;FV-0011;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;7.508.000
+2025-04-22;FV-0012;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;5.005.300;0
+2025-04-22;FV-0012;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;5.005.300
+2025-04-06;CE-2504-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;5.505.900;0
+2025-04-06;CE-2504-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;5.505.900
+2025-04-06;CE-2504-PEA;519595;Otros gastos diversos;;Peajes del mes;1.192.800;0
+2025-04-06;CE-2504-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.192.800
+2025-04-18;CE-2504-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.519.200;0
+2025-04-18;CE-2504-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.519.200
+2025-04-30;CE-2504-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-04-30;CE-2504-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-04-30;CE-2504-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-04-30;CE-2504-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-04-30;CE-2504-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-04-30;CE-2504-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-04-02;CE-2504-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-04-02;CE-2504-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-04-26;CE-2504-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.368.000;0
+2025-04-26;CE-2504-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-04-26;CE-2504-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.368.000
+2025-04-30;NC-2504-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-04-30;NC-2504-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-04-30;CE-2504-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-04-30;CE-2504-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-04-30;CE-2504-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-04-30;NC-2504-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-04-30;NC-2504-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-05-10;RC-2505-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);12.388.266;0
+2025-05-10;RC-2505-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);125.134;0
+2025-05-10;RC-2505-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;12.513.400
+2025-05-10;RC-2505-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);7.432.920;0
+2025-05-10;RC-2505-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);75.080;0
+2025-05-10;RC-2505-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;7.508.000
+2025-05-10;RC-2505-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);4.955.247;0
+2025-05-10;RC-2505-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);50.053;0
+2025-05-10;RC-2505-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;5.005.300
+2025-05-15;CE-2505-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-05-15;CE-2505-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-05-08;FV-0013;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.518.000;0
+2025-05-08;FV-0013;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.518.000
+2025-05-15;FV-0014;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.510.800;0
+2025-05-15;FV-0014;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.510.800
+2025-05-22;FV-0015;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;3.007.200;0
+2025-05-22;FV-0015;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;3.007.200
+2025-05-06;CE-2505-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.307.900;0
+2025-05-06;CE-2505-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.307.900
+2025-05-06;CE-2505-PEA;519595;Otros gastos diversos;;Peajes del mes;1.230.800;0
+2025-05-06;CE-2505-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.230.800
+2025-05-18;CE-2505-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;8.149.900;0
+2025-05-18;CE-2505-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;8.149.900
+2025-05-31;CE-2505-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-05-31;CE-2505-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-05-31;CE-2505-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-05-31;CE-2505-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-05-31;CE-2505-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-05-31;CE-2505-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-05-02;CE-2505-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-05-02;CE-2505-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-05-26;CE-2505-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.344.000;0
+2025-05-26;CE-2505-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-05-26;CE-2505-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.344.000
+2025-05-31;NC-2505-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-05-31;NC-2505-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-05-31;CE-2505-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-05-31;CE-2505-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-05-31;CE-2505-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-05-31;NC-2505-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-05-31;NC-2505-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-06-10;RC-2506-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.442.820;0
+2025-06-10;RC-2506-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);75.180;0
+2025-06-10;RC-2506-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.518.000
+2025-06-10;RC-2506-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.465.692;0
+2025-06-10;RC-2506-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);45.108;0
+2025-06-10;RC-2506-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.510.800
+2025-06-10;RC-2506-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.977.128;0
+2025-06-10;RC-2506-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);30.072;0
+2025-06-10;RC-2506-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;3.007.200
+2025-06-15;CE-2506-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-06-15;CE-2506-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-06-08;FV-0016;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.532.200;0
+2025-06-08;FV-0016;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.532.200
+2025-06-15;FV-0017;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.519.300;0
+2025-06-15;FV-0017;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.519.300
+2025-06-22;FV-0018;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;3.012.900;0
+2025-06-22;FV-0018;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;3.012.900
+2025-06-06;CE-2506-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.314.100;0
+2025-06-06;CE-2506-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.314.100
+2025-06-06;CE-2506-PEA;519595;Otros gastos diversos;;Peajes del mes;1.070.900;0
+2025-06-06;CE-2506-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.070.900
+2025-06-18;CE-2506-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.503.700;0
+2025-06-18;CE-2506-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.503.700
+2025-06-30;CE-2506-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-06-30;CE-2506-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-06-30;CE-2506-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-06-30;CE-2506-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-06-30;CE-2506-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-06-30;CE-2506-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-06-02;CE-2506-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-06-02;CE-2506-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-06-26;CE-2506-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.320.000;0
+2025-06-26;CE-2506-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-06-26;CE-2506-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.320.000
+2025-06-30;NC-2506-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-06-30;NC-2506-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-06-30;CE-2506-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-06-30;CE-2506-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-06-30;CE-2506-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-06-30;NC-2506-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-06-30;NC-2506-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-07-10;RC-2507-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.456.878;0
+2025-07-10;RC-2507-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);75.322;0
+2025-07-10;RC-2507-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.532.200
+2025-07-10;RC-2507-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.474.107;0
+2025-07-10;RC-2507-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);45.193;0
+2025-07-10;RC-2507-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.519.300
+2025-07-10;RC-2507-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.982.771;0
+2025-07-10;RC-2507-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);30.129;0
+2025-07-10;RC-2507-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;3.012.900
+2025-07-15;CE-2507-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-07-15;CE-2507-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-07-08;FV-0019;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.375.300;0
+2025-07-08;FV-0019;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.375.300
+2025-07-15;FV-0020;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.425.200;0
+2025-07-15;FV-0020;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.425.200
+2025-07-22;FV-0021;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.950.100;0
+2025-07-22;FV-0021;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.950.100
+2025-07-06;CE-2507-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.245.100;0
+2025-07-06;CE-2507-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.245.100
+2025-07-06;CE-2507-PEA;519595;Otros gastos diversos;;Peajes del mes;1.167.000;0
+2025-07-06;CE-2507-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.167.000
+2025-07-18;CE-2507-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.360.200;0
+2025-07-18;CE-2507-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.360.200
+2025-07-31;CE-2507-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-07-31;CE-2507-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-07-31;CE-2507-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-07-31;CE-2507-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-07-31;CE-2507-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-07-31;CE-2507-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-07-02;CE-2507-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-07-02;CE-2507-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-07-26;CE-2507-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.296.000;0
+2025-07-26;CE-2507-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-07-26;CE-2507-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.296.000
+2025-07-31;NC-2507-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-07-31;NC-2507-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-07-31;CE-2507-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-07-31;CE-2507-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-07-31;CE-2507-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-07-31;NC-2507-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-07-31;NC-2507-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-08-10;RC-2508-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.301.547;0
+2025-08-10;RC-2508-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);73.753;0
+2025-08-10;RC-2508-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.375.300
+2025-08-10;RC-2508-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.380.948;0
+2025-08-10;RC-2508-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);44.252;0
+2025-08-10;RC-2508-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.425.200
+2025-08-10;RC-2508-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.920.599;0
+2025-08-10;RC-2508-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);29.501;0
+2025-08-10;RC-2508-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.950.100
+2025-08-15;CE-2508-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-08-15;CE-2508-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-08-08;FV-0022;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.110.400;0
+2025-08-08;FV-0022;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.110.400
+2025-08-15;FV-0023;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.266.200;0
+2025-08-15;FV-0023;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.266.200
+2025-08-22;FV-0024;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.844.100;0
+2025-08-22;FV-0024;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.844.100
+2025-08-06;CE-2508-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.128.600;0
+2025-08-06;CE-2508-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.128.600
+2025-08-06;CE-2508-PEA;519595;Otros gastos diversos;;Peajes del mes;1.142.300;0
+2025-08-06;CE-2508-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.142.300
+2025-08-18;CE-2508-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.689.800;0
+2025-08-18;CE-2508-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.689.800
+2025-08-31;CE-2508-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-08-31;CE-2508-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-08-31;CE-2508-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-08-31;CE-2508-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-08-31;CE-2508-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-08-31;CE-2508-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-08-02;CE-2508-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-08-02;CE-2508-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-08-26;CE-2508-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.272.000;0
+2025-08-26;CE-2508-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-08-26;CE-2508-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.272.000
+2025-08-31;NC-2508-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-08-31;NC-2508-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-08-31;CE-2508-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-08-31;CE-2508-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-08-31;CE-2508-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-08-31;NC-2508-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-08-31;NC-2508-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-09-01;RC-2509-SOC;111005;Bancos - moneda nacional;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;15.000.000;0
+2025-09-01;RC-2509-SOC;235505;Deudas con accionistas o socios;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;0;15.000.000
+2025-09-10;RC-2509-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.039.296;0
+2025-09-10;RC-2509-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);71.104;0
+2025-09-10;RC-2509-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.110.400
+2025-09-10;RC-2509-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.223.538;0
+2025-09-10;RC-2509-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);42.662;0
+2025-09-10;RC-2509-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.266.200
+2025-09-10;RC-2509-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.815.659;0
+2025-09-10;RC-2509-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);28.441;0
+2025-09-10;RC-2509-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.844.100
+2025-09-15;CE-2509-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-09-15;CE-2509-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-09-08;FV-0025;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;12.140.700;0
+2025-09-08;FV-0025;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;12.140.700
+2025-09-15;FV-0026;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;7.284.400;0
+2025-09-15;FV-0026;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;7.284.400
+2025-09-22;FV-0027;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;4.856.300;0
+2025-09-22;FV-0027;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;4.856.300
+2025-09-06;CE-2509-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;5.341.900;0
+2025-09-06;CE-2509-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;5.341.900
+2025-09-06;CE-2509-PEA;519595;Otros gastos diversos;;Peajes del mes;1.094.900;0
+2025-09-06;CE-2509-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.094.900
+2025-09-18;CE-2509-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.231.400;0
+2025-09-18;CE-2509-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.231.400
+2025-09-30;CE-2509-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-09-30;CE-2509-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-09-30;CE-2509-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-09-30;CE-2509-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-09-30;CE-2509-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-09-30;CE-2509-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-09-02;CE-2509-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-09-02;CE-2509-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-09-26;CE-2509-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.248.000;0
+2025-09-26;CE-2509-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-09-26;CE-2509-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.248.000
+2025-09-30;NC-2509-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-09-30;NC-2509-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-09-30;CE-2509-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-09-30;CE-2509-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-09-30;CE-2509-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-09-30;NC-2509-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-09-30;NC-2509-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-10-10;RC-2510-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);12.019.293;0
+2025-10-10;RC-2510-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);121.407;0
+2025-10-10;RC-2510-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;12.140.700
+2025-10-10;RC-2510-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);7.211.556;0
+2025-10-10;RC-2510-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);72.844;0
+2025-10-10;RC-2510-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;7.284.400
+2025-10-10;RC-2510-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);4.807.737;0
+2025-10-10;RC-2510-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);48.563;0
+2025-10-10;RC-2510-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;4.856.300
+2025-10-15;CE-2510-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-10-15;CE-2510-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-10-08;FV-0028;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;10.758.100;0
+2025-10-08;FV-0028;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;10.758.100
+2025-10-15;FV-0029;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;6.454.900;0
+2025-10-15;FV-0029;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;6.454.900
+2025-10-22;FV-0030;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;4.303.300;0
+2025-10-22;FV-0030;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;4.303.300
+2025-10-06;CE-2510-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;4.733.600;0
+2025-10-06;CE-2510-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;4.733.600
+2025-10-06;CE-2510-PEA;519595;Otros gastos diversos;;Peajes del mes;1.376.500;0
+2025-10-06;CE-2510-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.376.500
+2025-10-18;CE-2510-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.657.200;0
+2025-10-18;CE-2510-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.657.200
+2025-10-31;CE-2510-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-10-31;CE-2510-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-10-31;CE-2510-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-10-31;CE-2510-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-10-31;CE-2510-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-10-31;CE-2510-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-10-02;CE-2510-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-10-02;CE-2510-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-10-26;CE-2510-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.224.000;0
+2025-10-26;CE-2510-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-10-26;CE-2510-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.224.000
+2025-10-31;NC-2510-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-10-31;NC-2510-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-10-31;CE-2510-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-10-31;CE-2510-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-10-31;CE-2510-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-10-31;NC-2510-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-10-31;NC-2510-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-11-10;RC-2511-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);10.650.519;0
+2025-11-10;RC-2511-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);107.581;0
+2025-11-10;RC-2511-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;10.758.100
+2025-11-10;RC-2511-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);6.390.351;0
+2025-11-10;RC-2511-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);64.549;0
+2025-11-10;RC-2511-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;6.454.900
+2025-11-10;RC-2511-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);4.260.267;0
+2025-11-10;RC-2511-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);43.033;0
+2025-11-10;RC-2511-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;4.303.300
+2025-11-15;CE-2511-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-11-15;CE-2511-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-11-08;FV-0031;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;8.812.800;0
+2025-11-08;FV-0031;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;8.812.800
+2025-11-15;FV-0032;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;5.287.700;0
+2025-11-15;FV-0032;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;5.287.700
+2025-11-22;FV-0033;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;3.525.100;0
+2025-11-22;FV-0033;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;3.525.100
+2025-11-06;CE-2511-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.877.600;0
+2025-11-06;CE-2511-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.877.600
+2025-11-06;CE-2511-PEA;519595;Otros gastos diversos;;Peajes del mes;1.217.000;0
+2025-11-06;CE-2511-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.217.000
+2025-11-18;CE-2511-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;8.210.800;0
+2025-11-18;CE-2511-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;8.210.800
+2025-11-30;CE-2511-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-11-30;CE-2511-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-11-30;CE-2511-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-11-30;CE-2511-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-11-30;CE-2511-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-11-30;CE-2511-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-11-02;CE-2511-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-11-02;CE-2511-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-11-26;CE-2511-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.200.000;0
+2025-11-26;CE-2511-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-11-26;CE-2511-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.200.000
+2025-11-30;NC-2511-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-11-30;NC-2511-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-11-30;CE-2511-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-11-30;CE-2511-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-11-30;CE-2511-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-11-30;NC-2511-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-11-30;NC-2511-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2025-12-10;RC-2512-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);8.724.672;0
+2025-12-10;RC-2512-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);88.128;0
+2025-12-10;RC-2512-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;8.812.800
+2025-12-10;RC-2512-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);5.234.823;0
+2025-12-10;RC-2512-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);52.877;0
+2025-12-10;RC-2512-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;5.287.700
+2025-12-10;RC-2512-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);3.489.849;0
+2025-12-10;RC-2512-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);35.251;0
+2025-12-10;RC-2512-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;3.525.100
+2025-12-15;CE-2512-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2025-12-15;CE-2512-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2025-12-08;FV-0034;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;7.307.600;0
+2025-12-08;FV-0034;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;7.307.600
+2025-12-15;FV-0035;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;4.384.600;0
+2025-12-15;FV-0035;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;4.384.600
+2025-12-22;FV-0036;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.923.100;0
+2025-12-22;FV-0036;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.923.100
+2025-12-06;CE-2512-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;3.215.400;0
+2025-12-06;CE-2512-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;3.215.400
+2025-12-06;CE-2512-PEA;519595;Otros gastos diversos;;Peajes del mes;1.300.600;0
+2025-12-06;CE-2512-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.300.600
+2025-12-18;CE-2512-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.697.900;0
+2025-12-18;CE-2512-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.697.900
+2025-12-31;CE-2512-NOM;510506;Sueldos;;Nómina de conductores y aportes;4.400.000;0
+2025-12-31;CE-2512-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;400.000;0
+2025-12-31;CE-2512-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;528.000;0
+2025-12-31;CE-2512-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;306.200;0
+2025-12-31;CE-2512-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;176.000;0
+2025-12-31;CE-2512-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;5.810.200
+2025-12-02;CE-2512-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2025-12-02;CE-2512-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2025-12-26;CE-2512-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.176.000;0
+2025-12-26;CE-2512-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2025-12-26;CE-2512-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.176.000
+2025-12-31;NC-2512-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2025-12-31;NC-2512-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2025-12-31;CE-2512-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2025-12-31;CE-2512-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2025-12-31;CE-2512-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2025-12-31;NC-2512-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2025-12-31;NC-2512-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-01-10;RC-2601-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);7.234.524;0
+2026-01-10;RC-2601-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);73.076;0
+2026-01-10;RC-2601-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;7.307.600
+2026-01-10;RC-2601-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);4.340.754;0
+2026-01-10;RC-2601-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);43.846;0
+2026-01-10;RC-2601-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;4.384.600
+2026-01-10;RC-2601-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.893.869;0
+2026-01-10;RC-2601-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);29.231;0
+2026-01-10;RC-2601-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.923.100
+2026-01-15;CE-2601-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-01-15;CE-2601-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-01-08;FV-0037;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;5.096.000;0
+2026-01-08;FV-0037;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;5.096.000
+2026-01-15;FV-0038;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.057.600;0
+2026-01-15;FV-0038;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.057.600
+2026-01-22;FV-0039;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.038.400;0
+2026-01-22;FV-0039;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.038.400
+2026-01-06;CE-2601-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.242.300;0
+2026-01-06;CE-2601-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.242.300
+2026-01-06;CE-2601-PEA;519595;Otros gastos diversos;;Peajes del mes;1.283.000;0
+2026-01-06;CE-2601-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.283.000
+2026-01-18;CE-2601-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.392.200;0
+2026-01-18;CE-2601-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.392.200
+2026-01-31;CE-2601-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-01-31;CE-2601-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-01-31;CE-2601-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-01-31;CE-2601-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-01-31;CE-2601-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-01-31;CE-2601-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-01-02;CE-2601-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-01-02;CE-2601-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-01-26;CE-2601-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.152.000;0
+2026-01-26;CE-2601-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-01-26;CE-2601-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.152.000
+2026-01-31;NC-2601-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-01-31;NC-2601-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-01-31;CE-2601-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-01-31;CE-2601-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-01-31;CE-2601-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-01-31;NC-2601-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-01-31;NC-2601-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-02-10;RC-2602-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);5.045.040;0
+2026-02-10;RC-2602-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);50.960;0
+2026-02-10;RC-2602-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;5.096.000
+2026-02-10;RC-2602-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);3.027.024;0
+2026-02-10;RC-2602-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);30.576;0
+2026-02-10;RC-2602-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;3.057.600
+2026-02-10;RC-2602-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.018.016;0
+2026-02-10;RC-2602-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);20.384;0
+2026-02-10;RC-2602-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.038.400
+2026-02-15;CE-2602-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-02-15;CE-2602-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-02-08;FV-0040;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;5.822.800;0
+2026-02-08;FV-0040;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;5.822.800
+2026-02-15;FV-0041;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.493.700;0
+2026-02-15;FV-0041;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.493.700
+2026-02-22;FV-0042;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.329.100;0
+2026-02-22;FV-0042;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.329.100
+2026-02-06;CE-2602-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.562.000;0
+2026-02-06;CE-2602-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.562.000
+2026-02-06;CE-2602-PEA;519595;Otros gastos diversos;;Peajes del mes;1.110.600;0
+2026-02-06;CE-2602-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.110.600
+2026-02-18;CE-2602-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.318.200;0
+2026-02-18;CE-2602-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.318.200
+2026-02-28;CE-2602-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-02-28;CE-2602-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-02-28;CE-2602-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-02-28;CE-2602-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-02-28;CE-2602-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-02-28;CE-2602-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-02-02;CE-2602-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-02-02;CE-2602-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-02-26;CE-2602-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.128.000;0
+2026-02-26;CE-2602-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-02-26;CE-2602-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.128.000
+2026-02-28;NC-2602-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-02-28;NC-2602-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-02-28;CE-2602-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-02-28;CE-2602-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-02-28;CE-2602-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-02-28;NC-2602-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-02-28;NC-2602-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-03-10;RC-2603-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);5.764.572;0
+2026-03-10;RC-2603-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);58.228;0
+2026-03-10;RC-2603-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;5.822.800
+2026-03-10;RC-2603-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);3.458.763;0
+2026-03-10;RC-2603-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);34.937;0
+2026-03-10;RC-2603-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;3.493.700
+2026-03-10;RC-2603-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.305.809;0
+2026-03-10;RC-2603-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);23.291;0
+2026-03-10;RC-2603-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.329.100
+2026-03-15;CE-2603-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-03-15;CE-2603-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-03-08;FV-0043;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;6.459.800;0
+2026-03-08;FV-0043;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;6.459.800
+2026-03-15;FV-0044;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.875.900;0
+2026-03-15;FV-0044;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.875.900
+2026-03-22;FV-0045;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.583.900;0
+2026-03-22;FV-0045;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.583.900
+2026-03-06;CE-2603-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.842.300;0
+2026-03-06;CE-2603-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.842.300
+2026-03-06;CE-2603-PEA;519595;Otros gastos diversos;;Peajes del mes;1.096.200;0
+2026-03-06;CE-2603-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.096.200
+2026-03-18;CE-2603-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;7.843.800;0
+2026-03-18;CE-2603-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;7.843.800
+2026-03-31;CE-2603-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-03-31;CE-2603-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-03-31;CE-2603-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-03-31;CE-2603-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-03-31;CE-2603-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-03-31;CE-2603-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-03-02;CE-2603-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-03-02;CE-2603-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-03-26;CE-2603-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.104.000;0
+2026-03-26;CE-2603-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-03-26;CE-2603-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.104.000
+2026-03-31;NC-2603-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-03-31;NC-2603-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-03-31;CE-2603-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-03-31;CE-2603-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-03-31;CE-2603-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-03-31;NC-2603-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-03-31;NC-2603-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-04-01;RC-2604-SOC;111005;Bancos - moneda nacional;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;15.000.000;0
+2026-04-01;RC-2604-SOC;235505;Deudas con accionistas o socios;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;0;15.000.000
+2026-04-10;RC-2604-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);6.395.202;0
+2026-04-10;RC-2604-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);64.598;0
+2026-04-10;RC-2604-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;6.459.800
+2026-04-10;RC-2604-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);3.837.141;0
+2026-04-10;RC-2604-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);38.759;0
+2026-04-10;RC-2604-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;3.875.900
+2026-04-10;RC-2604-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.558.061;0
+2026-04-10;RC-2604-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);25.839;0
+2026-04-10;RC-2604-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.583.900
+2026-04-15;CE-2604-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-04-15;CE-2604-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-04-08;FV-0046;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;5.021.500;0
+2026-04-08;FV-0046;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;5.021.500
+2026-04-15;FV-0047;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.012.900;0
+2026-04-15;FV-0047;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.012.900
+2026-04-22;FV-0048;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.008.600;0
+2026-04-22;FV-0048;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.008.600
+2026-04-06;CE-2604-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.209.400;0
+2026-04-06;CE-2604-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.209.400
+2026-04-06;CE-2604-PEA;519595;Otros gastos diversos;;Peajes del mes;1.202.200;0
+2026-04-06;CE-2604-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.202.200
+2026-04-18;CE-2604-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.318.200;0
+2026-04-18;CE-2604-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.318.200
+2026-04-30;CE-2604-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-04-30;CE-2604-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-04-30;CE-2604-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-04-30;CE-2604-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-04-30;CE-2604-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-04-30;CE-2604-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-04-02;CE-2604-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-04-02;CE-2604-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-04-26;CE-2604-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.080.000;0
+2026-04-26;CE-2604-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-04-26;CE-2604-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.080.000
+2026-04-30;NC-2604-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-04-30;NC-2604-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-04-30;CE-2604-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-04-30;CE-2604-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-04-30;CE-2604-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-04-30;NC-2604-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-04-30;NC-2604-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-05-01;RC-2605-SOC;111005;Bancos - moneda nacional;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;15.000.000;0
+2026-05-01;RC-2605-SOC;235505;Deudas con accionistas o socios;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;0;15.000.000
+2026-05-10;RC-2605-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);4.971.285;0
+2026-05-10;RC-2605-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);50.215;0
+2026-05-10;RC-2605-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;5.021.500
+2026-05-10;RC-2605-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);2.982.771;0
+2026-05-10;RC-2605-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);30.129;0
+2026-05-10;RC-2605-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;3.012.900
+2026-05-10;RC-2605-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);1.988.514;0
+2026-05-10;RC-2605-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);20.086;0
+2026-05-10;RC-2605-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.008.600
+2026-05-15;CE-2605-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-05-15;CE-2605-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-05-08;FV-0049;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;4.594.800;0
+2026-05-08;FV-0049;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;4.594.800
+2026-05-15;FV-0050;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;2.756.900;0
+2026-05-15;FV-0050;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;2.756.900
+2026-05-22;FV-0051;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;1.837.900;0
+2026-05-22;FV-0051;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;1.837.900
+2026-05-06;CE-2605-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.021.700;0
+2026-05-06;CE-2605-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.021.700
+2026-05-06;CE-2605-PEA;519595;Otros gastos diversos;;Peajes del mes;1.147.600;0
+2026-05-06;CE-2605-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.147.600
+2026-05-18;CE-2605-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.474.400;0
+2026-05-18;CE-2605-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.474.400
+2026-05-31;CE-2605-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-05-31;CE-2605-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-05-31;CE-2605-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-05-31;CE-2605-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-05-31;CE-2605-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-05-31;CE-2605-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-05-02;CE-2605-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-05-02;CE-2605-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-05-26;CE-2605-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.056.000;0
+2026-05-26;CE-2605-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-05-26;CE-2605-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.056.000
+2026-05-31;NC-2605-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-05-31;NC-2605-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-05-31;CE-2605-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-05-31;CE-2605-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-05-31;CE-2605-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-05-31;NC-2605-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-05-31;NC-2605-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-06-10;RC-2606-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);4.548.852;0
+2026-06-10;RC-2606-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);45.948;0
+2026-06-10;RC-2606-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;4.594.800
+2026-06-10;RC-2606-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);2.729.331;0
+2026-06-10;RC-2606-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);27.569;0
+2026-06-10;RC-2606-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;2.756.900
+2026-06-10;RC-2606-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);1.819.521;0
+2026-06-10;RC-2606-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);18.379;0
+2026-06-10;RC-2606-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;1.837.900
+2026-06-15;CE-2606-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-06-15;CE-2606-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-06-08;FV-0052;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;4.532.200;0
+2026-06-08;FV-0052;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;4.532.200
+2026-06-15;FV-0053;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;2.719.300;0
+2026-06-15;FV-0053;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;2.719.300
+2026-06-22;FV-0054;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;1.812.900;0
+2026-06-22;FV-0054;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;1.812.900
+2026-06-06;CE-2606-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;1.994.200;0
+2026-06-06;CE-2606-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;1.994.200
+2026-06-06;CE-2606-PEA;519595;Otros gastos diversos;;Peajes del mes;1.374.900;0
+2026-06-06;CE-2606-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.374.900
+2026-06-18;CE-2606-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.268.200;0
+2026-06-18;CE-2606-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.268.200
+2026-06-30;CE-2606-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-06-30;CE-2606-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-06-30;CE-2606-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-06-30;CE-2606-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-06-30;CE-2606-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-06-30;CE-2606-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-06-02;CE-2606-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-06-02;CE-2606-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-06-26;CE-2606-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.032.000;0
+2026-06-26;CE-2606-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-06-26;CE-2606-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.032.000
+2026-06-30;NC-2606-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-06-30;NC-2606-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-06-30;CE-2606-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-06-30;CE-2606-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-06-30;CE-2606-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-06-30;NC-2606-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-06-30;NC-2606-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-07-10;RC-2607-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);4.486.878;0
+2026-07-10;RC-2607-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);45.322;0
+2026-07-10;RC-2607-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;4.532.200
+2026-07-10;RC-2607-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);2.692.107;0
+2026-07-10;RC-2607-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);27.193;0
+2026-07-10;RC-2607-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;2.719.300
+2026-07-10;RC-2607-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);1.794.771;0
+2026-07-10;RC-2607-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);18.129;0
+2026-07-10;RC-2607-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;1.812.900
+2026-07-15;CE-2607-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-07-15;CE-2607-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-07-08;FV-0055;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;5.527.500;0
+2026-07-08;FV-0055;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;5.527.500
+2026-07-15;FV-0056;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.316.500;0
+2026-07-15;FV-0056;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.316.500
+2026-07-22;FV-0057;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.211.000;0
+2026-07-22;FV-0057;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.211.000
+2026-07-06;CE-2607-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.432.100;0
+2026-07-06;CE-2607-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.432.100
+2026-07-06;CE-2607-PEA;519595;Otros gastos diversos;;Peajes del mes;1.367.800;0
+2026-07-06;CE-2607-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.367.800
+2026-07-18;CE-2607-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;8.175.400;0
+2026-07-18;CE-2607-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;8.175.400
+2026-07-31;CE-2607-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-07-31;CE-2607-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-07-31;CE-2607-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-07-31;CE-2607-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-07-31;CE-2607-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-07-31;CE-2607-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-07-02;CE-2607-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-07-02;CE-2607-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-07-26;CE-2607-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;1.008.000;0
+2026-07-26;CE-2607-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-07-26;CE-2607-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;3.008.000
+2026-07-31;NC-2607-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-07-31;NC-2607-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-07-31;CE-2607-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-07-31;CE-2607-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-07-31;CE-2607-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-07-31;NC-2607-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-07-31;NC-2607-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-08-01;RC-2608-SOC;111005;Bancos - moneda nacional;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;15.000.000;0
+2026-08-01;RC-2608-SOC;235505;Deudas con accionistas o socios;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;0;15.000.000
+2026-08-10;RC-2608-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);5.472.225;0
+2026-08-10;RC-2608-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);55.275;0
+2026-08-10;RC-2608-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;5.527.500
+2026-08-10;RC-2608-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);3.283.335;0
+2026-08-10;RC-2608-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);33.165;0
+2026-08-10;RC-2608-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;3.316.500
+2026-08-10;RC-2608-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.188.890;0
+2026-08-10;RC-2608-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);22.110;0
+2026-08-10;RC-2608-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.211.000
+2026-08-15;CE-2608-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-08-15;CE-2608-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-08-08;FV-0058;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;6.269.400;0
+2026-08-08;FV-0058;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;6.269.400
+2026-08-15;FV-0059;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.761.600;0
+2026-08-15;FV-0059;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.761.600
+2026-08-22;FV-0060;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.507.700;0
+2026-08-22;FV-0060;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.507.700
+2026-08-06;CE-2608-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.758.500;0
+2026-08-06;CE-2608-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.758.500
+2026-08-06;CE-2608-PEA;519595;Otros gastos diversos;;Peajes del mes;1.360.700;0
+2026-08-06;CE-2608-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.360.700
+2026-08-18;CE-2608-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.605.200;0
+2026-08-18;CE-2608-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.605.200
+2026-08-31;CE-2608-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-08-31;CE-2608-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-08-31;CE-2608-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-08-31;CE-2608-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-08-31;CE-2608-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-08-31;CE-2608-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-08-02;CE-2608-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-08-02;CE-2608-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-08-26;CE-2608-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;984.000;0
+2026-08-26;CE-2608-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-08-26;CE-2608-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;2.984.000
+2026-08-31;NC-2608-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-08-31;NC-2608-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-08-31;CE-2608-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-08-31;CE-2608-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-08-31;CE-2608-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-08-31;NC-2608-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-08-31;NC-2608-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000
+2026-09-01;RC-2609-SOC;111005;Bancos - moneda nacional;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;15.000.000;0
+2026-09-01;RC-2609-SOC;235505;Deudas con accionistas o socios;RICARDO ANTONIO VELASCO PRADO;Préstamo del socio para capital de trabajo;0;15.000.000
+2026-09-10;RC-2609-400;111005;Bancos - moneda nacional;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);6.206.706;0
+2026-09-10;RC-2609-400;135515;Retención en la fuente;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);62.694;0
+2026-09-10;RC-2609-400;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Pago de factura de flete (retención 1 %);0;6.269.400
+2026-09-10;RC-2609-432;111005;Bancos - moneda nacional;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);3.723.984;0
+2026-09-10;RC-2609-432;135515;Retención en la fuente;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);37.616;0
+2026-09-10;RC-2609-432;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Pago de factura de flete (retención 1 %);0;3.761.600
+2026-09-10;RC-2609-131;111005;Bancos - moneda nacional;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);2.482.623;0
+2026-09-10;RC-2609-131;135515;Retención en la fuente;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);25.077;0
+2026-09-10;RC-2609-131;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Pago de factura de flete (retención 1 %);0;2.507.700
+2026-09-15;CE-2609-RTE;236515;Retención en la fuente - honorarios;;Pago retención en la fuente del mes anterior;99.000;0
+2026-09-15;CE-2609-RTE;111005;Bancos - moneda nacional;;Pago retención en la fuente del mes anterior;0;99.000
+2026-09-08;FV-0061;130505;Clientes nacionales;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;5.601.800;0
+2026-09-08;FV-0061;414505;Transporte, almacenamiento y comunicaciones;INGENIO LA PRIMAVERA DEL VALLE (demo);Flete de carga terrestre;0;5.601.800
+2026-09-15;FV-0062;130505;Clientes nacionales;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;3.361.100;0
+2026-09-15;FV-0062;414505;Transporte, almacenamiento y comunicaciones;COMERCIALIZADORA AGRÍCOLA PALMIRA (demo);Flete de carga terrestre;0;3.361.100
+2026-09-22;FV-0063;130505;Clientes nacionales;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;2.240.700;0
+2026-09-22;FV-0063;414505;Transporte, almacenamiento y comunicaciones;LOGÍSTICA DEL PACÍFICO S.A.S. (demo);Flete de carga terrestre;0;2.240.700
+2026-09-06;CE-2609-COM;519535;Combustibles y lubricantes;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;2.464.800;0
+2026-09-06;CE-2609-COM;111005;Bancos - moneda nacional;ESTACIÓN DE SERVICIO LA RECTA (demo);Combustible ACPM de los camiones;0;2.464.800
+2026-09-06;CE-2609-PEA;519595;Otros gastos diversos;;Peajes del mes;1.224.700;0
+2026-09-06;CE-2609-PEA;111005;Bancos - moneda nacional;;Peajes del mes;0;1.224.700
+2026-09-18;CE-2609-MTO;514540;Mantenimiento y reparaciones;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;1.369.600;0
+2026-09-18;CE-2609-MTO;111005;Bancos - moneda nacional;TECNIDIÉSEL PALMIRA (demo);Mantenimiento y llantas de la flota;0;1.369.600
+2026-09-30;CE-2609-NOM;510506;Sueldos;;Nómina de conductores y aportes;5.000.000;0
+2026-09-30;CE-2609-NOM;510527;Auxilio de transporte;;Nómina de conductores y aportes;498.190;0
+2026-09-30;CE-2609-NOM;510570;Aportes a fondos de pensiones;;Nómina de conductores y aportes;600.000;0
+2026-09-30;CE-2609-NOM;510568;Aportes a administradoras de riesgos laborales (ARL);;Nómina de conductores y aportes;348.000;0
+2026-09-30;CE-2609-NOM;510572;Aportes cajas de compensación familiar;;Nómina de conductores y aportes;200.000;0
+2026-09-30;CE-2609-NOM;111005;Bancos - moneda nacional;;Nómina de conductores y aportes;0;6.646.190
+2026-09-02;CE-2609-SEG;513040;Seguros;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;1.400.000;0
+2026-09-02;CE-2609-SEG;111005;Bancos - moneda nacional;ASEGURADORA DEMO S.A.;Póliza de seguros de los vehículos;0;1.400.000
+2026-09-26;CE-2609-PRE;530520;Intereses;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;960.000;0
+2026-09-26;CE-2609-PRE;210510;Bancos nacionales;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;2.000.000;0
+2026-09-26;CE-2609-PRE;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Cuota del préstamo: intereses y abono a capital;0;2.960.000
+2026-09-30;NC-2609-DEP;516035;Depreciación flota y equipo de transporte;;Depreciación mensual de la flota;2.250.000;0
+2026-09-30;NC-2609-DEP;159235;Depreciación acumulada - flota y equipo de transporte;;Depreciación mensual de la flota;0;2.250.000
+2026-09-30;CE-2609-HON;511025;Honorarios;Carlos Cruz — asesoría contable;Honorarios contables;900.000;0
+2026-09-30;CE-2609-HON;236515;Retención en la fuente - honorarios;Carlos Cruz — asesoría contable;Honorarios contables;0;99.000
+2026-09-30;CE-2609-HON;111005;Bancos - moneda nacional;Carlos Cruz — asesoría contable;Honorarios contables;0;801.000
+2026-09-30;NC-2609-BAN;530505;Gastos bancarios;BANCO DEMO DEL VALLE;Gastos bancarios;35.000;0
+2026-09-30;NC-2609-BAN;111005;Bancos - moneda nacional;BANCO DEMO DEL VALLE;Gastos bancarios;0;35.000

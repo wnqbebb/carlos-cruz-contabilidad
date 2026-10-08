@@ -1,8 +1,8 @@
 import { Plus, X } from "lucide-react";
 import { Cabecera } from "../componentes/Marco";
 import { useCallback, useEffect, useState } from "react";
-import { sistema } from "../api";
-import { Campo, estiloCampo, estiloCampoAuto } from "../componentes/ui";
+import { clientes as apiClientes, sistema } from "../api";
+import { Aviso, Boton, Campo, Dialogo, estiloCampo, estiloCampoAuto } from "../componentes/ui";
 import { clases, fecha, fechaLarga, numero, pesos, sumar } from "../formato";
 import { cargarContador } from "../contador";
 import type { Contador, Salud } from "../tipos";
@@ -408,6 +408,91 @@ function Sistema() {
           </div>
         </dl>
       )}
+      <ClientesDemostracion />
     </section>
+  );
+}
+
+/* ── clientes de demostración: se borran todos juntos, nunca un cliente real ── */
+function ClientesDemostracion() {
+  const [lista, setLista] = useState<{ id: string; razon_social: string }[] | null>(null);
+  const [abierto, setAbierto] = useState(false);
+  const [trabajando, setTrabajando] = useState(false);
+  const [error, setError] = useState("");
+  const avisar = useAvisos();
+  const cargar = useCallback(() => {
+    apiClientes.demostracion().then((r) => setLista(r.clientes)).catch((e) => setError((e as Error).message));
+  }, []);
+  useEffect(() => {
+    cargar();
+  }, [cargar]);
+
+  const eliminar = async () => {
+    setTrabajando(true);
+    setError("");
+    try {
+      const r = await apiClientes.eliminarDemostracion();
+      avisar(`Se eliminaron ${r.eliminados} cliente(s) de demostración.`);
+      setAbierto(false);
+      cargar();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setTrabajando(false);
+    }
+  };
+
+  return (
+    <div className="material-hoja px-6 py-5">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <h3 className="t-h2 text-tinta">Clientes de demostración</h3>
+          <p className="t-small mt-1 max-w-[60ch] text-grafito">
+            {lista === null
+              ? "Consultando…"
+              : lista.length
+                ? `Hay ${lista.length} cliente(s) con la etiqueta «Demostración», con datos inventados para mostrar la aplicación.`
+                : "No hay clientes de demostración cargados."}
+          </p>
+        </div>
+        {!!lista?.length && (
+          <Boton variante="peligro" onClick={() => setAbierto(true)}>
+            Eliminar clientes de demostración
+          </Boton>
+        )}
+      </div>
+      {error && !abierto && <p className="t-small mt-3 text-rojo">{error}</p>}
+      {abierto && lista && (
+        <Dialogo
+          rotulo="Acción irreversible"
+          titulo="Eliminar clientes de demostración"
+          onCerrar={() => setAbierto(false)}
+          ancho="max-w-lg"
+          pie={
+            <>
+              <Boton variante="fantasma" onClick={() => setAbierto(false)}>
+                Cancelar
+              </Boton>
+              <Boton variante="peligro" cargando={trabajando} onClick={eliminar}>
+                Eliminar {lista.length} cliente(s)
+              </Boton>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <Aviso tono="rojo" titulo="Esto no se puede deshacer">
+              Se borran estos clientes con todos sus periodos, movimientos y su rastro en la bitácora. Ningún otro
+              cliente se toca: solo los marcados como demostración.
+            </Aviso>
+            <ul className="t-small list-disc space-y-1 pl-5 text-tinta">
+              {lista.map((c) => (
+                <li key={c.id}>{c.razon_social}</li>
+              ))}
+            </ul>
+            {error && <p className="t-small text-rojo">{error}</p>}
+          </div>
+        </Dialogo>
+      )}
+    </div>
   );
 }

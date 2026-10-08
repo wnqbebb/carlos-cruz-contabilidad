@@ -217,14 +217,15 @@ def cambios_patrimonio(mayor: dict[str, CuentaMayor], utilidad: Decimal, empresa
     claves = ["inicial", "aumentos", "disminuciones", "resultado", "final"]
     k.agregar("total", {"cuenta": "TOTAL PATRIMONIO", **{x: sum((k.filas[i]["valores"][x] for i in idx), CERO) for x in claves}}, suma=idx)
     notas = []
-    if utilidad > 0:
+    if utilidad > 0 and empresa.tipo_persona != "natural":
         reserva_actual = sum((-c.neto for c in mayor.values() if c.codigo.startswith("3305")), CERO)
         tope = empresa.capital_suscrito * Decimal("0.5")
         propuesta = min(redondear(utilidad * Decimal("0.10"), 2), max(tope - reserva_actual, CERO))
         notas.append(
-            f"Proyecto de distribución (art. 33 estatutos): apropiar reserva legal del 10 % de la utilidad líquida = {pesos(propuesta)} "
-            f"(reserva actual {pesos(reserva_actual)}, tope 50 % del capital suscrito {pesos(tope)}). "
-            f"Utilidad a disposición de la asamblea: {pesos(utilidad - propuesta)}, a repartir en proporción a las acciones (art. 34).")
+            f"Proyecto de distribución (sugerido): reserva legal del 10 % de la utilidad líquida = {pesos(propuesta)} "
+            f"(reserva actual {pesos(reserva_actual)}, tope 50 % del capital suscrito {pesos(tope)}; art. 452 del Código de "
+            f"Comercio, confirme en los estatutos si aplica). Utilidad a disposición de la asamblea: "
+            f"{pesos(utilidad - propuesta)}, a repartir en proporción a las acciones o cuotas.")
     return reporte("cambios_patrimonio", "ESTADO DE CAMBIOS EN EL PATRIMONIO", subtitulo, cols, k.filas, firmas=True, notas=notas)
 
 

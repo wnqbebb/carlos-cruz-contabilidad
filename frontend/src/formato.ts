@@ -188,6 +188,14 @@ export function periodoCorto(desde: string, hasta: string): string {
     const mes = MESES[Number(m1) - 1] ?? "";
     return `${mes.charAt(0).toUpperCase()}${mes.slice(1)} ${a1}`;
   }
+  // Meses completos (bimestre, trimestre…): «Enero – febrero 2025», «Diciembre 2025 – enero 2026».
+  const d2 = hasta.slice(8, 10);
+  if (d1 === "01" && Number(d2) === new Date(Number(a2), Number(m2), 0).getDate()) {
+    const ini = MESES[Number(m1) - 1] ?? "";
+    const fin = MESES[Number(m2) - 1] ?? "";
+    const Ini = `${ini.charAt(0).toUpperCase()}${ini.slice(1)}`;
+    return a1 === a2 ? `${Ini} – ${fin} ${a2}` : `${Ini} ${a1} – ${fin} ${a2}`;
+  }
   return `${fecha(desde)} – ${fecha(hasta)}`;
 }
 

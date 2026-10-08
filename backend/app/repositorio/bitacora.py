@@ -15,7 +15,7 @@ import logging
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import delete, desc, insert, select
+from sqlalchemy import delete, desc, insert, select, update
 
 from ..db import conexion, lectura
 from ..esquema import bitacora as T
@@ -29,6 +29,7 @@ ACCIONES = {
     "cliente_archivado": "Cliente archivado",
     "cliente_restaurado": "Cliente restaurado",
     "cliente_eliminado": "Cliente eliminado",
+    "clientes_demo_eliminados": "Clientes de demostración eliminados",
     "clientes_importados": "Directorio importado",
     "archivos_subidos": "Archivos subidos",
     "periodo_calculado": "Periodo calculado",
@@ -69,6 +70,19 @@ def registrar(accion: str, cliente_id: str | None = None, **detalle) -> None:
             ))
     except Exception as ex:  # pragma: no cover - la bitácora jamás frena el trabajo
         log.warning("No se pudo registrar «%s» en la bitácora: %s", accion, ex)
+
+
+def asociar_subida(subida_id: str, cliente_id: str) -> None:
+    """La subida que dio de alta a un cliente se registró antes de que él existiera: se le asigna ahora."""
+    try:
+        with conexion() as cn:
+            filas = cn.execute(select(T.c.id, T.c.detalle).where(T.c.cliente_id.is_(None), T.c.accion == "archivos_subidos")
+                               .order_by(desc(T.c.id)).limit(50)).all()
+            ids = [f.id for f in filas if (f.detalle or {}).get("subida") == subida_id]
+            if ids:
+                cn.execute(update(T).where(T.c.id.in_(ids)).values(cliente_id=cliente_id))
+    except Exception as ex:  # pragma: no cover
+        log.warning("No se pudo asociar la subida %s al cliente: %s", subida_id, ex)
 
 
 def listar(cliente_id: str | None = None, limite: int = 50) -> list[dict]:
