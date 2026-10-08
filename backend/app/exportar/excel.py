@@ -30,7 +30,7 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from ..contabilidad.estados import resultados
 from ..contabilidad.mayor import CuentaMayor
-from ..modelos import Alerta, Empresa
+from ..modelos import Empresa
 from ..utils.numeros import CERO
 
 # ── paleta: los mismos tokens de la interfaz (frontend/src/styles/tokens.css) ──

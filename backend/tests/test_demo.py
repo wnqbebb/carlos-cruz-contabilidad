@@ -63,7 +63,9 @@ def test_eliminar_demostracion_no_toca_clientes_reales(api_demo, cliente_api):
     assert cliente_api.get("/api/clientes/demostracion").json()["clientes"] == []
     assert cliente_api.get(f"/api/clientes/{real['id']}").status_code == 200
     # Su rastro en la bitácora también se va (no quedan actividades huérfanas en el tablero).
-    assert "cuentas finca" not in str(cliente_api.get("/api/actividad").json())
+    from app.repositorio import bitacora
+
+    assert "cuentas finca" not in str(bitacora.listar(None, 200))
     # Una segunda vez no hace nada.
     assert cliente_api.post("/api/clientes/demostracion/eliminar").json()["eliminados"] == 0
 

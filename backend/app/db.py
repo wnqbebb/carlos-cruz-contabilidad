@@ -6,11 +6,13 @@ módulos de `app/repositorio/`. Aquí solo vive la conexión y su diagnóstico.
 from __future__ import annotations
 
 import logging
+import time
 from contextlib import contextmanager
-from typing import Iterator
+from typing import Callable, Iterator, TypeVar
 
 from sqlalchemy import create_engine, event, text
 from sqlalchemy.engine import Connection, Engine
+from sqlalchemy.exc import DBAPIError, InterfaceError, OperationalError
 
 from .config import DB_URL, ES_POSTGRES
 from .esquema import metadatos
@@ -64,6 +66,47 @@ def _crear_motor() -> Engine:
 
 
 motor_db: Engine = _crear_motor()
+
+# ── reintentos (H20) ────────────────────────────────────────────────────────
+# Supabase está al otro lado del continente y el internet de una oficina se
+# cae a ratos. Un fallo al CONECTAR se reintenta con espera creciente; si sigue
+# sin responder, se dice en español qué pasa y que nada guardado se perdió.
+ESPERAS = (0.5, 1.5, 3.0)
+T = TypeVar("T")
+
+
+class BaseNoDisponible(RuntimeError):
+    """La base no respondió después de los reintentos."""
+
+    def __init__(self, causa: Exception | None = None):
+        self.causa = causa
+        donde = "la base de datos en la nube (Supabase)" if ES_POSTGRES else "la base de datos de este equipo"
+        super().__init__(
+            f"No hay conexión con {donde}: se intentó {len(ESPERAS) + 1} veces durante unos "
+            f"{sum(ESPERAS):.0f} segundos. Revise el internet de este equipo y vuelva a intentar en un momento. "
+            "Lo que ya estaba guardado no se perdió.")
+
+
+def es_falla_de_conexion(ex: BaseException) -> bool:
+    return isinstance(ex, (OperationalError, InterfaceError)) or bool(getattr(ex, "connection_invalidated", False))
+
+
+def con_reintentos(abrir: Callable[[], T], esperas: tuple[float, ...] = ESPERAS) -> T:
+    """Ejecuta `abrir` y, si falla la conexión, reintenta tras cada espera."""
+    for intento, espera in enumerate((0.0, *esperas)):
+        if espera:
+            time.sleep(espera)
+        try:
+            return abrir()
+        except DBAPIError as ex:
+            if not es_falla_de_conexion(ex):
+                raise
+            if intento == len(esperas):
+                log.error("La base no respondió tras %s intentos: %s", intento + 1, ex)
+                raise BaseNoDisponible(ex) from ex
+            log.warning("La base no respondió (intento %s): %s. Se reintenta en %.1f s.",
+                        intento + 1, str(ex).splitlines()[0], esperas[intento])
+    raise AssertionError("inalcanzable")  # pragma: no cover
 
 _tablas_listas = False
 
@@ -120,8 +163,8 @@ def _columnas_nuevas() -> None:
 @contextmanager
 def conexion() -> Iterator[Connection]:
     """Conexión con transacción: confirma al salir bien, revierte si hay error."""
-    preparar()
-    with motor_db.begin() as cn:
+    con_reintentos(preparar)
+    with con_reintentos(motor_db.connect) as cn, cn.begin():
         yield cn
 
 
@@ -135,8 +178,8 @@ def lectura() -> Iterator[Connection]:
     que ese rollback inútil era medio segundo de más en cada pantalla.
     Aquí no se escribe nada, así que no hay nada que revertir.
     """
-    preparar()
-    with motor_db.connect().execution_options(isolation_level="AUTOCOMMIT") as cn:
+    con_reintentos(preparar)
+    with con_reintentos(motor_db.connect).execution_options(isolation_level="AUTOCOMMIT") as cn:
         yield cn
 
 

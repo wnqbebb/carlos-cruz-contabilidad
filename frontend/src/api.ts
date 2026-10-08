@@ -49,16 +49,28 @@ export class ErrorApi extends Error {
   }
 }
 
+/** Esperas antes de reintentar una LECTURA que no obtuvo respuesta (H20). */
+const ESPERAS_REINTENTO = [800, 2000];
+const dormir = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
+
 async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
-  let r: Response;
-  try {
-    r = await fetch(BASE + ruta, opciones);
-  } catch {
-    throw new ErrorApi(
-      "No se pudo contactar el servidor. Revise que el backend esté encendido y vuelva a intentar.",
-      0,
-      "sin_conexion",
-    );
+  // Solo las lecturas se repiten: repetir una escritura podría hacerla dos veces.
+  const esLectura = !opciones?.method || opciones.method === "GET";
+  let r: Response | null = null;
+  for (let intento = 0; ; intento++) {
+    try {
+      r = await fetch(BASE + ruta, opciones);
+      if (!(esLectura && r.status === 503 && intento < ESPERAS_REINTENTO.length)) break;
+    } catch {
+      if (!(esLectura && intento < ESPERAS_REINTENTO.length)) {
+        throw new ErrorApi(
+          "No se pudo contactar el servidor. Revise que el programa esté abierto y vuelva a intentar.",
+          0,
+          "sin_conexion",
+        );
+      }
+    }
+    await dormir(ESPERAS_REINTENTO[intento]);
   }
   if (!r.ok) {
     let detalle = `${r.status} ${r.statusText}`;
@@ -143,7 +155,6 @@ export const clientes = {
     archivos.forEach((a) => fd.append("archivos", a));
     return pedir<ComparacionFicha>(`/api/clientes/${id}/ficha/comparar`, { method: "POST", body: fd });
   },
-  resumen: () => pedir<{ clientes: ConteoClientes; trabajo: Tablero["trabajo"] }>("/api/clientes/resumen"),
   buscar: (q: string, limite = 8) =>
     pedir<{ q: string; resultados: ResultadoBusqueda[] }>(`/api/buscar${qs({ q, limite })}`),
 
@@ -155,7 +166,6 @@ export const clientes = {
       body: fd,
     });
   },
-  urlPlantilla: () => `${BASE}/api/clientes/plantilla`,
 };
 
 /* ── histórico y análisis ──────────────────────────────────────────────── */
@@ -181,15 +191,12 @@ export const analisis = {
     ),
   versiones: (periodoId: string) =>
     pedir<{ versiones: VersionPeriodo[] }>(`/api/periodos/${periodoId}/versiones`),
-  version: (versionId: number) => pedir<Record<string, any>>(`/api/versiones/${versionId}`),
   restaurarVersion: (versionId: number) =>
     pedir<Periodo>(`/api/versiones/${versionId}/restaurar`, { method: "POST" }),
   actividad: (clienteId: string, limite = 40) =>
     pedir<{ actividad: Actividad[]; importaciones: ArchivoImportado[] }>(
       `/api/clientes/${clienteId}/actividad${qs({ limite })}`,
     ),
-  actividadGeneral: (limite = 20) =>
-    pedir<{ actividad: Actividad[] }>(`/api/actividad${qs({ limite })}`),
 
   notaPeriodo: (periodoId: string, nota: string) =>
     pedir<Periodo>(`/api/periodos/${periodoId}`, { method: "PATCH", ...json({ nota }) }),
@@ -245,7 +252,6 @@ export const puerta = {
   ) {
     return pedir<Confirmacion>(`/api/subir/${subidaId}/confirmar`, { method: "POST", ...json(cuerpo) });
   },
-  ver: (subidaId: string) => pedir<Propuesta>(`/api/subir/${subidaId}`),
   /** Solo identidad: lo usa el formulario de cliente nuevo para llenarse solo. */
   identidad(archivos: File[]) {
     const fd = new FormData();
@@ -263,7 +269,6 @@ export const descargas = {
   pdf: (sid: string) => `${BASE}/api/exportar/${sid}/pdf`,
   saldos: (sid: string) => `${BASE}/api/exportar/${sid}/saldos`,
   plantilla: `${BASE}/api/plantilla`,
-  plantillaDemo: `${BASE}/api/plantilla-demo`,
   plantillaCaso: (caso: string) => `${BASE}/api/plantilla-demo?caso=${caso}`,
   plantillaClientes: `${BASE}/api/clientes/plantilla`,
   // Descargas de un periodo ya guardado: no hace falta volver a subir los Excel.

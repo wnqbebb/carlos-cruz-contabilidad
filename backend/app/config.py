@@ -34,7 +34,7 @@ def _cargar_env() -> None:
 
     No sobreescribe variables ya definidas en el entorno. `CC_ENV` permite
     apuntar a otro archivo, que es lo que hace la versión instalada: guarda la
-    configuración en Documentos\Carlos Cruz, no junto al programa.
+    configuración en «Documentos › Carlos Cruz», no junto al programa.
     """
     candidatos = []
     propio = (os.getenv("CC_ENV") or "").strip()

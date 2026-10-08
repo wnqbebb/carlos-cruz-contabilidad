@@ -34,6 +34,24 @@ EXTENSIONES = (".xlsx", ".xlsm", ".xls", ".csv", ".txt", ".pdf", ".docx")
 ARCHIVOS_EJEMPLO = ["CONTABILIDAD.xls", "ESTADOS_FINANCIEROS.xlsx", "NOMINA__enero__2025.xlsx"]
 
 
+def tiene_archivos_de_muestra(nit: str) -> bool:
+    """¿Hay en este equipo archivos de muestra de ESTE cliente? (H10)
+
+    Los archivos de muestra son de una sola empresa (la de `data/empresa_fanant.json`)
+    y viven fuera del repositorio. Solo se ofrecen en su ficha y solo si están.
+    """
+    import json
+
+    from ..config import DATA
+    from ..utils.nit import limpiar
+
+    try:
+        dueño = json.loads((DATA / "empresa_fanant.json").read_text(encoding="utf-8")).get("nit", "")
+    except (OSError, ValueError):
+        return False
+    return bool(nit) and limpiar(nit) == limpiar(dueño) and all((FUENTES / n).exists() for n in ARCHIVOS_EJEMPLO)
+
+
 # ── utilidades internas ─────────────────────────────────────────────────────
 def _sesion(sid: str) -> dict:
     try:
@@ -216,9 +234,9 @@ async def importar(archivos: list[UploadFile] = File(...), cliente_id: str = Que
 
 @router.post("/importar/ejemplo")
 def importar_ejemplo(cliente_id: str = Query("")):
-    faltan = [n for n in ARCHIVOS_EJEMPLO if not (FUENTES / n).exists()]
-    if faltan:
-        raise HTTPException(404, f"No se encuentran los archivos de ejemplo: {', '.join(faltan)}")
+    _, cliente = _empresa_base(cliente_id or None)
+    if not cliente or not tiene_archivos_de_muestra(cliente.get("nit", "")):
+        raise HTTPException(404, "Este cliente no tiene archivos de muestra en este equipo.")
     return _importar([(n, (FUENTES / n).read_bytes()) for n in ARCHIVOS_EJEMPLO], cliente_id or None)
 
 
@@ -503,11 +521,3 @@ def descargar_plantilla():
                     headers={"Content-Disposition": 'attachment; filename="plantilla_contable_CarlosCruz.xlsx"'})
 
 
-@router.get("/plantilla-demo")
-def descargar_demo(caso: str = Query("completo")):
-    clave = (caso or "completo").lower()
-    return Response(
-        gen_plantilla.construir(caso=clave),
-        media_type=XLSX,
-        headers={"Content-Disposition": f'attachment; filename="ejemplo_{clave}_CarlosCruz.xlsx"'},
-    )

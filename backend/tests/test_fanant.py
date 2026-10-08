@@ -267,8 +267,20 @@ def test_excel_desde_un_periodo_guardado(empresa):
 def test_api(tmp_path):
     from fastapi.testclient import TestClient
     from app.main import app
+    import json
+
+    from app.config import DATA
+
     c = TestClient(app)
-    r = c.post("/api/importar/ejemplo")
+    ficha = json.loads((DATA / "empresa_fanant.json").read_text(encoding="utf-8"))
+    otro = c.post("/api/clientes", json={"nit": "900123458", "razon_social": "OTRO CLIENTE S.A.S."}).json()
+    # Los archivos de muestra solo se ofrecen en la ficha de su dueño (H10).
+    assert c.get(f"/api/clientes/{otro['id']}").json()["archivos_de_muestra"] is False
+    assert c.post(f"/api/importar/ejemplo?cliente_id={otro['id']}").status_code == 404
+    creado = c.post("/api/clientes", json={"nit": ficha["nit"], "razon_social": ficha["razon_social"]})
+    fanant = creado.json() if creado.status_code == 200 else c.get(f"/api/clientes?q={ficha['nit']}&estado=").json()["clientes"][0]
+    assert c.get(f"/api/clientes/{fanant['id']}").json()["archivos_de_muestra"] is True
+    r = c.post(f"/api/importar/ejemplo?cliente_id={fanant['id']}")
     assert r.status_code == 200
     datos = r.json()
     assert datos["periodo_sugerido"]["desde"] == "2025-01-01"
@@ -305,3 +317,16 @@ def test_cifras_de_control_fanant_enero_2025(detectar, empresa):
     r = res["resumen"]
     assert (r["total_activo"], r["total_pasivo"], r["total_patrimonio"]) == (D("37144505"), D("2202480.72"), D("34942024.28"))
     assert r["utilidad_neta"] == D("-2857975.72") and r["ingresos"] == D("22641")
+
+
+def test_iva_con_saldo_debito_se_reclasifica_por_defecto_y_se_avisa(detectar, empresa):
+    """H22: sin decisión del contador, el IVA con saldo débito pasa a IVA descontable, con aviso."""
+    dets = detectar("CONTABILIDAD.xls", "NOMINA__enero__2025.xlsx")
+    _, res = _calcular(dets, empresa, decisiones={"nomina_causacion": True})
+    recl = next(a for a in res["ajustes"] if a["id"] == "recl_iva")
+    assert recl["aceptado"] and recl["aceptado_defecto"]
+    assert any(a.codigo == "RECL-NATURALEZA" for a in res["alertas"])
+    saldos = {s["codigo"]: s for s in res["saldos_siguiente"]}
+    assert "240805" not in saldos or D(saldos["240805"]["debito"]) == 0
+    # El activo no cambia; el pasivo deja de ser 2.280 menor de lo que debe.
+    assert res["resumen"]["total_activo"] == D("37144505")

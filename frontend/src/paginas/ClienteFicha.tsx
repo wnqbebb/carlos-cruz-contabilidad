@@ -1086,16 +1086,15 @@ function resumirDetalle(d: Record<string, unknown>): string {
 
 /* ── archivos reales de ejemplo, SOLO en la ficha de quien los tiene (H10) ──
    Antes este botón salía en el paso «Subir» de cualquier cliente, así que
-   podía meterse la contabilidad de una empresa en el expediente de otra. */
-const NIT_CON_ARCHIVOS_DE_MUESTRA = "[NIT]";
+   podía meterse la contabilidad de una empresa en el expediente de otra. El
+   backend dice si este cliente tiene archivos de muestra en este equipo. */
 
 function ArchivosDeMuestra({ cliente }: { cliente: Cliente }) {
   const navegar = useNavigate();
   const [cargando, setCargando] = useState(false);
   const avisar = useAvisos();
 
-  const soloDigitos = (cliente.nit || "").replace(/\D/g, "");
-  if (soloDigitos !== NIT_CON_ARCHIVOS_DE_MUESTRA) return null;
+  if (!cliente.archivos_de_muestra) return null;
 
   return (
     <BotonFantasma

@@ -129,6 +129,8 @@ export interface Cliente {
   creado: string;
   actualizado: string;
   socios?: Socio[];
+  /** El backend tiene archivos de muestra de este cliente en este equipo (solo en GET de un cliente). */
+  archivos_de_muestra?: boolean;
   /* v2.2 · Fase 6: lo que traen estatutos, RUT y cámara de comercio. */
   tipo_sociedad: string;
   objeto_social: string;

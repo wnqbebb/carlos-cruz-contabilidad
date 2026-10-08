@@ -251,9 +251,12 @@ def calcular(paquete: Paquete, empresa: Empresa, config: Config, decisiones: dic
     _, contrarias = val.naturaleza(mayor_pre)
     for codigo, valor in contrarias:
         if codigo.startswith("240805"):
+            # H22: una cuenta con saldo de naturaleza contraria deja el balance con un pasivo
+            # negativo. La reclasificación se acepta por defecto y se avisa; el contador la
+            # puede desmarcar en «Ajustes».
             propuestos.append(aj.reclasificacion("recl_iva", "Reclasificar IVA pagado a IVA descontable (E6)",
                                                  f"La cuenta {codigo} quedó con saldo débito de {pesos(valor)}: es IVA pagado en compras.",
-                                                 "240810", codigo, valor))
+                                                 "240810", codigo, valor, defecto=True))
     for cuenta, valor in gastos_pers.items():
         propuestos.append(aj.reclasificacion(f"recl_personales_{cuenta}", "Reclasificar gastos personales a cuenta por cobrar a socios (E14)",
                                              f"{pesos(valor)} de gastos personales no son gasto de la empresa.", "132505", cuenta, valor))
@@ -268,6 +271,11 @@ def calcular(paquete: Paquete, empresa: Empresa, config: Config, decisiones: dic
 
     for a in propuestos:
         a.aceptado = decisiones.get(a.id, a.aceptado_defecto)
+        if a.id == "recl_iva" and a.aceptado and a.id not in decisiones:
+            alertas.append(Alerta(
+                "RECL-NATURALEZA", "advertencia",
+                f"Se reclasificó por defecto {pesos(a.lineas[0].debito)} de IVA con saldo débito a IVA descontable (240810), "
+                "para que el balance no muestre un pasivo negativo. Si no corresponde, desmárquelo en «Ajustes» y recalcule."))
 
     # A4 · Causación de nómina aceptada con sueldos ya registrados en el diario:
     # puede ser el mismo salario dos veces. No se impide (el contador sabe si son

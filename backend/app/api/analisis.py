@@ -63,14 +63,6 @@ def sugerencias_del_cliente(cliente_id: str):
 
 
 # ── un periodo concreto ─────────────────────────────────────────────────────
-@router.get("/periodos/{periodo_id}")
-def periodo(periodo_id: str):
-    try:
-        return repo.obtener(periodo_id)
-    except repo.ErrorPeriodo as ex:
-        raise HTTPException(404, str(ex)) from ex
-
-
 @router.patch("/periodos/{periodo_id}")
 def nota_del_periodo(periodo_id: str, datos: dict = Body(...)):
     """Solo la nota de revisión: las cifras de un periodo se cambian recalculando, nunca a mano."""
@@ -119,14 +111,6 @@ def versiones_del_periodo(periodo_id: str):
     return {"versiones": repo.versiones(periodo_id)}
 
 
-@router.get("/versiones/{version_id}")
-def ver_version(version_id: int):
-    try:
-        return repo.version(version_id)
-    except repo.ErrorPeriodo as ex:
-        raise HTTPException(404, str(ex)) from ex
-
-
 @router.post("/versiones/{version_id}/restaurar")
 def restaurar_version(version_id: int):
     """Devuelve el periodo al estado de esa versión. El estado actual queda como versión nueva."""
@@ -145,12 +129,6 @@ def actividad_del_cliente(cliente_id: str, limite: int = Query(40, ge=1, le=200)
     _cliente(cliente_id)
     return {"actividad": bitacora.listar(cliente_id, limite),
             "importaciones": importaciones.listar(cliente_id, 20)}
-
-
-@router.get("/actividad")
-def actividad_general(limite: int = Query(20, ge=1, le=200)):
-    """Últimas acciones de toda la cartera, para el Tablero."""
-    return {"actividad": bitacora.listar(None, limite)}
 
 
 @router.delete("/periodos/{periodo_id}")

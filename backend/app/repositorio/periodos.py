@@ -17,7 +17,6 @@ from typing import Iterable
 
 from sqlalchemy import and_, case, delete, func, insert, select, update
 
-from ..config import ES_POSTGRES
 from ..db import conexion, lectura
 from ..esquema import cierres as TC
 from ..esquema import historial_periodos as TH
@@ -590,44 +589,6 @@ def resumen_global() -> dict:
         "descuadrados": int(f[3] or 0),
         "ultimo_corte": f[4].isoformat() if f[4] else "",
     }
-
-
-def serie_cartera(limite_meses: int = 12) -> list[dict]:
-    """Totales de TODA la cartera por mes de corte, para la gráfica del tablero.
-
-    La suma la hace la base, agrupando por mes. La versión anterior se traía las
-    filas y agrupaba en Python con un `limit(2000)`: con 5.000 clientes eso no
-    alcanzaba ni para un mes completo y la gráfica salía incompleta sin avisar.
-    """
-    # El nombre de la función de fecha cambia entre motores; no hay una portable.
-    mes = (func.to_char(TP.c.hasta, "YYYY-MM") if ES_POSTGRES
-           else func.strftime("%Y-%m", TP.c.hasta))
-
-    with lectura() as cn:
-        filas = cn.execute(
-            select(
-                mes.label("mes"),
-                func.sum(TP.c.total_ingresos),
-                func.sum(TP.c.total_gastos),
-                func.sum(TP.c.utilidad),
-                func.count(),
-            )
-            .where(TP.c.estado != "borrador")
-            .group_by(mes)
-            .order_by(mes.desc())
-            .limit(max(2, min(int(limite_meses or 12), 60)))
-        ).all()
-
-    return [
-        {
-            "mes": f[0],
-            "total_ingresos": _txt(f[1]) or "0",
-            "total_gastos": _txt(f[2]) or "0",
-            "utilidad": _txt(f[3]) or "0",
-            "periodos": int(f[4] or 0),
-        }
-        for f in reversed(filas)
-    ]
 
 
 def series_de_varios(cliente_ids: list[str], limite_por_cliente: int = 36) -> dict[str, list[dict]]:

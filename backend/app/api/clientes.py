@@ -5,10 +5,8 @@ from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
 from fastapi.responses import Response
 
 from ..importadores import clientes_excel
-from ..repositorio import alias as repo_alias
 from ..repositorio import bitacora
 from ..repositorio import clientes as repo
-from ..repositorio import periodos as repo_periodos
 
 router = APIRouter(prefix="/api/clientes", tags=["clientes"])
 
@@ -46,18 +44,6 @@ def eliminar_demostracion():
         bitacora.registrar("clientes_demo_eliminados", None, eliminados=salida["eliminados"],
                            clientes=salida["clientes"])
     return salida
-
-
-@router.get("/resumen")
-def resumen():
-    """Conteos de la cartera y del trabajo contable, para el tablero."""
-    return {"clientes": repo.contar(), "trabajo": repo_periodos.resumen_global()}
-
-
-@router.get("/buscar")
-def buscar(q: str = Query("", min_length=0), limite: int = Query(8, ge=1, le=25)):
-    """Buscador rápido del menú (Ctrl+K). Respuesta corta a propósito."""
-    return {"q": q, "resultados": repo.sugerencias_busqueda(q, limite)}
 
 
 @router.get("/plantilla")
@@ -112,10 +98,14 @@ def crear(datos: dict = Body(...)):
 
 @router.get("/{cliente_id}")
 def obtener(cliente_id: str):
+    from .trabajo import tiene_archivos_de_muestra
+
     try:
-        return repo.obtener(cliente_id)
+        cliente = repo.obtener(cliente_id)
     except repo.ErrorCliente as ex:
         raise HTTPException(404, str(ex)) from ex
+    cliente["archivos_de_muestra"] = tiene_archivos_de_muestra(cliente.get("nit", ""))
+    return cliente
 
 
 @router.patch("/{cliente_id}")
@@ -160,11 +150,3 @@ def restaurar(cliente_id: str):
     return cliente
 
 
-@router.get("/{cliente_id}/alias")
-def alias_del_cliente(cliente_id: str):
-    """Diccionario de nombres de cuenta que el sistema ya aprendió de este cliente."""
-    try:
-        cliente = repo.obtener(cliente_id)
-    except repo.ErrorCliente as ex:
-        raise HTTPException(404, str(ex)) from ex
-    return {"nit": cliente["nit"], "alias": repo_alias.listar(cliente["nit"])}

@@ -29,6 +29,7 @@ from ..repositorio import alias as repo_alias
 from ..repositorio import bitacora as repo_bitacora
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import sesiones
+from ..repositorio import subidas as repo_subidas
 from ..utils import nit as unit
 from ..utils.numeros import NOMBRE_MES
 
@@ -181,8 +182,10 @@ async def subir(archivos: list[UploadFile] = File(...), cliente_id: str = Query(
             "ilegibles": lectura.ilegibles,
         })
 
-    sid = sesiones.crear({"archivos": datos, "clase": clase, "propuesta": None},
+    # Los bytes van a disco; la sesión guarda solo dónde quedaron (A5).
+    sid = sesiones.crear({"archivos": [], "clase": clase, "propuesta": None},
                          cliente_id=cliente_id or None)
+    sesiones.actualizar(sid, archivos=repo_subidas.guardar(sid, datos))
     propuesta = _propuesta(lectura, cliente_id or None)
     sesiones.actualizar(sid, propuesta=propuesta)
 
@@ -210,7 +213,7 @@ def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
             "mensaje": "La subida caducó. Vuelva a arrastrar el archivo.",
         }) from ex
 
-    archivos: list[tuple[str, bytes]] = s.get("archivos") or []
+    archivos: list[tuple[str, bytes]] = repo_subidas.leer(s.get("archivos") or [])
     if not archivos:
         raise HTTPException(400, {"codigo": "sin_archivos", "mensaje": "Esa subida ya no tiene archivos."})
 
@@ -288,17 +291,8 @@ def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
 
     salida = _importar(archivos, cliente_id)
     sesiones.cerrar(subida_id)
+    repo_subidas.borrar(subida_id)
     return {"clase": clas.CONTABILIDAD, "cliente_id": cliente_id, **salida}
-
-
-@router.get("/subir/{subida_id}")
-def ver_subida(subida_id: str):
-    """Lo que se detectó en una subida, por si la pantalla se recargó."""
-    try:
-        s = sesiones.obtener(subida_id)
-    except sesiones.SesionExpirada as ex:
-        raise HTTPException(404, str(ex)) from ex
-    return a_json({"subida_id": subida_id, "clase": s.get("clase"), **(s.get("propuesta") or {})})
 
 
 # ── identidad suelta, para la pantalla de crear cliente ────────────────────

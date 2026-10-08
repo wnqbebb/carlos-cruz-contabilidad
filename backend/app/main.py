@@ -4,14 +4,16 @@ from __future__ import annotations
 import logging
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, HTMLResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
+from sqlalchemy.exc import DBAPIError
 
 from . import db
 from .api import ROUTERS
 from .config import CORS_ORIGENES, FRONTEND_DIST, LEMA, MARCA, VERSION
 from .repositorio import parametros as repo_parametros
+from .repositorio import subidas as repo_subidas
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s · %(message)s")
 log = logging.getLogger("carloscruz")
@@ -31,6 +33,9 @@ async def ciclo_de_vida(_app: FastAPI):
             log.warning("No se pudieron sembrar los parámetros legales: %s", ex)
     else:
         log.error("SIN BASE DE DATOS · %s", estado["error"])
+    borradas = repo_subidas.limpiar()
+    if borradas:
+        log.info("Subidas vencidas borradas de la carpeta temporal: %s.", borradas)
     yield
 
 
@@ -40,6 +45,22 @@ app = FastAPI(
     version=VERSION,
     lifespan=ciclo_de_vida,
 )
+
+
+@app.exception_handler(db.BaseNoDisponible)
+async def _sin_base(_req: Request, ex: db.BaseNoDisponible):
+    """La base no respondió tras los reintentos (H20): 503 con un mensaje que el contador entiende."""
+    return JSONResponse(status_code=503, content={"detail": {"codigo": "sin_base", "mensaje": str(ex)}})
+
+
+@app.exception_handler(DBAPIError)
+async def _error_de_base(_req: Request, ex: DBAPIError):
+    if db.es_falla_de_conexion(ex):
+        # La conexión se cayó a mitad de la consulta: la siguiente abre una nueva.
+        return JSONResponse(status_code=503, content={"detail": {"codigo": "sin_base", "mensaje": str(db.BaseNoDisponible(ex))}})
+    log.exception("Error de la base de datos")
+    return JSONResponse(status_code=500, content={"detail": {"codigo": "error_base",
+                                                             "mensaje": "La base de datos rechazó la operación. Nada se guardó a medias."}})
 
 app.add_middleware(
     CORSMiddleware,

@@ -142,10 +142,11 @@ def ajuste_renta(utilidad_antes: Decimal, tarifa: Decimal) -> Ajuste | None:
                    mov("240405", credito=valor, comprobante="AJ-RENTA", descripcion="Impuesto de renta por pagar")])
 
 
-def reclasificacion(id_: str, titulo: str, explicacion: str, debito_cta: str, credito_cta: str, valor: Decimal) -> Ajuste:
+def reclasificacion(id_: str, titulo: str, explicacion: str, debito_cta: str, credito_cta: str, valor: Decimal,
+                    defecto: bool = False) -> Ajuste:
     return Ajuste(id_, titulo, "sugerido", explicacion,
                   [mov(debito_cta, debito=valor, comprobante="AJ-RECL", descripcion=titulo),
-                   mov(credito_cta, credito=valor, comprobante="AJ-RECL", descripcion=titulo)], aceptado_defecto=False)
+                   mov(credito_cta, credito=valor, comprobante="AJ-RECL", descripcion=titulo)], aceptado_defecto=defecto)
 
 
 def ajuste_manual(lineas: list[Movimiento]) -> list[Ajuste]:
