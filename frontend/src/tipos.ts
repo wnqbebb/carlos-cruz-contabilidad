@@ -499,21 +499,11 @@ export interface Contador {
 }
 
 /* ── estado del sistema ────────────────────────────────────────────────── */
-export interface Salud {
-  ok: boolean;
-  marca: string;
-  lema: string;
+/** Panel «Sistema» y estado de la conexión: nada técnico (v2.3 · Fase 2). */
+export interface EstadoSistema {
+  conectado: boolean;
+  en_la_nube: boolean;
   version: string;
-  almacenamiento: {
-    modo: "local" | "supabase";
-    es_postgres: boolean;
-    supabase_configurado: boolean;
-    proyecto: string;
-    conectado: boolean;
-    motor: string;
-    error: string;
-  };
-  sesiones_abiertas: number;
 }
 
 export interface ResultadoBusqueda {

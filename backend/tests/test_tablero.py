@@ -125,15 +125,5 @@ def test_el_tablero_ya_no_trae_cifras_de_un_cliente_ni_nomina(cliente_api):
 def test_h18_los_datos_del_contador_salen_de_la_configuracion(cliente_api):
     c = cliente_api.get("/api/contador").json()
     assert c["tarjeta_profesional"] and c["municipio"]
-    nuevo = cliente_api.put("/api/contador", json={"municipio": "Buga"}).json()
-    assert nuevo["municipio"] == "Buga" and nuevo["tarjeta_profesional"] == c["tarjeta_profesional"]
-    assert cliente_api.get("/api/contador").json()["municipio"] == "Buga"
-    cliente_api.put("/api/contador", json={"municipio": c["municipio"]})
-
-
-def test_guardar_parametros_deja_rastro_en_la_bitacora(cliente_api):
-    """Regresión: `guardar_parametros` usaba la bitácora sin importarla y fallaba con 500."""
-    anio = max(int(a) for a in cliente_api.get("/api/parametros").json())
-    actual = cliente_api.get("/api/parametros").json()[str(anio)]
-    r = cliente_api.put(f"/api/parametros/{anio}", json=actual)
-    assert r.status_code == 200, r.text
+    # v2.3 · Fase 2: ya no se editan desde la interfaz.
+    assert cliente_api.put("/api/contador", json={"municipio": "Buga"}).status_code in (404, 405)

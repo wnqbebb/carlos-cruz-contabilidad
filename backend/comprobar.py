@@ -140,19 +140,19 @@ def main() -> int:
     _titulo("6. Datos")
     try:
         from app.repositorio import clientes as repo
-        from app.repositorio import parametros as repo_param
+        from app.nomina import parametros as repo_param
         from app.repositorio import periodos as repo_per
 
         conteo = repo.contar()
         trabajo = repo_per.resumen_global()
-        anios = sorted(repo_param.todos().keys())
+        anios = [str(a) for a in repo_param.anios()]
         print(f"{OK} Clientes: {conteo['total']} ({conteo['activos']} activos)")
         print(f"{OK} Periodos contabilizados: {trabajo['periodos']} "
               f"({trabajo['cerrados']} cerrados)")
         if trabajo["descuadrados"]:
             print(f"{AVISO} {trabajo['descuadrados']} periodo(s) con el balance descuadrado")
         if anios:
-            print(f"{OK} Parametros legales cargados: {', '.join(anios)}")
+            print(f"{OK} Valores legales en la aplicacion: {', '.join(anios)}")
         else:
             print(f"{AVISO} Sin parametros legales. Ejecute: python backend/sembrar.py")
         if conteo["total"] == 0:

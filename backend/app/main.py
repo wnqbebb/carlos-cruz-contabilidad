@@ -12,7 +12,6 @@ from sqlalchemy.exc import DBAPIError
 from . import db, sesion
 from .api import ROUTERS
 from .config import CORS_ORIGENES, FRONTEND_DIST, LEMA, MARCA, VERSION
-from .repositorio import parametros as repo_parametros
 from .repositorio import subidas as repo_subidas
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s · %(message)s")
@@ -21,16 +20,10 @@ log = logging.getLogger("carloscruz")
 
 @asynccontextmanager
 async def ciclo_de_vida(_app: FastAPI):
-    """Al arrancar: comprobar la base y sembrar los parámetros legales si hace falta."""
+    """Al arrancar: comprobar la base y limpiar las subidas vencidas."""
     estado = db.diagnostico()
     if estado["conectado"]:
         log.info("Base de datos lista (%s).", estado["motor"])
-        try:
-            nuevos = repo_parametros.sembrar_si_vacio()
-            if nuevos:
-                log.info("Parámetros legales sembrados: %s año(s).", nuevos)
-        except Exception as ex:
-            log.warning("No se pudieron sembrar los parámetros legales: %s", ex)
     else:
         log.error("SIN BASE DE DATOS · %s", estado["error"])
     borradas = repo_subidas.limpiar()
@@ -98,6 +91,9 @@ INMUTABLE = {"Cache-Control": "public, max-age=31536000, immutable"}
 
 @app.get("/{ruta:path}", include_in_schema=False)
 def spa(ruta: str):
+    # Una ruta de la API que no existe responde 404, no la página de la aplicación.
+    if ruta == "api" or ruta.startswith("api/"):
+        return JSONResponse(status_code=404, content={"detail": {"codigo": "no_existe", "mensaje": "Eso no existe."}})
     indice = FRONTEND_DIST / "index.html"
     archivo = (FRONTEND_DIST / ruta).resolve() if ruta else None
     if archivo and archivo.is_file() and FRONTEND_DIST.resolve() in archivo.parents:
@@ -109,9 +105,7 @@ def spa(ruta: str):
         return FileResponse(archivo)
     if indice.exists():
         return FileResponse(indice, headers=SIN_CACHE)
-    return HTMLResponse(
-        f"<h1>{MARCA}</h1><p>{LEMA}</p>"
-        "<p>El frontend no está compilado. Ejecute <code>iniciar.bat</code> "
-        "o <code>npm run build</code> dentro de <code>frontend/</code>.</p>",
-        status_code=200,
-    )
+    # Sin interfaz compilada: un mensaje humano, sin comandos ni rutas (v2.3 · 6.1).
+    log.error("Falta la interfaz compilada en %s", FRONTEND_DIST)
+    return HTMLResponse(f"<h1>{MARCA}</h1><p>{LEMA}</p><p>La aplicación se está actualizando. "
+                        "Ciérrela y vuelva a abrirla en un momento.</p>", status_code=503)

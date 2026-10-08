@@ -1,12 +1,19 @@
-"""Parámetros legales laborales por año (editables; nada quemado en el código)."""
+"""Parámetros legales laborales por año (v2.3 · Fase 2).
+
+Viven DENTRO de la aplicación, en `data/parametros_legales.json`, versionados por
+año y con la fuente oficial de cada valor (decreto o resolución). Ya no se editan
+desde una pantalla: si falta un año, la aplicación no inventa nada, avisa en el
+Tablero y bloquea el cálculo de nómina de ese año con un mensaje claro. Cómo se
+agrega un año nuevo está en `docs/MANTENIMIENTO.md`.
+"""
 from __future__ import annotations
 
 import json
 from datetime import date
 from decimal import Decimal
+from functools import lru_cache
 
 from ..config import DATA
-from ..repositorio import parametros as repo
 
 ARCHIVO = DATA / "parametros_legales.json"
 
@@ -20,25 +27,32 @@ class ParametrosFaltantes(Exception):
     pass
 
 
+def mensaje_faltan(año: int) -> str:
+    return (f"Faltan los valores legales de {año} (salario mínimo y auxilio de transporte). La nómina de {año} no se "
+            "calcula hasta que la aplicación los traiga: la aplicación no inventa estos valores.")
+
+
+@lru_cache(maxsize=1)
 def _leer() -> dict:
-    """Lee de la base (fuente de verdad). Si la base no responde, usa el JSON local."""
-    try:
-        return repo.todos()
-    except Exception:  # sin base disponible la nómina igual debe poder calcularse
-        return json.loads(ARCHIVO.read_text(encoding="utf-8"))
+    return json.loads(ARCHIVO.read_text(encoding="utf-8"))
 
 
 def todos() -> dict:
-    return {k: v for k, v in _leer().items() if not k.startswith("_")}
+    return {k: v for k, v in _leer().items() if k.isdigit()}
+
+
+def anios() -> list[int]:
+    return sorted(int(a) for a in todos())
+
+
+def hay(año: int) -> bool:
+    return str(año) in todos()
 
 
 def obtener(año: int) -> dict:
-    datos = _leer()
+    datos = todos()
     if str(año) not in datos:
-        raise ParametrosFaltantes(
-            f"No hay parámetros legales cargados para el año {año}. Ingrese el SMMLV y el auxilio de transporte "
-            f"de {año} en la pantalla «Parámetros» (la aplicación no inventa estos valores)."
-        )
+        raise ParametrosFaltantes(mensaje_faltan(año))
     p = dict(datos[str(año)])
     for campo in CAMPOS_DECIMALES:
         p[campo] = Decimal(str(p[campo]))
@@ -46,6 +60,8 @@ def obtener(año: int) -> dict:
     p["fsp_tramos"] = [{"desde_smmlv": Decimal(str(t["desde_smmlv"])), "tasa": Decimal(str(t["tasa"]))} for t in p["fsp_tramos"]]
     p["tope_aux_transporte_smmlv"] = Decimal(str(p["tope_aux_transporte_smmlv"]))
     p["tope_exoneracion_smmlv"] = Decimal(str(p["tope_exoneracion_smmlv"]))
+    if "uvt" in p:
+        p["uvt"] = Decimal(str(p["uvt"]))
     return p
 
 
@@ -56,25 +72,3 @@ def horas_semana(p: dict, fecha: date) -> int:
         if date.fromisoformat(t["desde"]) <= fecha:
             horas = t["horas_semana"]
     return int(horas)
-
-
-def guardar(año: int, valores: dict) -> dict:
-    """Crea o actualiza un año. Un año nuevo copia las tasas del año cargado más cercano y exige SMMLV y auxilio."""
-    datos = _leer()
-    clave = str(año)
-    if clave not in datos:
-        if not valores.get("smmlv") or not valores.get("aux_transporte"):
-            raise ValueError("Para crear un año nuevo debe indicar el SMMLV y el auxilio de transporte.")
-        años = sorted(int(k) for k in datos if k.isdigit())
-        cercano = max((a for a in años if a < año), default=años[0])
-        base = json.loads(json.dumps(datos[str(cercano)]))
-        ultimo = sorted(base["jornada_tramos"], key=lambda t: t["desde"])[-1]
-        base["jornada_tramos"] = [{"desde": f"{año}-01-01", "horas_semana": ultimo["horas_semana"]}]
-        datos[clave] = base
-    for k, v in valores.items():
-        if k in CAMPOS_DECIMALES:
-            datos[clave][k] = str(v)
-        elif k in ("jornada_tramos", "arl", "fsp_tramos", "tope_aux_transporte_smmlv", "tope_exoneracion_smmlv"):
-            datos[clave][k] = v
-    repo.guardar(año, datos[clave])
-    return datos[clave]

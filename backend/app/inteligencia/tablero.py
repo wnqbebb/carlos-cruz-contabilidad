@@ -23,6 +23,7 @@ from ..repositorio import bitacora
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import periodos as repo_periodos
 from . import sugerencias as sug
+from ..nomina import parametros as parametros_legales
 
 CERO = Decimal("0")
 MESES_SERIE = 12
@@ -169,6 +170,18 @@ def armar(hoy: date | None = None) -> dict:
                 "que": que, "titulo": s["titulo"], "por_que": s["detalle"],
                 "accion": _accion(tipo, c["id"], s.get("dato") or {}),
             })
+    # v2.3 · Fase 2: los valores legales viven en la aplicación. Si falta el año en
+    # curso, no se inventan: se avisa aquí y la nómina de ese año queda bloqueada.
+    if not parametros_legales.hay(hoy.year) and f"VALORES_LEGALES:{hoy.year}" not in pospuestas:
+        tareas.append({
+            "clave": f"VALORES_LEGALES:{hoy.year}", "codigo": "VALORES_LEGALES", "prioridad": "critica",
+            "cliente_id": None, "razon_social": "Toda la cartera", "nit": "",
+            "que": f"Faltan los valores legales de {hoy.year}",
+            "titulo": f"La aplicación no tiene el salario mínimo ni el auxilio de transporte de {hoy.year}",
+            "por_que": f"La nómina de {hoy.year} no se calcula hasta que se actualice la aplicación con los valores "
+                       "oficiales. No se inventa ninguno.",
+            "accion": {"tipo": "informar"},
+        })
     tareas.sort(key=lambda t: (ORDEN[t["prioridad"]], t["razon_social"], t["codigo"]))
 
     # H13 · cómo va cada mes de la cartera, contado en el servidor.

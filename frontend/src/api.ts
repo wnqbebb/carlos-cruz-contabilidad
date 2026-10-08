@@ -20,7 +20,7 @@ import type {
   Propuesta,
   Resultado,
   ResultadoBusqueda,
-  Salud,
+  EstadoSistema,
   Tablero,
   VersionPeriodo,
 } from "./tipos";
@@ -114,14 +114,9 @@ const qs = (p: Record<string, string | number | boolean | undefined>) => {
 
 /* ── sistema ───────────────────────────────────────────────────────────── */
 export const sistema = {
-  salud: () => pedir<Salud>("/api/salud"),
+  estado: () => pedir<EstadoSistema>("/api/sistema"),
   contador: () => pedir<Contador>("/api/contador"),
-  guardarContador: (datos: Partial<Contador>) =>
-    pedir<Contador>("/api/contador", { method: "PUT", ...json(datos) }),
   puc: () => pedir<{ codigo: string; nombre: string }[]>("/api/puc"),
-  parametros: () => pedir<Record<string, any>>("/api/parametros"),
-  guardarParametros: (anio: number, valores: Record<string, unknown>) =>
-    pedir<Record<string, any>>(`/api/parametros/${anio}`, { method: "PUT", ...json(valores) }),
 };
 
 /* ── sesión del contador (A2) ──────────────────────────────────────────── */

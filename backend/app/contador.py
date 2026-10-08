@@ -2,7 +2,7 @@
 
 Se muestran en el logotipo, en el preloader, en el saludo del tablero y en las
 firmas. Antes estaban escritos a mano en el código de la interfaz; ahora salen
-de aquí y se pueden cambiar en Parámetros › Sistema.
+de aquí (`data/contador.json` o variables `CONTADOR_*`); no se editan desde la interfaz.
 
 Orden de precedencia: lo que el contador guardó (`DATOS_APP/contador.json`) →
 variables de entorno `CONTADOR_*` → `data/contador.json` (valores de la

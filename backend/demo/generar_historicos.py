@@ -20,7 +20,7 @@ contador: subir archivos → identificar → calcular → cerrar, mes a mes.
 
 Los clientes 1 y 2 se dan de alta subiendo sus estatutos (.docx) y su RUT (.pdf),
 generados aquí. Todos quedan con la etiqueta «Demostración» y la marca `demo`, que
-es lo que usa «Eliminar clientes de demostración» (Parámetros › Sistema).
+es lo que usa «Eliminar clientes de demostración» (menú de la cuenta › Sistema).
 
 Reproducible: azar con semilla fija. Algunos pagos (aportes, IVA, retenciones,
 prestaciones) se toman del cierre del mes anterior que devuelve la propia
@@ -60,7 +60,7 @@ INICIO, FIN = (2025, 1), (2026, 9)
 MESES = ["", "enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre",
          "octubre", "noviembre", "diciembre"]
 ETIQUETA = "Demostración"
-NOTA = "Cliente de demostración: todos los datos son ficticios. Se borra desde Parámetros › Sistema."
+NOTA = "Cliente de demostración: todos los datos son ficticios. Se borra desde el menú de la cuenta › Sistema."
 CERO = Decimal(0)
 
 
@@ -973,13 +973,13 @@ def main(argv: list[str] | None = None) -> int:
     args = ap.parse_args(argv)
     api = Api(args.url, args.usuario, args.clave)
     salud = api.get("/api/salud")
-    print(f"Aplicación {salud.get('version')} · base {salud.get('almacenamiento', {}).get('motor')}")
+    print(f"Aplicación {salud.get('version')}")
     claves = [x.strip() for x in args.solo.split(",") if x.strip()]
     nits = {"1": PANADERIA, "2": FERRETERIA, "3": CLINICA, "4": TRANSPORTES, "5": MARIA}
     cargados = {x["nit"]: x["razon_social"] for x in api.get("/api/clientes/demostracion")["clientes"]}
     repetidos = [cargados[nits[k]["nit"]] for k in claves if nits[k]["nit"] in cargados]
     if repetidos:
-        print("Estos clientes de demostración ya están cargados; bórrelos primero desde Parámetros › Sistema:")
+        print("Estos clientes de demostración ya están cargados; bórrelos primero desde el menú de la cuenta › Sistema:")
         for r in repetidos:
             print(f"  · {r}")
         return 1

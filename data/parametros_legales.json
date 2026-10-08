@@ -1,12 +1,18 @@
 {
-  "_nota": "Parámetros laborales por año. Los importes de SMMLV y auxilio de transporte vienen de los decretos oficiales citados en cada año. Las tasas de aportes y prestaciones no cambiaron. Los años siguientes los ingresa el contador desde la pantalla Parámetros: la aplicación no inventa valores.",
+  "_nota": "Parámetros laborales por año, dentro de la aplicación (no se editan desde ninguna pantalla). Cada año cita su fuente oficial. Cuando el Gobierno publique los de un año nuevo, se agregan aquí siguiendo docs/MANTENIMIENTO.md. Si un año falta, la aplicación no inventa valores: avisa y bloquea la nómina de ese año.",
   "2025": {
-    "_fuente": "Decreto 1572 de 2024 (SMMLV) y Decreto 1573 de 2024 (auxilio de transporte).",
+    "_fuente": "Decreto 1572 de 2024 (SMMLV $1.423.500), Decreto 1573 de 2024 (auxilio de transporte $200.000) y Resolución DIAN 000193 de 2024 (UVT $49.799).",
     "smmlv": "1423500",
     "aux_transporte": "200000",
     "jornada_tramos": [
-      {"desde": "2025-01-01", "horas_semana": 46},
-      {"desde": "2025-07-15", "horas_semana": 44}
+      {
+        "desde": "2025-01-01",
+        "horas_semana": 46
+      },
+      {
+        "desde": "2025-07-15",
+        "horas_semana": 44
+      }
     ],
     "salud_empleado": "0.04",
     "pension_empleado": "0.04",
@@ -19,25 +25,56 @@
     "intereses_cesantias_mensual": "0.01",
     "prima": "0.0833",
     "vacaciones": "0.0417",
-    "arl": {"1": "0.00522", "2": "0.01044", "3": "0.02436", "4": "0.0435", "5": "0.0696"},
+    "arl": {
+      "1": "0.00522",
+      "2": "0.01044",
+      "3": "0.02436",
+      "4": "0.0435",
+      "5": "0.0696"
+    },
     "fsp_tramos": [
-      {"desde_smmlv": 4, "tasa": "0.01"},
-      {"desde_smmlv": 16, "tasa": "0.012"},
-      {"desde_smmlv": 17, "tasa": "0.014"},
-      {"desde_smmlv": 18, "tasa": "0.016"},
-      {"desde_smmlv": 19, "tasa": "0.018"},
-      {"desde_smmlv": 20, "tasa": "0.02"}
+      {
+        "desde_smmlv": 4,
+        "tasa": "0.01"
+      },
+      {
+        "desde_smmlv": 16,
+        "tasa": "0.012"
+      },
+      {
+        "desde_smmlv": 17,
+        "tasa": "0.014"
+      },
+      {
+        "desde_smmlv": 18,
+        "tasa": "0.016"
+      },
+      {
+        "desde_smmlv": 19,
+        "tasa": "0.018"
+      },
+      {
+        "desde_smmlv": 20,
+        "tasa": "0.02"
+      }
     ],
     "tope_aux_transporte_smmlv": 2,
-    "tope_exoneracion_smmlv": 10
+    "tope_exoneracion_smmlv": 10,
+    "uvt": "49799"
   },
   "2026": {
-    "_fuente": "Decretos 1469 y 1470 del 29 de diciembre de 2025. SMMLV $1.750.905 (+23 %) y auxilio de transporte $249.095 (+24,5 %): juntos suman exactamente $2.000.000. Jornada máxima 42 horas desde el 15 de julio de 2026, último tramo de la Ley 2101 de 2021.",
+    "_fuente": "Decretos 1469 y 1470 del 29 de diciembre de 2025 (SMMLV $1.750.905 y auxilio de transporte $249.095) y Resolución DIAN 000238 de 2025 (UVT $52.374). Jornada máxima 42 horas desde el 15 de julio de 2026 (Ley 2101 de 2021).",
     "smmlv": "1750905",
     "aux_transporte": "249095",
     "jornada_tramos": [
-      {"desde": "2026-01-01", "horas_semana": 44},
-      {"desde": "2026-07-15", "horas_semana": 42}
+      {
+        "desde": "2026-01-01",
+        "horas_semana": 44
+      },
+      {
+        "desde": "2026-07-15",
+        "horas_semana": 42
+      }
     ],
     "salud_empleado": "0.04",
     "pension_empleado": "0.04",
@@ -50,16 +87,41 @@
     "intereses_cesantias_mensual": "0.01",
     "prima": "0.0833",
     "vacaciones": "0.0417",
-    "arl": {"1": "0.00522", "2": "0.01044", "3": "0.02436", "4": "0.0435", "5": "0.0696"},
+    "arl": {
+      "1": "0.00522",
+      "2": "0.01044",
+      "3": "0.02436",
+      "4": "0.0435",
+      "5": "0.0696"
+    },
     "fsp_tramos": [
-      {"desde_smmlv": 4, "tasa": "0.01"},
-      {"desde_smmlv": 16, "tasa": "0.012"},
-      {"desde_smmlv": 17, "tasa": "0.014"},
-      {"desde_smmlv": 18, "tasa": "0.016"},
-      {"desde_smmlv": 19, "tasa": "0.018"},
-      {"desde_smmlv": 20, "tasa": "0.02"}
+      {
+        "desde_smmlv": 4,
+        "tasa": "0.01"
+      },
+      {
+        "desde_smmlv": 16,
+        "tasa": "0.012"
+      },
+      {
+        "desde_smmlv": 17,
+        "tasa": "0.014"
+      },
+      {
+        "desde_smmlv": 18,
+        "tasa": "0.016"
+      },
+      {
+        "desde_smmlv": 19,
+        "tasa": "0.018"
+      },
+      {
+        "desde_smmlv": 20,
+        "tasa": "0.02"
+      }
     ],
     "tope_aux_transporte_smmlv": 2,
-    "tope_exoneracion_smmlv": 10
+    "tope_exoneracion_smmlv": 10,
+    "uvt": "52374"
   }
 }

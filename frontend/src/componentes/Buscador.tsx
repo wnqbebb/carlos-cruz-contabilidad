@@ -12,7 +12,6 @@ const ACCIONES: { id: string; titulo: string; subtitulo: string; ruta: string; p
   { id: "a-trabajo", titulo: "Trabajar un periodo", subtitulo: "Subir archivos y calcular", ruta: "/trabajo", palabras: "calcular importar excel balance estados" },
   { id: "a-clientes", titulo: "Ver todos los clientes", subtitulo: "Directorio completo", ruta: "/clientes", palabras: "directorio listado cartera" },
   { id: "a-tablero", titulo: "Tablero", subtitulo: "Pendientes y resumen del día", ruta: "/", palabras: "inicio resumen pendientes" },
-  { id: "a-parametros", titulo: "Parámetros legales", subtitulo: "SMMLV, auxilio y aportes por año", ruta: "/parametros", palabras: "smmlv salario auxilio nomina configuracion ajustes" },
 ];
 
 function sinTildes(t: string): string {

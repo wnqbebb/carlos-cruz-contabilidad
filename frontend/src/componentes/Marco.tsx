@@ -15,7 +15,8 @@ import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
 import { sesionApi, sistema } from "../api";
 import { clases } from "../formato";
-import type { Salud } from "../tipos";
+import type { EstadoSistema } from "../tipos";
+import { DialogoSistema } from "./Sistema";
 import { colorCliente } from "../colorCliente";
 import { useTema, type PreferenciaTema } from "../tema";
 import { BotonAcento, Flip, Interruptor, MetaEncabezado, sinMovimiento, DURACION } from "../ui";
@@ -40,7 +41,6 @@ const SECCIONES = [
   { ruta: "/", texto: "Tablero", indice: "01", icono: LayoutGrid, exacto: true },
   { ruta: "/clientes", texto: "Clientes", indice: "02", icono: Users },
   { ruta: "/trabajo", texto: "Trabajar", indice: "03", icono: PenLine },
-  { ruta: "/parametros", texto: "Parámetros", indice: "04", icono: Settings2 },
 ] as const;
 
 function seccionDe(ruta: string): { indice: string; nombre: string } {
@@ -50,15 +50,13 @@ function seccionDe(ruta: string): { indice: string; nombre: string } {
   if (ruta.endsWith("/editar")) return { indice: "02", nombre: "Clientes › Editar ficha" };
   if (ruta.startsWith("/clientes/")) return { indice: "02", nombre: "Clientes › Ficha" };
   if (ruta.startsWith("/trabajo")) return { indice: "03", nombre: "Trabajar" };
-  if (ruta.startsWith("/parametros")) return { indice: "04", nombre: "Parámetros" };
   if (ruta.startsWith("/diseno")) return { indice: "00", nombre: "Catálogo" };
   return { indice: "—", nombre: "Página no encontrada" };
 }
 
 /** Identidad de la página (8.2): la clave que leen los tokens en `data-seccion`. */
-function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" | "trabajar" | "parametros" {
+function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" | "trabajar" {
   if (ruta.startsWith("/trabajo")) return "trabajar";
-  if (ruta.startsWith("/parametros")) return "parametros";
   if (/^\/clientes\/[0-9a-f-]{8,}$/i.test(ruta)) return "ficha";
   if (ruta.startsWith("/clientes")) return "clientes";
   return "tablero";
@@ -113,7 +111,7 @@ export function Marco({ children }: { children: ReactNode }) {
   const [nitCliente, setNitCliente] = useState<string | null>(null);
   const valorCabecera = useMemo(() => ({ hueco, fijarCliente: setNitCliente }), [hueco]);
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
-  const [salud, setSalud] = useState<Salud | null>(null);
+  const [salud, setSalud] = useState<EstadoSistema | null>(null);
   const [comprobado, setComprobado] = useState<number | null>(null);
   const [metaPagina, setMetaPagina] = useState<string | null>(null);
   const ubicacion = useLocation();
@@ -132,7 +130,7 @@ export function Marco({ children }: { children: ReactNode }) {
     let vivo = true;
     const comprobar = () =>
       sistema
-        .salud()
+        .estado()
         .then((s) => {
           if (!vivo) return;
           setSalud(s);
@@ -147,7 +145,7 @@ export function Marco({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const sinBase = salud && !salud.almacenamiento.conectado;
+  const sinBase = salud && !salud.conectado;
 
   return (
     <ContextoMeta.Provider value={setMetaPagina}>
@@ -238,7 +236,7 @@ export function Marco({ children }: { children: ReactNode }) {
             <div className="contenedor relative z-10 mt-4">
               <div role="status" className="rounded-control border border-ambar/30 bg-ambar-suave p-4 text-sm text-ambar">
                 <strong className="font-semibold">Sin conexión con la nube.</strong>{" "}
-                Lo que haga se guarda en este equipo. El detalle técnico está en Parámetros › Sistema.
+                Lo que haga se guarda en este equipo y se sincroniza cuando vuelva la conexión.
               </div>
             </div>
           )}
@@ -373,7 +371,7 @@ function NavegacionMovil() {
 }
 
 /** «Sincronizado · hace 2 min» — sin nombres técnicos ni ID del proyecto. */
-function EstadoSincronizacion({ salud, comprobado }: { salud: Salud | null; comprobado: number | null }) {
+function EstadoSincronizacion({ salud, comprobado }: { salud: EstadoSistema | null; comprobado: number | null }) {
   const [, refrescar] = useState(0);
   useEffect(() => {
     const t = setInterval(() => refrescar((n) => n + 1), 30_000);
@@ -384,7 +382,7 @@ function EstadoSincronizacion({ salud, comprobado }: { salud: Salud | null; comp
   let titulo = "Comprobando conexión";
   let detalle = "Un momento";
   if (salud) {
-    const a = salud.almacenamiento;
+    const a = { conectado: salud.conectado, es_postgres: salud.en_la_nube };
     const minutos = comprobado ? Math.floor((Date.now() - comprobado) / 60_000) : 0;
     const hace = minutos < 1 ? "hace un momento" : minutos === 1 ? "hace 1 min" : `hace ${minutos} min`;
     if (!a.conectado) {
@@ -469,6 +467,7 @@ function SelectorTema() {
 /* ── cuenta: quién está dentro y «Cerrar sesión» (A2) ─────────────────── */
 function MenuCuenta({ titulo }: { titulo: string }) {
   const [abierto, setAbierto] = useState(false);
+  const [sistemaAbierto, setSistemaAbierto] = useState(false);
   const [usuario, setUsuario] = useState("");
   const raiz = useRef<HTMLDivElement>(null);
 
@@ -519,6 +518,17 @@ function MenuCuenta({ titulo }: { titulo: string }) {
           <button
             type="button"
             role="menuitem"
+            onClick={() => {
+              setAbierto(false);
+              setSistemaAbierto(true);
+            }}
+            className="t-body flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left text-tinta transition-colors hover:bg-hoja-2"
+          >
+            <Settings2 size={16} strokeWidth={1.5} aria-hidden /> Sistema
+          </button>
+          <button
+            type="button"
+            role="menuitem"
             onClick={salir}
             className="t-body flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left text-tinta transition-colors hover:bg-hoja-2"
           >
@@ -526,6 +536,7 @@ function MenuCuenta({ titulo }: { titulo: string }) {
           </button>
         </div>
       )}
+      {sistemaAbierto && <DialogoSistema onCerrar={() => setSistemaAbierto(false)} />}
     </div>
   );
 }

@@ -1,30 +1,31 @@
-"""Estado del sistema, catálogo PUC y parámetros legales."""
+"""Estado del sistema, datos del contador y catálogo PUC."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, HTTPException
+from fastapi import APIRouter
 
 from .. import contador as datos_contador
 from .. import db
-from ..config import LEMA, MARCA, VERSION, estado_almacenamiento
+from ..config import VERSION, estado_almacenamiento
 from ..contabilidad.puc import puc
-from ..nomina import parametros
-from ..repositorio import bitacora, sesiones
 
 router = APIRouter(prefix="/api", tags=["sistema"])
 
 
 @router.get("/salud")
 def salud():
-    """Lo que la interfaz necesita para saber si puede trabajar."""
+    """Pública: solo si el servidor responde y su versión. El diagnóstico va en /api/sistema, con sesión."""
+    return {"ok": True, "version": VERSION}
+
+
+@router.get("/sistema")
+def sistema():
+    """Lo que muestra el panel «Sistema»: conectado o no, en la nube o en este equipo, y la versión.
+
+    Nada técnico: ni el proyecto, ni el motor, ni rutas, ni variables de entorno.
+    """
     base = db.diagnostico()
-    return {
-        "ok": base["conectado"],
-        "marca": MARCA,
-        "lema": LEMA,
-        "version": VERSION,
-        "almacenamiento": {**estado_almacenamiento(), **base},
-        "sesiones_abiertas": sesiones.abiertas(),
-    }
+    return {"conectado": bool(base["conectado"]), "en_la_nube": bool(estado_almacenamiento().get("es_postgres")),
+            "version": VERSION}
 
 
 @router.get("/contador")
@@ -33,30 +34,7 @@ def ver_contador():
     return datos_contador.leer()
 
 
-@router.put("/contador")
-def guardar_contador(datos: dict = Body(...)):
-    salida = datos_contador.guardar(datos)
-    bitacora.registrar("contador_editado", None, campos=sorted(k for k in datos if k in datos_contador.CAMPOS))
-    return salida
-
-
 @router.get("/puc")
 def listar_puc():
     """Catálogo de cuentas del Decreto 2650/1993."""
     return puc().listado()
-
-
-@router.get("/parametros")
-def ver_parametros():
-    return parametros.todos()
-
-
-@router.put("/parametros/{anio}")
-def guardar_parametros(anio: int, valores: dict = Body(...)):
-    try:
-        salida = parametros.guardar(anio, valores)
-    except ValueError as ex:
-        raise HTTPException(400, str(ex)) from ex
-    bitacora.registrar("parametros_guardados", None, anio=anio,
-                       campos=sorted(k for k in valores if not k.startswith("_")))
-    return salida

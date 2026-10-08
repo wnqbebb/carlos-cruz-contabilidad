@@ -8,7 +8,6 @@ import { ClienteEditor } from "./paginas/ClienteEditor";
 import { ClienteFicha } from "./paginas/ClienteFicha";
 import { Clientes } from "./paginas/Clientes";
 import { Diseno } from "./paginas/Diseno";
-import { Parametros } from "./paginas/Parametros";
 import { Tablero } from "./paginas/Tablero";
 import { Trabajo } from "./paginas/Trabajo";
 import { Ingreso } from "./paginas/Ingreso";
@@ -104,7 +103,7 @@ function Contenido() {
         <Route path="/clientes/:id" element={<ClienteFicha />} />
         <Route path="/clientes/:id/editar" element={<ClienteEditor />} />
         <Route path="/trabajo" element={<Trabajo />} />
-        <Route path="/parametros" element={<Parametros />} />
+        <Route path="/parametros" element={<Navigate to="/" replace />} />
         {/* Catálogo vivo del sistema de diseño: uso interno, fuera del menú */}
         <Route path="/diseno" element={<Diseno />} />
         {/* rutas del diseño anterior, para que los enlaces guardados sigan sirviendo */}

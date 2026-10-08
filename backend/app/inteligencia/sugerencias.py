@@ -7,10 +7,8 @@ vista. Ninguna es una estimación ni una opinión. Si no hay dato, no hay
 sugerencia: preferimos quedarnos callados antes que decirle al contador algo
 que no podemos sustentar.
 
-Por eso tampoco se inventan fechas del calendario tributario: los plazos los
-fija un decreto cada año, así que el sistema calcula el TURNO del cliente por
-el último dígito del NIT (eso sí es una regla fija) y el contador registra las
-fechas del año en la pantalla de parámetros.
+Tampoco se inventan fechas del calendario tributario: los plazos los fija un
+decreto cada año (los de renta de personas naturales están en `data/renta/`).
 
 Cada sugerencia devuelve:
   codigo    identificador estable, para no duplicar ni perder el hilo
@@ -27,7 +25,6 @@ from decimal import Decimal
 
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import periodos as repo_periodos
-from ..utils import nit as unit
 from ..utils.numeros import pesos
 
 CERO = Decimal("0")
@@ -88,7 +85,6 @@ def de_cliente(cliente_id: str, hoy: date | None = None) -> dict:
     salida += _capital_por_pagar(cliente)
     salida += _capital_vs_estatutos(todos)
     salida += _causal_disolucion(cliente, historia)
-    salida += _turno_tributario(cliente)
 
     salida.sort(key=lambda s: ORDEN_SEVERIDAD.get(s["severidad"], 9))
     return {
@@ -353,22 +349,6 @@ def _causal_disolucion(cliente: dict, historia: list[dict]) -> list[dict]:
     )]
 
 
-def _turno_tributario(cliente: dict) -> list[dict]:
-    """Turno del cliente en el calendario DIAN. Las fechas las fija un decreto cada año."""
-    turno = unit.turno_dian(cliente.get("nit"))
-    if not turno:
-        return []
-    base = unit.limpiar(cliente.get("nit"))
-    return [_sug(
-        "TURNO_DIAN", "informativa",
-        f"Turno {turno} en el calendario tributario",
-        (f"El NIT termina en {base[-1]}, que corresponde al turno {turno} de 10. "
-         "Las fechas exactas las fija el decreto de plazos de cada año."),
-        "Cargue las fechas del año en la pantalla de parámetros para ver el vencimiento exacto aquí.",
-        turno=turno, ultimo_digito=int(base[-1]),
-    )]
-
-
 # ════════════════════════════════════════════════════════════════════════════
 #  Panorama de TODA la cartera (tablero de inicio)
 # ════════════════════════════════════════════════════════════════════════════
@@ -390,7 +370,6 @@ def _informe_en_memoria(cliente: dict, historia: list[dict], cierres: int, hoy: 
     salida += _estructura_financiera(calculados)
     salida += _capital_por_pagar(cliente)
     salida += _causal_disolucion(cliente, calculados)
-    salida += _turno_tributario(cliente)
     salida.sort(key=lambda x: ORDEN_SEVERIDAD.get(x["severidad"], 9))
     return {
         "cliente_id": cliente["id"],

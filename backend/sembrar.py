@@ -19,7 +19,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from app.config import EMPRESA_PRIVADA, MARCA, estado_almacenamiento  # noqa: E402
 from app.db import diagnostico  # noqa: E402
 from app.repositorio import clientes as repo  # noqa: E402
-from app.repositorio import parametros as repo_parametros  # noqa: E402
+from app.nomina import parametros  # noqa: E402
 
 
 def ficha_fanant() -> dict:
@@ -72,9 +72,7 @@ def main() -> int:
         print(f"  ERROR: {estado['error']}")
         return 1
 
-    anios = repo_parametros.sembrar_si_vacio()
-    print(f"  parámetros legales: {anios} año(s) sembrados" if anios
-          else "  parámetros legales: ya estaban cargados")
+    print(f"  valores legales en la aplicación: {', '.join(str(a) for a in parametros.anios())}")
 
     if not EMPRESA_PRIVADA.exists():
         print("  sin datos privados en privado/: no se siembra ningún cliente")

@@ -362,7 +362,7 @@ export function Diseno() {
             <BotonFantasma compacto>Fantasma compacto</BotonFantasma>
           </div>
           <p className="t-body text-grafito">
-            Las fechas de vencimiento salen del <EnlaceSubrayado a="/parametros">calendario tributario</EnlaceSubrayado> que
+            Las fechas de vencimiento salen del calendario tributario que
             usted carga cada año.
           </p>
         </div>

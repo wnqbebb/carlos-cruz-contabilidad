@@ -322,15 +322,6 @@ def test_ficha_incompleta_enumera_lo_que_falta(base_limpia):
     assert "FICHA_INCOMPLETA" not in _codigos(sug.de_cliente(c["id"]))
 
 
-def test_turno_dian_es_informativo_no_una_fecha_inventada(base_limpia):
-    c = _cliente()
-    s = _buscar(sug.de_cliente(c["id"]), "TURNO_DIAN")
-    assert s["severidad"] == "informativa"
-    assert s["dato"]["turno"] == 8
-    # No debe afirmar una fecha de vencimiento: las fija un decreto cada año.
-    assert "decreto" in s["detalle"].lower()
-
-
 def test_sugerencias_ordenadas_por_gravedad(base_limpia):
     c = _cliente(capital_suscrito="30000000")
     repo.guardar_resultado(
