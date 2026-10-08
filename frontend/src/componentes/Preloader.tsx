@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
 import { estaTableroListo, gsap, sinMovimiento } from "../animacion";
-import { CARGO, LEMA, MARCA, Monograma, TARJETA_PROFESIONAL } from "./Marca";
+import { LEMA, MARCA, Monograma, useFirmaContador } from "./Marca";
 
 /**
  * Preloader «La cuenta T» (spec 7).
@@ -36,6 +36,7 @@ function yaVisto(): boolean {
 }
 
 export function Preloader() {
+  const { cargo, tp, municipio } = useFirmaContador();
   const { pathname } = useLocation();
   const [activo, setActivo] = useState(() => !yaVisto());
   const raiz = useRef<HTMLDivElement>(null);
@@ -221,11 +222,12 @@ export function Preloader() {
 
           {/* textos de esquina (ref-06) */}
           <div aria-hidden className="t-meta absolute inset-x-0 top-0 flex justify-between gap-4 p-[var(--margen)] pt-6 text-grafito">
-            <span data-esquina>{MARCA} — {CARGO}</span>
-            <span data-esquina>{TARJETA_PROFESIONAL}</span>
+            <span data-esquina>{cargo ? `${MARCA} — ${cargo}` : MARCA}</span>
+            <span data-esquina>{tp}</span>
           </div>
           <div aria-hidden className="t-meta absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 p-[var(--margen)] pb-6 text-grafito">
-            <span data-esquina>Guacarí, Valle del Cauca</span>
+            {/* H18: el municipio sale de la configuración del contador, no del código. */}
+            <span data-esquina>{municipio}</span>
             <span data-esquina>
               Abriendo expedientes <span data-contador className="codigo text-tinta">000</span>
             </span>

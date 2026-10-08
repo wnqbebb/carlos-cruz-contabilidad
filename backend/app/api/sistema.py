@@ -3,11 +3,12 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Body, HTTPException
 
+from .. import contador as datos_contador
 from .. import db
 from ..config import LEMA, MARCA, VERSION, estado_almacenamiento
 from ..contabilidad.puc import puc
 from ..nomina import parametros
-from ..repositorio import sesiones
+from ..repositorio import bitacora, sesiones
 
 router = APIRouter(prefix="/api", tags=["sistema"])
 
@@ -24,6 +25,19 @@ def salud():
         "almacenamiento": {**estado_almacenamiento(), **base},
         "sesiones_abiertas": sesiones.abiertas(),
     }
+
+
+@router.get("/contador")
+def ver_contador():
+    """Nombre, tarjeta profesional y municipio del contador (logotipo, preloader, saludo)."""
+    return datos_contador.leer()
+
+
+@router.put("/contador")
+def guardar_contador(datos: dict = Body(...)):
+    salida = datos_contador.guardar(datos)
+    bitacora.registrar("contador_editado", None, campos=sorted(k for k in datos if k in datos_contador.CAMPOS))
+    return salida
 
 
 @router.get("/puc")

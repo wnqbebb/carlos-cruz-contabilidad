@@ -16,7 +16,7 @@ import { clases } from "../formato";
 import type { Salud } from "../tipos";
 import { BotonAcento, Flip, MetaEncabezado, sinMovimiento, DURACION } from "../ui";
 import { Buscador, useAtajoBuscador } from "./Buscador";
-import { CARGO, Logotipo, MARCA, Monograma, TARJETA_PROFESIONAL } from "./Marca";
+import { Logotipo, MARCA, Monograma, useFirmaContador } from "./Marca";
 
 /**
  * Estructura de la aplicación (spec 6.1).
@@ -71,6 +71,7 @@ export function useMetaPagina(texto: string | null | undefined) {
 }
 
 export function Marco({ children }: { children: ReactNode }) {
+  const { cargo, tp } = useFirmaContador();
   const [buscadorAbierto, setBuscadorAbierto] = useState(false);
   const [salud, setSalud] = useState<Salud | null>(null);
   const [comprobado, setComprobado] = useState<number | null>(null);
@@ -158,7 +159,7 @@ export function Marco({ children }: { children: ReactNode }) {
                   </BotonAcento>
                 </span>
                 <span
-                  title={`${MARCA} · ${CARGO} · ${TARJETA_PROFESIONAL}`}
+                  title={[MARCA, cargo, tp].filter(Boolean).join(" · ")}
                   className="grid h-11 w-11 place-items-center rounded-full border border-linea bg-hoja text-[13px] font-semibold tracking-[-0.02em] text-tinta"
                 >
                   <span aria-hidden>CC</span>
@@ -171,8 +172,8 @@ export function Marco({ children }: { children: ReactNode }) {
           <div className="contenedor relative z-10 pt-3 escritorio:pt-6">
             <MetaEncabezado
               columnas={[
-                `${MARCA} — ${CARGO}`,
-                TARJETA_PROFESIONAL,
+                cargo ? `${MARCA} — ${cargo}` : MARCA,
+                tp,
                 `Índice ${seccion.indice} — ${seccion.nombre}`,
                 metaPagina ?? hoyLargo(),
               ]}

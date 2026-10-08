@@ -168,6 +168,31 @@ def _hojas_json(dets) -> list[dict]:
             for d in dets]
 
 
+@router.get("/importar/{sid}")
+def ver_importacion(sid: str):
+    """Vuelve a abrir una subida que quedó a medias (con preguntas sin responder)."""
+    s = _sesion(sid)
+    if "dets" not in s:
+        raise HTTPException(404, "Esa sesión no es una importación.")
+    dets, conversion, empresa = s["dets"], s.get("conversion"), s["empresa"]
+    cliente = None
+    if s.get("cliente_id"):
+        try:
+            cliente = repo_clientes.obtener(s["cliente_id"])
+        except repo_clientes.ErrorCliente:
+            cliente = None
+    periodo = {"desde": empresa.periodo_desde, "hasta": empresa.periodo_hasta,
+               "fuente": "Sesión guardada"}
+    return a_json({
+        "repetidos": [], "sesion_id": sid, "cliente_id": s.get("cliente_id"), "cliente": cliente,
+        "empresa": empresa, "periodo_sugerido": periodo,
+        "periodizacion": _periodizacion(dets, periodo, cliente),
+        "preguntas": conversion.preguntas if conversion else [],
+        "mapeo": motor.items_mapeo(dets, s.get("mapeador") or Mapeador(), conversion.mapeo_sugerido if conversion else None),
+        "hojas": _hojas_json(dets),
+    })
+
+
 # ── 1. subir archivos ───────────────────────────────────────────────────────
 @router.post("/importar")
 async def importar(archivos: list[UploadFile] = File(...), cliente_id: str = Query("")):

@@ -96,6 +96,29 @@ export function Trabajo() {
     navegar(`${ubicacion.pathname}${ubicacion.search}`, { replace: true, state: null });
   }, [ubicacion, navegar]);
 
+  /* Desde una tarea del tablero: «Responder las preguntas del archivo». La
+     sesión del servidor guarda lo leído; si ya caducó, se dice y se pide subir. */
+  const sesionEnRuta = parametros.get("sesion") ?? "";
+  useEffect(() => {
+    if (!sesionEnRuta) return;
+    apiTrabajo
+      .verImportacion(sesionEnRuta)
+      .then((imp) => {
+        setImportacion(imp);
+        setPeticion(null);
+        setResultado(null);
+        setFase("revisar");
+      })
+      .catch(() => setError("La subida con preguntas pendientes ya caducó (dura 8 horas). Vuelva a subir el archivo."))
+      .finally(() => {
+        const sin = new URLSearchParams(parametros);
+        sin.delete("sesion");
+        setParametros(sin, { replace: true });
+      });
+    // Solo al entrar con ?sesion=
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sesionEnRuta]);
+
   useEffect(() => {
     if (!clienteEnRuta) {
       setCliente(null);

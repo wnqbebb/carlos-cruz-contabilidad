@@ -297,18 +297,42 @@ export interface MesCartera {
   periodos: number;
 }
 
+/** Una tarea sugerida del tablero (spec v2.2 · Fase 7). */
+export interface Tarea {
+  /** codigo:cliente_id — estable, para posponerla. */
+  clave: string;
+  codigo: string;
+  prioridad: "critica" | "alta" | "media";
+  cliente_id: string;
+  razon_social: string;
+  nit: string;
+  /** Qué hacer, en pocas palabras. */
+  que: string;
+  titulo: string;
+  /** Por qué: el dato exacto que la sustenta. */
+  por_que: string;
+  accion: { tipo: "ir" | "subir"; etiqueta: string; ruta: string };
+}
+
+export interface MesTablero {
+  mes: string;
+  cerrados: number;
+  abiertos: number;
+  sin_contabilizar: number;
+}
+
 export interface Tablero {
+  generado: string;
+  hoy: string;
+  indicadores: { clientes_activos: number; honorarios_mensuales: Monto; al_dia: number; atrasados: number };
+  tareas: Tarea[];
+  tareas_total: number;
+  /** H13: la cartera mes a mes, contada en el servidor. */
+  meses: MesTablero[];
+  recientes: (Cliente & { estado_trabajo: "al_dia" | "atrasado"; ultimo_periodo: Periodo | null })[];
+  actividad: (Actividad & { razon_social: string })[];
   clientes: ConteoClientes;
-  trabajo: {
-    periodos: number;
-    cerrados: number;
-    pendientes: number;
-    descuadrados: number;
-    ultimo_corte: string;
-  };
-  pendientes: Cartera;
-  /** Totales de toda la cartera por mes de corte, para la gráfica del tablero. */
-  serie: MesCartera[];
+  trabajo: { periodos: number; cerrados: number; pendientes: number; descuadrados: number; ultimo_corte: string };
 }
 
 /* ── importación masiva del directorio ─────────────────────────────────── */
@@ -487,6 +511,16 @@ export interface Resultado {
     utilidad?: Monto;
     cuadra?: boolean;
   }[];
+}
+
+/* ── el contador dueño de la aplicación (H18) ──────────────────────────── */
+export interface Contador {
+  nombre: string;
+  nombre_corto: string;
+  cargo: string;
+  tarjeta_profesional: string;
+  municipio: string;
+  departamento: string;
 }
 
 /* ── estado del sistema ────────────────────────────────────────────────── */

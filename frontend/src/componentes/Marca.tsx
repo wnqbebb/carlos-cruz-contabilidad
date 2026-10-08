@@ -1,9 +1,19 @@
+import { useContador } from "../contador";
 import { clases } from "../formato";
 
+/** El nombre de la marca y su lema: son el producto, no datos del contador. */
 export const MARCA = "Carlos Cruz";
 export const LEMA = "Contabilidad que cuadra.";
-export const CARGO = "Contador Público";
-export const TARJETA_PROFESIONAL = "T.P. 103028-T";
+
+/** «Contador Público» y «T.P. 103028-T», leídos de la configuración (H18). */
+export function useFirmaContador(): { cargo: string; tp: string; municipio: string } {
+  const c = useContador();
+  return {
+    cargo: c?.cargo ?? "",
+    tp: c?.tarjeta_profesional ? `T.P. ${c.tarjeta_profesional}` : "",
+    municipio: c ? [c.municipio, c.departamento].filter(Boolean).join(", ") : "",
+  };
+}
 
 /**
  * «CC» en Geist Sans 600 con tracking −0,03 em, convertido a contornos.
@@ -47,17 +57,18 @@ export function Monograma({ tamano = 40, className }: { tamano?: number; classNa
   );
 }
 
-/** Logotipo: monograma + nombre + «CONTADOR PÚBLICO · T.P. 103028-T». */
+/** Logotipo: monograma + nombre + cargo y tarjeta profesional del contador. */
 export function Logotipo({ tamano = 40, className }: { tamano?: number; className?: string }) {
+  const { cargo, tp } = useFirmaContador();
   return (
     <span className={clases("flex min-w-0 items-center gap-3", className)}>
       <Monograma tamano={tamano} />
       <span className="min-w-0 leading-none">
         <span className="block truncate text-[17px] font-semibold tracking-[-0.03em] text-tinta">{MARCA}</span>
-        {/* «CONTADOR PÚBLICO · T.P. 103028-T»: en 248 px no cabe en una línea */}
-        <span className="t-meta mt-1.5 block text-[10px] tracking-[0.1em] text-gris">
-          {CARGO} ·<br />
-          {TARJETA_PROFESIONAL}
+        {/* «CONTADOR PÚBLICO · T.P. …»: en 248 px no cabe en una línea */}
+        <span className="t-meta mt-1.5 block min-h-[2.2em] text-[10px] tracking-[0.1em] text-gris">
+          {cargo && <>{cargo} ·<br /></>}
+          {tp}
         </span>
       </span>
     </span>

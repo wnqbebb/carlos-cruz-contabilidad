@@ -8,6 +8,7 @@ from ..contabilidad import libros
 from ..exactitud import a_json
 from ..exportar import excel, pdf
 from ..inteligencia import sugerencias as sug
+from ..inteligencia import tablero as tablero_cartera
 from ..modelos import Empresa
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import bitacora
@@ -179,13 +180,30 @@ def reabrir_periodo(periodo_id: str):
 # ── panorama general ────────────────────────────────────────────────────────
 @router.get("/tablero")
 def tablero():
-    """Todo lo que necesita la pantalla de inicio, en una sola llamada."""
-    return {
-        "clientes": repo_clientes.contar(),
-        "trabajo": repo.resumen_global(),
-        "pendientes": sug.de_cartera(),
-        "serie": repo.serie_cartera(12),
-    }
+    """El tablero del contador en una sola llamada: indicadores, tareas, meses, recientes y actividad.
+
+    H13: los agregados de la cartera por mes (cerrados, abiertos, sin
+    contabilizar) y los clientes al día o atrasados se cuentan aquí; la
+    pantalla ya no los deduce.
+    """
+    return tablero_cartera.armar()
+
+
+@router.post("/tareas/{clave}/posponer")
+def posponer_tarea(clave: str):
+    """«Posponer hasta mañana»: la tarea desaparece del tablero hasta mañana y queda en la bitácora."""
+    codigo, _, cliente_id = clave.partition(":")
+    hasta = tablero_cartera.manana()
+    bitacora.registrar("tarea_pospuesta", cliente_id or None, clave=clave, codigo=codigo, hasta=hasta)
+    return {"ok": True, "clave": clave, "hasta": hasta}
+
+
+@router.post("/tareas/{clave}/hacer")
+def hacer_tarea(clave: str):
+    """«Hacer ahora»: solo deja constancia; la pantalla lleva al contador al sitio."""
+    codigo, _, cliente_id = clave.partition(":")
+    bitacora.registrar("tarea_iniciada", cliente_id or None, clave=clave, codigo=codigo)
+    return {"ok": True}
 
 
 @router.get("/buscar")

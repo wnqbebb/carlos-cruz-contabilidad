@@ -3,7 +3,8 @@ import { useCallback, useEffect, useState } from "react";
 import { sistema } from "../api";
 import { Campo, estiloCampo, estiloCampoAuto } from "../componentes/ui";
 import { clases, fecha, fechaLarga, numero, pesos, sumar } from "../formato";
-import type { Salud } from "../tipos";
+import { cargarContador } from "../contador";
+import type { Contador, Salud } from "../tipos";
 import {
   BotonFantasma,
   BotonPrimario,
@@ -276,8 +277,67 @@ export function Parametros() {
         </div>
       </section>
 
+      <DatosContador />
+
       <Sistema />
     </div>
+  );
+}
+
+/* ── el contador dueño de la aplicación (H18) ──────────────────────────────
+   Aparecen en el logotipo, el preloader y el saludo del tablero. */
+const CAMPOS_CONTADOR: [keyof Contador, string][] = [
+  ["nombre", "Nombre"], ["nombre_corto", "Nombre para el saludo"], ["cargo", "Cargo"],
+  ["tarjeta_profesional", "Tarjeta profesional"], ["municipio", "Municipio"], ["departamento", "Departamento"],
+];
+
+function DatosContador() {
+  const [datos, setDatos] = useState<Contador | null>(null);
+  const [guardando, setGuardando] = useState(false);
+  const [mensaje, setMensaje] = useState("");
+  useEffect(() => {
+    sistema.contador().then(setDatos).catch(() => setDatos(null));
+  }, []);
+  if (!datos) return null;
+  return (
+    <section aria-labelledby="titulo-contador" className="space-y-6">
+      <div>
+        <EtiquetaSeccion indice={3}>Contador</EtiquetaSeccion>
+        <h2 id="titulo-contador" className="t-h1 mt-4 text-tinta">Quién firma</h2>
+        <p className="t-small mt-1 text-gris">Se usan en el logotipo, la pantalla de entrada y el saludo del tablero.</p>
+      </div>
+      <div className="material-hoja grid gap-4 p-6 sm:grid-cols-2 escritorio:grid-cols-3">
+        {CAMPOS_CONTADOR.map(([campo, etiqueta]) => (
+          <Campo key={campo} etiqueta={etiqueta}>
+            <input
+              value={datos[campo]}
+              onChange={(e) => setDatos({ ...datos, [campo]: e.target.value })}
+              className={estiloCampo}
+            />
+          </Campo>
+        ))}
+        <div className="flex flex-wrap items-center gap-3 sm:col-span-2 escritorio:col-span-3">
+          <BotonPrimario
+            cargando={guardando}
+            onClick={async () => {
+              setGuardando(true);
+              try {
+                setDatos(await sistema.guardarContador(datos));
+                await cargarContador(true);
+                setMensaje("Guardado.");
+              } catch (e) {
+                setMensaje((e as Error).message);
+              } finally {
+                setGuardando(false);
+              }
+            }}
+          >
+            Guardar datos del contador
+          </BotonPrimario>
+          {mensaje && <span className="t-small text-grafito">{mensaje}</span>}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -318,7 +378,7 @@ function Sistema() {
     <section aria-labelledby="titulo-sistema" className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <EtiquetaSeccion indice={3}>Sistema</EtiquetaSeccion>
+          <EtiquetaSeccion indice={4}>Sistema</EtiquetaSeccion>
           <h2 id="titulo-sistema" className="t-h1 mt-4 text-tinta">Dónde viven los datos</h2>
           <p className="t-small mt-1 text-gris">Información técnica para soporte. El cliente no necesita verla.</p>
         </div>

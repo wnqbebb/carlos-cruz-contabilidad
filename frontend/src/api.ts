@@ -5,6 +5,7 @@ import type {
   Cierre,
   Cliente,
   ComparacionFicha,
+  Contador,
   FichaExtraida,
   Confirmacion,
   ConteoClientes,
@@ -100,6 +101,9 @@ const qs = (p: Record<string, string | number | boolean | undefined>) => {
 /* ── sistema ───────────────────────────────────────────────────────────── */
 export const sistema = {
   salud: () => pedir<Salud>("/api/salud"),
+  contador: () => pedir<Contador>("/api/contador"),
+  guardarContador: (datos: Partial<Contador>) =>
+    pedir<Contador>("/api/contador", { method: "PUT", ...json(datos) }),
   puc: () => pedir<{ codigo: string; nombre: string }[]>("/api/puc"),
   parametros: () => pedir<Record<string, any>>("/api/parametros"),
   guardarParametros: (anio: number, valores: Record<string, unknown>) =>
@@ -153,6 +157,10 @@ export const clientes = {
 /* ── histórico y análisis ──────────────────────────────────────────────── */
 export const analisis = {
   tablero: () => pedir<Tablero>("/api/tablero"),
+  posponerTarea: (clave: string) =>
+    pedir<{ ok: boolean; hasta: string }>(`/api/tareas/${encodeURIComponent(clave)}/posponer`, { method: "POST" }),
+  hacerTarea: (clave: string) =>
+    pedir<{ ok: boolean }>(`/api/tareas/${encodeURIComponent(clave)}/hacer`, { method: "POST" }),
   periodos: (clienteId: string) =>
     pedir<{ periodos: Periodo[]; cierres: Cierre[] }>(`/api/clientes/${clienteId}/periodos`),
   serie: (clienteId: string, limite = 24) =>
@@ -163,7 +171,6 @@ export const analisis = {
   ) => pedir<PaginaMovimientos>(`/api/clientes/${clienteId}/movimientos${qs(p)}`),
   sugerencias: (clienteId: string) =>
     pedir<InformeSugerencias>(`/api/clientes/${clienteId}/sugerencias`),
-  cartera: () => pedir<Tablero>("/api/tablero").then((t) => t.pendientes),
   resultadoDePeriodo: (periodoId: string) =>
     pedir<{ resultado: Resultado; peticion: Peticion; creado: string }>(
       `/api/periodos/${periodoId}/resultado`,
@@ -205,6 +212,8 @@ export const trabajo = {
   demo: (clienteId?: string | null, caso = "completo") =>
     pedir<Importacion>(`/api/importar/demo${qs({ cliente_id: clienteId ?? "", caso })}`, { method: "POST" }),
   calcular: (p: Peticion) => pedir<Resultado>("/api/calcular", { method: "POST", ...json(p) }),
+  /** Vuelve a abrir una subida que quedó con preguntas sin responder. */
+  verImportacion: (sid: string) => pedir<Importacion>(`/api/importar/${sid}`),
   guardarCierre: (sid: string) =>
     pedir<{ ok: boolean; mensaje: string }>(`/api/cierre/${sid}`, { method: "POST" }),
 };

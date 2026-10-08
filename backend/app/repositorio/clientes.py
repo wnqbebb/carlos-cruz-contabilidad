@@ -400,6 +400,14 @@ def sugerencias_busqueda(q: str, limite: int = 8) -> list[dict]:
     ]
 
 
+def activos(limite: int = 5000) -> list[dict]:
+    """Todos los clientes activos (para el tablero), en una consulta."""
+    with lectura() as cn:
+        filas = cn.execute(select(T).where(T.c.estado == "activo").order_by(T.c.razon_social)
+                           .limit(max(1, int(limite or 5000)))).all()
+    return [_a_dict(f) for f in filas]
+
+
 def contar() -> dict:
     with lectura() as cn:
         filas = cn.execute(select(T.c.estado, func.count()).group_by(T.c.estado)).all()

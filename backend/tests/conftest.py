@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 # cargarse. `ALMACENAMIENTO=local` evita además tocar Supabase por accidente.
 _TEMPORAL = Path(tempfile.mkdtemp(prefix="carloscruz-pruebas-"))
 os.environ["CC_SQLITE"] = str(_TEMPORAL / "pruebas.db")
+os.environ["CC_DATOS_APP"] = str(_TEMPORAL / "datos")
 os.environ["ALMACENAMIENTO"] = "local"
 os.environ.pop("DATABASE_URL", None)
 

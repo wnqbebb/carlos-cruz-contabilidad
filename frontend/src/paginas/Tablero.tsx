@@ -1,16 +1,15 @@
-import { ArrowLeft, ArrowRight, ArrowUpRight, Plus } from "lucide-react";
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router-dom";
+import { ArrowRight, Clock, Plus } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { marcarTableroListo, useAparicion } from "../animacion";
-import { analisis, clientes as apiClientes, sistema } from "../api";
+import { analisis } from "../api";
+import { useContador } from "../contador";
 import { useMetaPagina } from "../componentes/Marco";
-import { BotonSubirArchivo } from "../componentes/Subir";
-import { clases, cmp, esCero, fechaLarga, pesos, porcentaje, razon, restar, sumar } from "../formato";
-import type { Cliente, Periodo, Severidad, Tablero as DatosTablero } from "../tipos";
+import { BotonSubirArchivo, ZonaSubida } from "../componentes/Subir";
+import { clases, fecha, fechaLarga } from "../formato";
+import type { MesTablero, Tablero as DatosTablero, Tarea } from "../tipos";
 import {
-  BotonPrimario,
   Cifra,
-  DURACION,
   EnlaceSubrayado,
   EsferaCliente,
   EsqueletoTablero,
@@ -18,596 +17,375 @@ import {
   EtiquetaSeccion,
   Expediente,
   InsigniaEstado,
-  TituloPagina,
-  gsap,
-  sinMovimiento,
+  useAvisos,
 } from "../ui";
 
 /**
- * Tablero (spec 6.2). Orden de lectura:
- *   1. Título y subtítulo con el último corte.
- *   2. Fila héroe: Expediente con el resultado del mes · ecuación contable.
- *   3. Fila de estado: tira de 12 meses · nómina y seguridad social vigentes.
- *   4. Cola de operaciones.
- *   5. Clientes recientes en carrusel.
+ * Tablero del contador (spec v2.2 · Fase 7). Básico y útil, en este orden:
+ *   1. Saludo, fecha y «Subir archivo» con una zona de arrastre amplia.
+ *   2. Cuatro indicadores: clientes activos, honorarios mensuales, al día, atrasados.
+ *   3. Tareas sugeridas (el bloque principal): prioridad, cliente, qué hacer,
+ *      por qué y acción directa; «Hacer ahora» o «Posponer hasta mañana».
+ *   4. La cartera mes a mes (H13: cerrados, abiertos, sin contabilizar).
+ *   5. Clientes recientes en carpetas, con «Ver todos».
+ *   6. Actividad reciente: las últimas 8 líneas de la bitácora.
  *
- * Fuentes de datos (todas existentes, ningún endpoint nuevo):
- *   /api/tablero ............ conteos, pendientes y serie mensual de la cartera
- *   /api/parametros ......... SMMLV, auxilio y jornada (antes estaban escritos a mano)
- *   /api/clientes ........... los 8 clientes activos más recientes
- *   /api/clientes/:id/periodos  periodos de esos 8 (ecuación, carrusel y tira)
+ * Ya no está: el resultado del mes de la cartera, la ecuación contable, la
+ * tarjeta de nómina (vive en Parámetros) ni cifras financieras de un cliente.
+ * Todo lo que se muestra lo cuenta el servidor (`/api/tablero`).
  */
 
 const MESES_CORTOS = ["ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic"];
-const MESES_LARGOS = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto",
-  "septiembre", "octubre", "noviembre", "diciembre"];
 
-/**
- * Tolerancia antes de considerar un mes «en mora». Es la misma del backend
- * (`MESES_SIN_TRABAJO["mensual"]` en inteligencia/sugerencias.py): un mes se
- * pinta en rojo solo si además el backend reporta una alerta ATRASADO.
- */
-const TOLERANCIA_MESES = 2;
-
-type Reciente = { cliente: Cliente; periodos: Periodo[]; ultimo: Periodo | null };
-
-const COLOR_SEVERIDAD: Record<Severidad, string> = {
-  critica: "bg-rojo-cartel",
-  alta: "bg-ambar",
-  media: "bg-tinta",
-  informativa: "bg-tinta/20",
-};
-const NOMBRE_SEVERIDAD: Record<Severidad, string> = {
-  critica: "Crítico",
-  alta: "Importante",
-  media: "Revisar",
-  informativa: "Dato",
+const PRIORIDAD: Record<Tarea["prioridad"], { texto: string; punto: string }> = {
+  critica: { texto: "Urgente", punto: "bg-rojo-cartel" },
+  alta: { texto: "Importante", punto: "bg-ambar" },
+  media: { texto: "Cuando pueda", punto: "bg-tinta/40" },
 };
 
-const mesLargo = (clave: string) => {
-  const [a, m] = clave.split("-");
-  return `${MESES_LARGOS[Number(m) - 1] ?? m} ${a}`;
-};
-const corteCorto = (iso: string) => {
-  const [a, m, d] = iso.slice(0, 10).split("-");
-  return `${Number(d)} ${MESES_CORTOS[Number(m) - 1] ?? m} ${a}`;
-};
-const soloDigitos = (t: string) => t.replace(/\D/g, "");
+function saludo(hora: number): string {
+  if (hora < 12) return "Buenos días";
+  if (hora < 19) return "Buenas tardes";
+  return "Buenas noches";
+}
 
 export function Tablero() {
   const [datos, setDatos] = useState<DatosTablero | null>(null);
-  const [parametros, setParametros] = useState<Record<string, any> | null>(null);
-  const [recientes, setRecientes] = useState<Reciente[] | null>(null);
   const [error, setError] = useState("");
-
   const [intento, setIntento] = useState(0);
+  const contador = useContador();
 
   useEffect(() => {
     setError("");
     analisis.tablero().then(setDatos).catch((e) => setError((e as Error).message));
-    sistema.parametros().then(setParametros).catch(() => setParametros({}));
-    apiClientes
-      .listar({ estado: "activo", orden: "actualizado", descendente: true, por_pagina: 8 })
-      .then((pag) =>
-        Promise.all(
-          pag.clientes.map(async (cliente) => {
-            const periodos = await analisis.periodos(cliente.id).then((r) => r.periodos).catch(() => [] as Periodo[]);
-            const ordenados = [...periodos].sort((a, b) => b.hasta.localeCompare(a.hasta));
-            return { cliente, periodos: ordenados, ultimo: ordenados[0] ?? null };
-          }),
-        ),
-      )
-      .then(setRecientes)
-      .catch(() => setRecientes([]));
   }, [intento]);
 
-  useMetaPagina(datos?.trabajo.ultimo_corte ? `Corte ${corteCorto(datos.trabajo.ultimo_corte)}` : null);
+  useMetaPagina(datos?.trabajo.ultimo_corte ? `Último corte ${fecha(datos.trabajo.ultimo_corte)}` : null);
 
-  // El preloader espera esta señal (o se rinde a los 4 s): no se alarga si los datos llegan antes.
+  // El preloader espera esta señal (o se rinde a los 4 s).
   useEffect(() => {
     if (datos || error) marcarTableroListo();
   }, [datos, error]);
-
-  // El periodo más reciente entre los clientes recientes: base de la ecuación.
-  const masReciente = useMemo(() => {
-    const conPeriodo = (recientes ?? []).filter((r) => r.ultimo);
-    conPeriodo.sort((a, b) => b.ultimo!.hasta.localeCompare(a.ultimo!.hasta));
-    return conPeriodo[0] ?? null;
-  }, [recientes]);
 
   if (error) {
     return <EstadoError titulo="No se pudo abrir el tablero" detalle={error} onReintentar={() => setIntento((n) => n + 1)} />;
   }
   if (!datos) return <EsqueletoTablero />;
 
-  const activos = datos.clientes.activos;
-  const mes = datos.serie[datos.serie.length - 1] ?? null;
+  const ind = datos.indicadores;
+  const hoy = new Date();
 
   return (
     <div className="space-y-16 escritorio:space-y-20">
-      <div className="flex flex-wrap items-end justify-between gap-6">
-        <TituloPagina
-          subtitulo={
-            <>
-              {activos} {activos === 1 ? "cliente activo" : "clientes activos"}
-              {datos.trabajo.ultimo_corte && <> · último corte {fechaLarga(datos.trabajo.ultimo_corte)}</>}
-            </>
-          }
-        >
-          Tablero
-        </TituloPagina>
-        {/* La acción de partida del contador: soltar un archivo. No tiene que
-            elegir cliente ni pantalla primero. */}
-        <BotonSubirArchivo />
-      </div>
-
-      {/* ── 1. Fila héroe ────────────────────────────────────────────── */}
-      <section aria-label="Resultado y ecuación contable" className="columnas-12">
-        <div className="col-span-12 escritorio:col-span-7">
-          <Heroe mes={mes} reciente={masReciente} />
-        </div>
+      {/* ── 1. saludo, fecha y subir ─────────────────────────────────────── */}
+      <section aria-labelledby="saludo" className="columnas-12 items-end">
         <div className="col-span-12 escritorio:col-span-5">
-          <Ecuacion reciente={masReciente} cargando={recientes === null} />
-        </div>
-      </section>
-
-      {/* ── 2. Fila de estado ────────────────────────────────────────── */}
-      <section aria-label="Estado de los periodos y parámetros legales" className="columnas-12">
-        <div className="col-span-12 escritorio:col-span-7">
-          <TiraPeriodos datos={datos} recientes={recientes} />
-        </div>
-        <div className="col-span-12 escritorio:col-span-5">
-          <Nomina parametros={parametros} />
-        </div>
-      </section>
-
-      {/* ── 3. Cola de operaciones ───────────────────────────────────── */}
-      <ColaOperaciones datos={datos} />
-
-      {/* ── 4. Clientes recientes ────────────────────────────────────── */}
-      <ClientesRecientes recientes={recientes} total={datos.clientes.total} />
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   1 · Expediente héroe — resultado del último mes de toda la cartera
-   ═══════════════════════════════════════════════════════════════════════════ */
-function Heroe({ mes, reciente }: { mes: DatosTablero["serie"][number] | null; reciente: Reciente | null }) {
-  if (!mes) {
-    return (
-      <Expediente etiqueta="01 • Resultado" flecha={false} titulo="Aún no hay periodos calculados">
-        <p className="t-body max-w-md">
-          Cuando trabaje el primer periodo de un cliente, aquí aparece su resultado con la cifra exacta.
-        </p>
-        <div className="mt-6">
-          <BotonPrimario a="/trabajo" flecha className="!bg-sobre-tinta !text-tinta">
-            Trabajar el primer periodo
-          </BotonPrimario>
-        </div>
-      </Expediente>
-    );
-  }
-  const margen = razon(mes.utilidad, mes.total_ingresos, 4);
-  const destino = reciente?.cliente ? `/clientes/${reciente.cliente.id}?vista=estados` : "/clientes";
-  return (
-    <Expediente
-      etiqueta="01 • Resultado"
-      a={destino}
-      etiquetaAccesible={`Resultado de ${mesLargo(mes.mes)}: ${pesos(mes.utilidad)}. Ver estado de resultados`}
-      className="h-full"
-    >
-      <p className="t-meta text-sobre-tinta-2">
-        {esNegativoTexto(mes.utilidad) ? "Pérdida neta" : "Utilidad neta"} · {mesLargo(mes.mes)} · toda la cartera ·{" "}
-        {mes.periodos} {mes.periodos === 1 ? "periodo" : "periodos"}
-      </p>
-      <div className="mt-4 text-sobre-tinta">
-        <Cifra valor={mes.utilidad} tamano="display-xl" odometro encajar indicador />
-      </div>
-      <dl className="mt-10 grid gap-6 border-t border-sobre-tinta/15 pt-5 sm:grid-cols-3">
-        <Metrica titulo="Ingresos"><Cifra valor={mes.total_ingresos} tamano="h2" /></Metrica>
-        <Metrica titulo="Gastos"><Cifra valor={mes.total_gastos} tamano="h2" /></Metrica>
-        <Metrica titulo="Margen neto">
-          <span className="t-h2 cifras">{margen === null ? "—" : porcentaje(margen).replace("%", " %")}</span>
-        </Metrica>
-      </dl>
-    </Expediente>
-  );
-}
-
-const esNegativoTexto = (v: string) => v.trim().startsWith("-") && !esCero(v);
-
-function Metrica({ titulo, children }: { titulo: string; children: ReactNode }) {
-  return (
-    <div className="min-w-0">
-      <dd className="text-sobre-tinta">{children}</dd>
-      <dt className="t-meta mt-1.5 text-sobre-tinta-2">{titulo}</dt>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   2 · Ecuación contable tipográfica con balanza
-   ═══════════════════════════════════════════════════════════════════════════ */
-function Ecuacion({ reciente, cargando }: { reciente: Reciente | null; cargando: boolean }) {
-  const viga = useRef<HTMLDivElement>(null);
-  const p = reciente?.ultimo ?? null;
-  const activo = p?.total_activo ?? "0";
-  const pasivo = p?.total_pasivo ?? "0";
-  const patrimonio = p?.total_patrimonio ?? "0";
-
-  // Proporciones SOLO para dibujar las barras; las cifras se muestran exactas.
-  const total = Math.abs(Number(activo)) || 1;
-  const anchoPasivo = Math.max(0, Math.min(100, (Math.abs(Number(pasivo)) / total) * 100));
-  const anchoPatrimonio = Math.max(0, Math.min(100 - anchoPasivo, (Math.abs(Number(patrimonio)) / total) * 100));
-
-  // Balanza: la viga entra inclinada y se nivela con un leve asentamiento (spec 8).
-  useLayoutEffect(() => {
-    if (!viga.current || !p || sinMovimiento()) return;
-    const ctx = gsap.context(() => {
-      gsap.fromTo(viga.current, { rotation: -3.5 }, { rotation: 0, duration: DURACION.balanza, ease: "back.out(1.4)", delay: 0.15 });
-    });
-    return () => ctx.revert();
-  }, [p?.id]);
-
-  return (
-    <section className="material-hoja flex h-full flex-col p-6 sm:p-7">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <EtiquetaSeccion indice={2}>Ecuación contable</EtiquetaSeccion>
-        {p && (p.cuadra ? (
-          <InsigniaEstado estado="cuadra" />
-        ) : (
-          <InsigniaEstado estado="descuadre">
-            Descuadre de {pesos(restar(activo, sumar(pasivo, patrimonio)).replace("-", ""))}
-          </InsigniaEstado>
-        ))}
-      </div>
-
-      {cargando && <p className="t-small mt-8 text-gris">Leyendo el último corte…</p>}
-      {!cargando && !p && (
-        <p className="t-body mt-8 text-grafito">
-          Todavía no hay un periodo calculado. La ecuación Activo = Pasivo + Patrimonio aparece con el primer cierre.
-        </p>
-      )}
-
-      {p && reciente && (
-        <>
-          <p className="t-small mt-4 text-gris">
-            {reciente.cliente.sigla || reciente.cliente.razon_social} · corte {fechaLarga(p.hasta)}
+          <p className="t-meta text-gris">{fechaLarga(datos.hoy)}</p>
+          <h1 id="saludo" className="t-display mt-4 text-tinta">
+            {saludo(hoy.getHours())}
+            {contador?.nombre_corto ? `, ${contador.nombre_corto}` : ""}.
+          </h1>
+          <p className="t-body mt-4 max-w-md text-grafito">
+            {datos.tareas_total
+              ? `Hay ${datos.tareas_total} ${datos.tareas_total === 1 ? "tarea" : "tareas"} en la cartera. Abajo, en orden de urgencia.`
+              : "No hay nada pendiente en la cartera. Suba el archivo del próximo cliente."}
           </p>
+          <div className="mt-6">
+            <BotonSubirArchivo />
+          </div>
+        </div>
+        <div className="col-span-12 escritorio:col-span-7">
+          <ZonaSubida className="min-h-[220px]" />
+        </div>
+      </section>
 
-          <div className="mt-7 space-y-4">
-            <FilaEcuacion signo="" nombre="Activo" valor={activo} fuerte />
-            <FilaEcuacion signo="=" nombre="Pasivo" valor={pasivo} />
-            <FilaEcuacion signo="+" nombre="Patrimonio" valor={patrimonio} />
-          </div>
+      {/* ── 2. cuatro indicadores ───────────────────────────────────────── */}
+      <section aria-label="Indicadores de la cartera" className="grid grid-cols-2 gap-4 escritorio:grid-cols-4">
+        <Indicador titulo="Clientes activos" a="/clientes">
+          <span className="cifras t-kpi text-tinta">{ind.clientes_activos.toLocaleString("es-CO")}</span>
+        </Indicador>
+        <Indicador titulo="Honorarios mensuales">
+          <Cifra valor={ind.honorarios_mensuales} tamano="h2" encajar />
+        </Indicador>
+        <Indicador titulo="Al día" detalle="Contabilizados dentro de su periodicidad">
+          <span className="cifras t-kpi text-tinta">{ind.al_dia.toLocaleString("es-CO")}</span>
+        </Indicador>
+        <Indicador titulo="Atrasados" detalle={ind.atrasados ? "Con meses sin contabilizar" : "Ninguno"}>
+          <span className={clases("cifras t-kpi", ind.atrasados ? "text-rojo" : "text-tinta")}>
+            {ind.atrasados.toLocaleString("es-CO")}
+          </span>
+        </Indicador>
+      </section>
 
-          <div ref={viga} className="mt-auto origin-center space-y-1.5 pt-8" aria-hidden>
-            <div className="h-2.5 w-full rounded-full bg-tinta" />
-            <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-hoja-2">
-              <div className="h-full bg-grafito" style={{ width: `${anchoPasivo}%` }} />
-              <div className="h-full border-l-2 border-hoja bg-gris" style={{ width: `${anchoPatrimonio}%` }} />
-            </div>
-          </div>
-          <div className="t-meta mt-2 flex justify-between text-gris">
-            <span>Activo</span>
-            <span>Pasivo | Patrimonio</span>
-          </div>
-        </>
+      {/* ── 3. tareas sugeridas ─────────────────────────────────────────── */}
+      <Tareas inicial={datos.tareas} total={datos.tareas_total} />
+
+      {/* ── 4. la cartera mes a mes ─────────────────────────────────────── */}
+      <CarteraPorMes meses={datos.meses} />
+
+      {/* ── 5. clientes recientes ───────────────────────────────────────── */}
+      <Recientes datos={datos} />
+
+      {/* ── 6. actividad reciente ───────────────────────────────────────── */}
+      <ActividadReciente datos={datos} />
+    </div>
+  );
+}
+
+function Indicador({ titulo, detalle, a, children }: { titulo: string; detalle?: string; a?: string; children: React.ReactNode }) {
+  const contenido = (
+    <>
+      <p className="t-meta text-gris">{titulo}</p>
+      <div className="mt-3 min-w-0">{children}</div>
+      {detalle && <p className="t-small mt-2 text-grafito">{detalle}</p>}
+    </>
+  );
+  const clase = "material-hoja @container block min-w-0 p-5";
+  return a ? (
+    <Link to={a} className={clases(clase, "transition-colors hover:bg-hoja-2")}>{contenido}</Link>
+  ) : (
+    <div className={clase}>{contenido}</div>
+  );
+}
+
+/* ── tareas sugeridas ─────────────────────────────────────────────────────── */
+function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
+  const [tareas, setTareas] = useState(inicial);
+  const [ocupada, setOcupada] = useState("");
+  const navegar = useNavigate();
+  const avisar = useAvisos();
+  const bloque = useRef<HTMLElement>(null);
+  useAparicion(bloque);
+  useEffect(() => setTareas(inicial), [inicial]);
+
+  const hacer = async (t: Tarea) => {
+    setOcupada(t.clave);
+    await analisis.hacerTarea(t.clave).catch(() => undefined);
+    navegar(t.accion.ruta);
+  };
+  const posponer = async (t: Tarea) => {
+    setOcupada(t.clave);
+    try {
+      await analisis.posponerTarea(t.clave);
+      setTareas((ts) => ts.filter((x) => x.clave !== t.clave));
+      avisar(`«${t.que}» de ${t.razon_social}: vuelve mañana.`);
+    } catch (e) {
+      avisar((e as Error).message, "rojo");
+    } finally {
+      setOcupada("");
+    }
+  };
+
+  return (
+    <section ref={bloque} aria-labelledby="titulo-tareas">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <EtiquetaSeccion indice={1}>Tareas sugeridas</EtiquetaSeccion>
+          <h2 id="titulo-tareas" className="t-h1 mt-4 text-tinta">Qué hacer, en orden</h2>
+        </div>
+        {total > inicial.length && <p className="t-small text-gris">Mostrando {inicial.length} de {total}</p>}
+      </div>
+
+      {tareas.length === 0 ? (
+        <p className="material-hoja t-body mt-8 p-6 text-grafito">
+          Nada pendiente: todos los clientes están al día, cerrados y cuadrados.
+        </p>
+      ) : (
+        <ol className="material-hoja mt-8 divide-y divide-linea">
+          {tareas.map((t) => {
+            const p = PRIORIDAD[t.prioridad];
+            return (
+              <li key={t.clave} className="grid gap-4 p-5 escritorio:grid-cols-[150px_minmax(0,1fr)_auto] escritorio:items-center">
+                <span className="flex items-center gap-2">
+                  <span aria-hidden className={clases("h-2.5 w-2.5 shrink-0 rounded-full", p.punto)} />
+                  <span className={clases("t-meta", t.prioridad === "critica" ? "text-rojo" : "text-grafito")}>{p.texto}</span>
+                </span>
+                <div className="min-w-0">
+                  <p className="t-body font-semibold text-tinta">
+                    {t.que}
+                    <span className="font-normal text-grafito"> · </span>
+                    <Link to={`/clientes/${t.cliente_id}`} className="font-normal text-azul-tinta underline-offset-4 hover:underline">
+                      {t.razon_social}
+                    </Link>
+                  </p>
+                  <p className="t-small mt-1 text-grafito">
+                    <span className="text-tinta">{t.titulo}.</span> {t.por_que}
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    disabled={ocupada === t.clave}
+                    onClick={() => hacer(t)}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-tinta px-4 text-[13px] font-medium text-sobre-tinta transition-colors hover:bg-tinta-2 disabled:opacity-60"
+                  >
+                    Hacer ahora <ArrowRight size={14} strokeWidth={1.5} aria-hidden />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={ocupada === t.clave}
+                    onClick={() => posponer(t)}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-linea px-4 text-[13px] text-grafito transition-colors hover:bg-hoja-2 hover:text-tinta disabled:opacity-60"
+                  >
+                    <Clock size={14} strokeWidth={1.5} aria-hidden /> Posponer hasta mañana
+                  </button>
+                </div>
+              </li>
+            );
+          })}
+        </ol>
       )}
     </section>
   );
 }
 
-function FilaEcuacion({ signo, nombre, valor, fuerte }: { signo: string; nombre: string; valor: string; fuerte?: boolean }) {
+/* ── la cartera mes a mes (H13) ───────────────────────────────────────────── */
+function CarteraPorMes({ meses }: { meses: MesTablero[] }) {
+  const maximo = Math.max(1, ...meses.map((m) => m.cerrados + m.abiertos + m.sin_contabilizar));
   return (
-    <div className="flex items-baseline gap-3 border-b border-linea pb-3 last:border-b-0">
-      <span aria-hidden className="w-4 shrink-0 text-center t-h2 text-gris">{signo}</span>
-      <span className={clases("t-body min-w-0 flex-1", fuerte ? "font-semibold text-tinta" : "text-grafito")}>{nombre}</span>
-      <Cifra valor={valor} tamano={fuerte ? "h2" : "body"} className={fuerte ? undefined : "font-medium"} />
-    </div>
+    <section aria-labelledby="titulo-meses">
+      <EtiquetaSeccion indice={2}>La cartera mes a mes</EtiquetaSeccion>
+      <h2 id="titulo-meses" className="t-h1 mt-4 text-tinta">Cuántos clientes van cerrados cada mes</h2>
+      <div className="material-hoja mt-8 p-5">
+        <div className="barra-fina overflow-x-auto">
+          <ol className="flex min-w-[640px] items-end gap-2" aria-label="Clientes por mes">
+            {meses.map((m) => {
+              const [a, mm] = m.mes.split("-");
+              const total = m.cerrados + m.abiertos + m.sin_contabilizar;
+              return (
+                <li key={m.mes} className="flex min-w-0 flex-1 flex-col items-center gap-2">
+                  <span className="codigo text-[11px] text-gris">{total || "·"}</span>
+                  <span className="flex h-28 w-full max-w-[40px] flex-col-reverse overflow-hidden rounded-chip bg-hoja-2"
+                    title={`${m.cerrados} cerrados · ${m.abiertos} abiertos · ${m.sin_contabilizar} sin contabilizar`}>
+                    <span className="w-full bg-tinta" style={{ height: `${(m.cerrados / maximo) * 100}%` }} />
+                    <span className="w-full bg-azul" style={{ height: `${(m.abiertos / maximo) * 100}%` }} />
+                    <span className="w-full bg-rojo-cartel" style={{ height: `${(m.sin_contabilizar / maximo) * 100}%` }} />
+                  </span>
+                  <span className="t-meta text-gris">{MESES_CORTOS[Number(mm) - 1]}</span>
+                  <span className="codigo -mt-1.5 text-[10px] text-gris">{a.slice(2)}</span>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+        <p className="t-small mt-4 flex flex-wrap gap-x-5 gap-y-1 text-grafito">
+          <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-tinta" /> Cerrados</span>
+          <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-azul" /> Calculados, por cerrar</span>
+          <span className="inline-flex items-center gap-1.5"><span aria-hidden className="h-2.5 w-2.5 rounded-sm bg-rojo-cartel" /> Sin contabilizar</span>
+        </p>
+        <details className="mt-4">
+          <summary className="t-meta cursor-pointer select-none text-gris">Ver los mismos datos en tabla</summary>
+          <table className="t-tabla mt-3 w-full text-[13px]">
+            <thead>
+              <tr className="text-left">
+                {["Mes", "Cerrados", "Por cerrar", "Sin contabilizar"].map((t, i) => (
+                  <th key={t} scope="col" className={clases("t-meta border-b border-linea py-2 text-gris", i > 0 && "text-right")}>{t}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {meses.map((m) => (
+                <tr key={m.mes}>
+                  <td className="border-b border-linea py-1.5">{m.mes}</td>
+                  <td className="cifras border-b border-linea py-1.5 text-right">{m.cerrados}</td>
+                  <td className="cifras border-b border-linea py-1.5 text-right">{m.abiertos}</td>
+                  <td className="cifras border-b border-linea py-1.5 text-right">{m.sin_contabilizar}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+      </div>
+    </section>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   3 · Tira de 12 meses
-   ═══════════════════════════════════════════════════════════════════════════ */
-type EstadoMes = "cerrado" | "abierto" | "pendiente" | "mora";
-
-const ESTILO_MES: Record<EstadoMes, { clase: string; texto: string }> = {
-  cerrado: { clase: "bg-tinta", texto: "Cerrado" },
-  abierto: { clase: "border-2 border-azul bg-azul-suave", texto: "Abierto" },
-  pendiente: { clase: "rayado border border-linea", texto: "Sin contabilizar" },
-  mora: { clase: "bg-rojo-cartel", texto: "En mora" },
-};
-
-function TiraPeriodos({ datos, recientes }: { datos: DatosTablero; recientes: Reciente[] | null }) {
-  const hoy = new Date();
-  const indiceHoy = hoy.getFullYear() * 12 + hoy.getMonth();
-  const hayAtraso = datos.pendientes.clientes.some((c) => c.principal.codigo === "ATRASADO");
-  const atrasado = datos.pendientes.clientes.find((c) => c.principal.codigo === "ATRASADO");
-  const periodos = (recientes ?? []).flatMap((r) => r.periodos);
-
-  const meses = Array.from({ length: 12 }, (_, i) => {
-    const idx = indiceHoy - 11 + i;
-    const anio = Math.floor(idx / 12);
-    const m = (idx % 12) + 1;
-    const clave = `${anio}-${String(m).padStart(2, "0")}`;
-    const delMes = periodos.filter((p) => p.hasta.slice(0, 7) === clave);
-    const enSerie = datos.serie.some((s) => s.mes === clave && s.periodos > 0);
-    let estado: EstadoMes;
-    if (delMes.length) estado = delMes.some((p) => p.estado !== "cerrado") ? "abierto" : "cerrado";
-    else if (enSerie) estado = datos.trabajo.pendientes > 0 ? "abierto" : "cerrado";
-    else estado = hayAtraso && indiceHoy - idx > TOLERANCIA_MESES ? "mora" : "pendiente";
-    return { clave, anio, m, estado };
-  });
-
-  const conteo = (e: EstadoMes) => meses.filter((x) => x.estado === e).length;
-
+/* ── clientes recientes ─────────────────────────────────────────────────── */
+function Recientes({ datos }: { datos: DatosTablero }) {
   return (
-    <section className="material-hoja h-full p-6 sm:p-7">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <EtiquetaSeccion indice={3}>Gestión de periodos</EtiquetaSeccion>
-        <span className="t-small text-gris">
-          {datos.trabajo.cerrados} {datos.trabajo.cerrados === 1 ? "cerrado" : "cerrados"} · {datos.trabajo.pendientes}{" "}
-          {datos.trabajo.pendientes === 1 ? "abierto" : "abiertos"}
-          {datos.trabajo.descuadrados > 0 && <span className="text-rojo"> · {datos.trabajo.descuadrados} con descuadre</span>}
-        </span>
+    <section aria-labelledby="titulo-recientes">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <EtiquetaSeccion indice={3}>Clientes</EtiquetaSeccion>
+          <h2 id="titulo-recientes" className="t-h1 mt-4 text-tinta">Expedientes recientes</h2>
+        </div>
+        <EnlaceSubrayado a="/clientes">Ver todos ({datos.clientes.activos})</EnlaceSubrayado>
       </div>
-
-      <h2 className="t-h2 mt-5 text-tinta">Últimos 12 meses de la cartera</h2>
-      {atrasado && (
-        <p className="t-body mt-1 text-rojo">
-          {atrasado.principal.titulo} — {atrasado.razon_social}
-        </p>
-      )}
-
-      <ol className="mt-6 grid grid-cols-6 gap-2 sm:grid-cols-12" aria-label="Estado de cada mes">
-        {meses.map((x) => (
-          <li key={x.clave} className="min-w-0">
-            <div
-              className={clases("h-14 rounded-chip", ESTILO_MES[x.estado].clase)}
-              title={`${mesLargo(x.clave)}: ${ESTILO_MES[x.estado].texto}`}
-            />
-            <p className="t-meta mt-1.5 text-center text-gris">
-              {MESES_CORTOS[x.m - 1]}
-              {x.m === 1 && <span className="block text-[10px]">{x.anio}</span>}
-            </p>
-            <span className="sr-only">{`${mesLargo(x.clave)}: ${ESTILO_MES[x.estado].texto}`}</span>
+      <ul className="mt-8 grid gap-x-6 gap-y-10 pt-4 sm:grid-cols-2 escritorio:grid-cols-4">
+        {datos.recientes.map((c, i) => (
+          <li key={c.id} className="min-w-0">
+            <Expediente
+              variante="papel"
+              etiqueta={`${c.sigla || "Cliente"} — ${String(i + 1).padStart(3, "0")}`}
+              a={`/clientes/${c.id}`}
+              className="h-full"
+              etiquetaAccesible={`Abrir el expediente de ${c.razon_social}`}
+            >
+              <div className="flex items-center gap-3">
+                <EsferaCliente nit={c.nit} nombre={c.razon_social} tamano={56} />
+                <p className="t-small line-clamp-2 min-w-0 font-semibold text-tinta">{c.razon_social}</p>
+              </div>
+              <div className="mt-4 flex flex-wrap items-center gap-2 border-t border-linea pt-3">
+                {c.estado_trabajo === "atrasado" ? (
+                  <InsigniaEstado estado="descuadre">Atrasado</InsigniaEstado>
+                ) : (
+                  <InsigniaEstado estado="cuadra" discreta>Al día</InsigniaEstado>
+                )}
+                <span className="t-meta text-gris">
+                  {c.ultimo_periodo ? `Corte ${fecha(c.ultimo_periodo.hasta)}` : "Sin periodos"}
+                </span>
+              </div>
+            </Expediente>
           </li>
         ))}
-      </ol>
-
-      <ul className="t-small mt-5 flex flex-wrap gap-x-5 gap-y-2 text-grafito">
-        {(Object.keys(ESTILO_MES) as EstadoMes[]).map((e) => (
-          <li key={e} className="flex items-center gap-2">
-            <span aria-hidden className={clases("h-3 w-5 rounded-[3px]", ESTILO_MES[e].clase)} />
-            {ESTILO_MES[e].texto} <span className="text-gris">({conteo(e)})</span>
-          </li>
-        ))}
+        <li className="min-w-0">
+          <Link
+            to="/clientes/nuevo"
+            className="flex h-full min-h-[170px] flex-col items-center justify-center gap-3 rounded-hoja border border-dashed border-tinta/25 text-grafito transition-colors hover:border-tinta/50 hover:text-tinta"
+          >
+            <span className="grid h-11 w-11 place-items-center rounded-full border border-linea bg-hoja">
+              <Plus size={18} strokeWidth={1.5} aria-hidden />
+            </span>
+            <span className="t-small font-medium">Cliente nuevo</span>
+          </Link>
+        </li>
       </ul>
     </section>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   3b · Nómina y seguridad social vigentes (de /api/parametros)
-   ═══════════════════════════════════════════════════════════════════════════ */
-function Nomina({ parametros }: { parametros: Record<string, any> | null }) {
-  const anioHoy = String(new Date().getFullYear());
-  const anios = Object.keys(parametros ?? {}).filter((k) => /^\d{4}$/.test(k)).sort();
-  const anio = anios.includes(anioHoy) ? anioHoy : anios[anios.length - 1];
-  const p = anio ? parametros?.[anio] : null;
-
-  const hoyIso = new Date().toISOString().slice(0, 10);
-  const tramos: { desde: string; horas_semana: number }[] = p?.jornada_tramos ?? [];
-  const vigente = [...tramos].filter((t) => t.desde <= hoyIso).sort((a, b) => b.desde.localeCompare(a.desde))[0] ?? tramos[0];
-
+/* ── actividad reciente ─────────────────────────────────────────────────── */
+function ActividadReciente({ datos }: { datos: DatosTablero }) {
   return (
-    <section className="material-hoja flex h-full flex-col p-6 sm:p-7">
-      <EtiquetaSeccion indice={4}>Nómina y seguridad social</EtiquetaSeccion>
-      <h2 className="t-h2 mt-5 text-tinta">Valores vigentes {anio ?? ""}</h2>
-
-      {parametros === null && <p className="t-small mt-6 text-gris">Leyendo parámetros…</p>}
-      {parametros !== null && !p && (
-        <p className="t-body mt-6 text-grafito">No hay parámetros legales cargados. Regístrelos en Parámetros.</p>
-      )}
-      {p && (
-        <dl className="mt-5 divide-y divide-linea">
-          <Renglon nombre="SMMLV" valor={<Cifra valor={p.smmlv} />} />
-          <Renglon nombre="Auxilio de transporte" valor={<Cifra valor={p.aux_transporte} />} />
-          <Renglon nombre="SMMLV + auxilio" valor={<Cifra valor={sumar(p.smmlv, p.aux_transporte)} className="font-semibold" />} />
-          {vigente && (
-            <Renglon
-              nombre="Jornada máxima"
-              valor={
-                <span className="t-body tabular-nums">
-                  {vigente.horas_semana} h/semana <span className="block text-gris sm:inline">desde {fechaLarga(vigente.desde)}</span>
-                </span>
-              }
-            />
-          )}
-        </dl>
-      )}
-
-      <div className="mt-auto flex items-end justify-between gap-4 pt-6">
-        {p?._fuente && (
-          <details className="t-small max-w-[40ch] text-gris">
-            <summary className="cursor-pointer select-none">Fuente legal</summary>
-            <p className="mt-2">{p._fuente}</p>
-          </details>
-        )}
-        <EnlaceSubrayado a="/parametros">Ajustar <ArrowRight size={14} strokeWidth={1.5} aria-hidden /></EnlaceSubrayado>
-      </div>
-    </section>
-  );
-}
-
-function Renglon({ nombre, valor }: { nombre: string; valor: ReactNode }) {
-  return (
-    <div className="flex items-baseline justify-between gap-4 py-2.5">
-      <dt className="t-body text-grafito">{nombre}</dt>
-      <dd className="min-w-0 text-right text-tinta">{valor}</dd>
-    </div>
-  );
-}
-
-/* ═══════════════════════════════════════════════════════════════════════════
-   4 · Cola de operaciones
-   ═══════════════════════════════════════════════════════════════════════════ */
-function ColaOperaciones({ datos }: { datos: DatosTablero }) {
-  const c = datos.pendientes;
-  const bloque = useRef<HTMLElement>(null);
-  useAparicion(bloque);
-  return (
-    <section ref={bloque} aria-labelledby="titulo-cola">
-      <div className="flex flex-wrap items-end justify-between gap-4 border-b border-linea pb-4">
-        <div>
-          <EtiquetaSeccion indice={5}>Cola de operaciones</EtiquetaSeccion>
-          <h2 id="titulo-cola" className="t-h1 mt-4 text-tinta">
-            {c.con_pendientes === 0
-              ? "Nada pendiente"
-              : `${c.con_pendientes} ${c.con_pendientes === 1 ? "cliente requiere" : "clientes requieren"} atención`}
-          </h2>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {c.criticas > 0 && <InsigniaEstado estado="descuadre">{c.criticas} {c.criticas === 1 ? "crítico" : "críticos"}</InsigniaEstado>}
-          {c.altas > 0 && <InsigniaEstado estado="por-cerrar">{c.altas} {c.altas === 1 ? "importante" : "importantes"}</InsigniaEstado>}
-        </div>
-      </div>
-
-      {c.clientes.length === 0 ? (
-        <p className="t-body py-8 text-grafito">Todos los clientes revisados están al día.</p>
+    <section aria-labelledby="titulo-actividad">
+      <EtiquetaSeccion indice={4}>Actividad</EtiquetaSeccion>
+      <h2 id="titulo-actividad" className="t-h1 mt-4 text-tinta">Lo último que se hizo</h2>
+      {datos.actividad.length === 0 ? (
+        <p className="t-body mt-6 text-grafito">Todavía no hay actividad.</p>
       ) : (
-        <ul>
-          {c.clientes.map((p) => (
-            <li key={p.cliente_id} className="relative border-b border-linea">
-              <span aria-hidden className={clases("absolute inset-y-4 left-0 w-1 rounded-full", COLOR_SEVERIDAD[p.principal.severidad])} />
-              <div className="grid gap-4 py-5 pl-6 sm:grid-cols-[auto_1fr_auto] sm:items-start">
-                <EsferaCliente nit={soloDigitos(p.nit_formateado)} nombre={p.razon_social} tamano={32} />
-                <div className="min-w-0">
-                  <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-                    <span className="t-body font-semibold text-tinta">{p.razon_social}</span>
-                    <span className="codigo text-[12px] text-gris">{p.nit_formateado}</span>
-                    <span className={clases("t-meta", p.principal.severidad === "critica" ? "text-rojo" : p.principal.severidad === "alta" ? "text-ambar" : "text-gris")}>
-                      {NOMBRE_SEVERIDAD[p.principal.severidad]}
-                    </span>
-                  </p>
-                  <p className="t-body mt-1 font-medium text-tinta">{p.principal.titulo}</p>
-                  <p className="t-small mt-0.5 text-grafito">{p.principal.detalle}</p>
-                </div>
-                <EnlaceSubrayado a={`/clientes/${p.cliente_id}`} className="justify-self-start sm:mt-1">
-                  Ver ficha <ArrowUpRight size={14} strokeWidth={1.5} aria-hidden />
-                </EnlaceSubrayado>
-              </div>
+        <ol className="material-hoja mt-8 divide-y divide-linea">
+          {datos.actividad.map((a) => (
+            <li key={a.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3">
+              <span className="codigo w-36 shrink-0 text-[12px] text-gris">{cuando(a.creado)}</span>
+              <span className="t-small font-medium text-tinta">{a.titulo}</span>
+              {a.razon_social &&
+                (a.cliente_id ? (
+                  <Link to={`/clientes/${a.cliente_id}`} className="t-small text-azul-tinta underline-offset-4 hover:underline">
+                    {a.razon_social}
+                  </Link>
+                ) : (
+                  <span className="t-small text-grafito">{a.razon_social}</span>
+                ))}
             </li>
           ))}
-        </ul>
-      )}
-      {c.truncado && (
-        <p className="t-small mt-3 text-gris">
-          Se revisaron {c.clientes_revisados} de {c.clientes_totales} clientes. Los demás se revisan en su ficha.
-        </p>
+        </ol>
       )}
     </section>
   );
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   5 · Clientes recientes: carrusel con la tarjeta vecina asomando (ref-03)
-   ═══════════════════════════════════════════════════════════════════════════ */
-function ClientesRecientes({ recientes, total }: { recientes: Reciente[] | null; total: number }) {
-  const pista = useRef<HTMLDivElement>(null);
-  const bloque = useRef<HTMLElement>(null);
-  useAparicion(bloque);
-  const mover = (dir: 1 | -1) => {
-    const el = pista.current;
-    if (!el) return;
-    const tarjeta = el.querySelector<HTMLElement>("[data-tarjeta]");
-    el.scrollBy({ left: dir * ((tarjeta?.offsetWidth ?? 320) + 24), behavior: sinMovimiento() ? "auto" : "smooth" });
-  };
-
-  return (
-    <section ref={bloque} aria-labelledby="titulo-recientes">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <EtiquetaSeccion indice={6}>Clientes recientes</EtiquetaSeccion>
-          <h2 id="titulo-recientes" className="t-h1 mt-4 text-tinta">Expedientes abiertos hace poco</h2>
-        </div>
-        <div className="flex items-center gap-3">
-          <EnlaceSubrayado a="/clientes">Ver los {total}</EnlaceSubrayado>
-          <button type="button" onClick={() => mover(-1)} aria-label="Anteriores"
-            className="grid h-11 w-11 place-items-center rounded-full bg-tinta text-sobre-tinta transition-colors hover:bg-tinta-2">
-            <ArrowLeft size={18} strokeWidth={1.5} aria-hidden />
-          </button>
-          <button type="button" onClick={() => mover(1)} aria-label="Siguientes"
-            className="grid h-11 w-11 place-items-center rounded-full bg-tinta text-sobre-tinta transition-colors hover:bg-tinta-2">
-            <ArrowRight size={18} strokeWidth={1.5} aria-hidden />
-          </button>
-        </div>
-      </div>
-
-      {recientes === null ? (
-        <p className="t-small mt-8 text-gris">Abriendo expedientes…</p>
-      ) : (
-        <div
-          ref={pista}
-          className="barra-fina -mx-[var(--margen)] mt-8 flex snap-x snap-mandatory gap-6 overflow-x-auto px-[var(--margen)] pt-6 pb-6"
-          style={{ scrollPaddingInline: "var(--margen)" }}
-        >
-          {recientes.map(({ cliente, ultimo }, i) => (
-            <div key={cliente.id} data-tarjeta className="w-[min(320px,82vw)] shrink-0 snap-start">
-              <Expediente
-                variante="papel"
-                etiqueta={`${cliente.sigla || "Cliente"} — ${String(i + 1).padStart(3, "0")}`}
-                a={`/clientes/${cliente.id}`}
-                className="h-full"
-              >
-                <div className="flex items-center gap-3">
-                  <EsferaCliente nit={cliente.nit} nombre={cliente.razon_social} tamano={56} />
-                  <div className="min-w-0">
-                    <p className="t-body line-clamp-2 font-semibold text-tinta">{cliente.razon_social}</p>
-                    <p className="codigo mt-0.5 text-[12px] text-gris">NIT {cliente.nit_formateado}</p>
-                  </div>
-                </div>
-                <p className="t-small mt-4 text-grafito">
-                  {cliente.municipio || "Sin municipio"} · {cliente.periodicidad}
-                </p>
-                <div className="mt-4 border-t border-linea pt-4">
-                  {ultimo ? (
-                    <>
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="t-meta text-gris">Corte {corteCorto(ultimo.hasta)}</span>
-                        <InsigniaEstado estado={ultimo.estado === "cerrado" ? "cerrado" : "por-cerrar"}>
-                          {ultimo.estado === "cerrado" ? "Cerrado" : "Por cerrar"}
-                        </InsigniaEstado>
-                      </div>
-                      <div className="mt-2 flex items-baseline justify-between gap-2">
-                        <span className="t-small text-grafito">{cmp(ultimo.utilidad, "0") < 0 ? "Pérdida" : "Utilidad"}</span>
-                        <Cifra valor={ultimo.utilidad} tamano="h2" encajar />
-                      </div>
-                    </>
-                  ) : (
-                    <p className="t-small text-gris">Sin periodos todavía</p>
-                  )}
-                </div>
-              </Expediente>
-            </div>
-          ))}
-
-          <div data-tarjeta className="w-[min(320px,82vw)] shrink-0 snap-start">
-            <Link
-              to="/clientes/nuevo"
-              className="flex h-full min-h-[260px] flex-col items-center justify-center gap-3 rounded-hoja border border-dashed border-tinta/25 text-grafito transition-colors hover:border-tinta/50 hover:text-tinta"
-            >
-              <span className="grid h-12 w-12 place-items-center rounded-full border border-linea bg-hoja">
-                <Plus size={20} strokeWidth={1.5} aria-hidden />
-              </span>
-              <span className="t-body font-medium">Abrir un expediente nuevo</span>
-            </Link>
-          </div>
-        </div>
-      )}
-    </section>
-  );
+function cuando(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return `${d.getDate()} ${MESES_CORTOS[d.getMonth()]} · ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
 }

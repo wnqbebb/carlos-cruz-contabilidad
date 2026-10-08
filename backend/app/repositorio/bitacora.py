@@ -38,6 +38,8 @@ ACCIONES = {
     "version_restaurada": "Versión restaurada",
     "calculo_rechazado": "Cálculo rechazado",
     "tarea_pospuesta": "Tarea pospuesta",
+    "tarea_iniciada": "Tarea empezada",
+    "nota_periodo": "Nota de revisión",
     "parametros_guardados": "Parámetros legales guardados",
     "demo_eliminada": "Clientes de demostración eliminados",
 }
@@ -84,6 +86,15 @@ def listar(cliente_id: str | None = None, limite: int = 50) -> list[dict]:
         "detalle": f.detalle or {},
         "creado": f.creado.isoformat(),
     } for f in filas]
+
+
+def listar_acciones(acciones: tuple[str, ...], limite: int = 200) -> list[dict]:
+    """Últimas líneas de ciertas acciones, de la más reciente a la más vieja."""
+    with lectura() as cn:
+        filas = cn.execute(select(T).where(T.c.accion.in_(acciones))
+                           .order_by(desc(T.c.creado), desc(T.c.id)).limit(max(1, int(limite)))).all()
+    return [{"id": int(f.id), "cliente_id": str(f.cliente_id) if f.cliente_id else None, "accion": f.accion,
+             "detalle": f.detalle or {}, "creado": f.creado.isoformat()} for f in filas]
 
 
 def olvidar(cliente_id: str) -> int:
