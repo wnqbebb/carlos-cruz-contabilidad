@@ -56,7 +56,8 @@ CLAVES = {
     "compras": ("COMPRA", "COMPRAS", "COMPRADO", "ADQUISICIONES", "PEDIDOS", "SURTIDO"),
     "gastos": ("GASTO", "GASTOS", "EGRESO", "EGRESOS", "COSTOS FIJOS", "OPERATIVOS", "SALIDAS DE CAJA"),
     "cartera": ("CARTERA", "POR COBRAR", "CXC", "DEUDORES", "FIADOS", "FIAO", "CREDITOS CLIENTES", "ME DEBEN"),
-    "cxp": ("POR PAGAR", "CXP", "ACREEDORES", "DEUDAS", "OBLIGACIONES", "LE DEBO", "DEBEMOS"),
+    "cxp": ("POR PAGAR", "CXP", "ACREEDORES", "DEUDAS", "OBLIGACIONES", "LE DEBO", "DEBEMOS", "PROVEEDORES",
+            "LO QUE DEBO", "LO QUE DEBEMOS"),
     "inventario": ("INVENTARIO", "INVENTARIOS", "EXISTENCIAS", "STOCK", "CONTEO", "BODEGA"),
 }
 
@@ -132,10 +133,12 @@ class Registro:
     abono: Decimal | None = None
     saldo: Decimal | None = None
     forma_pago: str = ""
+    excluido: bool = False                        # fecha futura que se deja fuera: todavía no ocurrió
     original: dict = field(default_factory=dict)   # lo leído, para recalcular con otras respuestas
 
     def guardar(self) -> None:
-        self.original = {"fecha": self.fecha, "tercero": self.tercero, "forma_pago": self.forma_pago}
+        self.original = {"fecha": self.fecha, "tercero": self.tercero, "forma_pago": self.forma_pago,
+                         "excluido": False}
 
     def restaurar(self) -> None:
         for k, v in self.original.items():
@@ -154,6 +157,7 @@ class Bloque:
     c0: int = 0                       # columnas que ocupa el bloque (dos tablas lado a lado)
     c1: int = 10 ** 6
     tipo_leido: str = ""              # lo que se dedujo al leer; `tipo` puede cambiar con una respuesta
+    tipo_dudoso: str = ""             # cartera ↔ cxp: el título dice una cosa y la columna otra
     subtipo: str = ""                 # inventario: inicial · fisico
     mes: tuple[int, int] | None = None   # (año, mes) del título
     registros: list[Registro] = field(default_factory=list)
@@ -429,7 +433,22 @@ def _clasificar(b: Bloque, contexto_hoja: str, contexto_archivo: str = "") -> st
 
     tiene = set(b.columnas)
     if tiene & {"abono", "saldo"} and not tiene & {"cantidad", "unitario"}:
-        # Una lista con abonos o saldos es cartera o cuentas por pagar.
+        # Una lista con abonos o saldos es cartera o cuentas por pagar. El nombre de
+        # la hoja y el título del bloque pesan más que el rótulo de una columna:
+        # «CUENTAS POR PAGAR» con una columna «CLIENTE» sigue siendo por pagar.
+        fuerte = {t: _palabra_tipo(b.titulo).get(t, 0) + _palabra_tipo(contexto_hoja).get(t, 0)
+                  for t in ("cartera", "cxp")}
+        col_cartera = enc.contiene_palabra(enc_tercero, ("CLIENTE", "COMPRADOR", "DEUDOR", "VENDIDO A", "QUIEN DEBE"))
+        col_cxp = enc.contiene_palabra(enc_tercero, ("PROVEEDOR", "ACREEDOR", "COMPRADO A", "A QUIEN SE DEBE",
+                                                     "BENEFICIARIO", "PAGADO A"))
+        if fuerte["cxp"] and not fuerte["cartera"]:
+            if col_cartera and not col_cxp:
+                b.tipo_dudoso = "cartera"
+            return "cxp"
+        if fuerte["cartera"] and not fuerte["cxp"]:
+            if col_cxp and not col_cartera:
+                b.tipo_dudoso = "cxp"
+            return "cartera"
         return "cxp" if pistas["cxp"] + pistas["compras"] > pistas["cartera"] + pistas["ventas"] else "cartera"
     if pistas.get("inventario", 0) >= 2 and "cantidad" in tiene and "tercero" not in tiene:
         return "inventario"
@@ -762,6 +781,24 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
         validos = {o["valor"] for o in p["opciones"]}
         return valor if valor in validos else p["defecto"]
 
+    # La misma pregunta en muchos bloques se hace una sola vez (B3): «En 11 bloques
+    # la forma de pago solo aparece en la primera fila». La respuesta de un bloque
+    # concreto (su id de siempre) manda sobre la del grupo.
+    grupos: dict[tuple, dict] = {}
+    orden: list = []
+
+    def responder_grupo(clave: tuple, p: dict, titulo_grupo: str) -> str:
+        validos = {o["valor"] for o in p["opciones"]}
+        llave = (clave, tuple(sorted(validos)), p["defecto"])
+        if llave not in grupos:
+            gid = "grupo:" + ":".join(str(x) for x in clave) + f":{p['defecto']}"
+            grupos[llave] = {"id": gid, "titulo": titulo_grupo, "base": p, "bloques": []}
+            orden.append(("grupo", llave))
+        g = grupos[llave]
+        g["bloques"].append({"id": p["id"], "lugar": p["hoja"], "titulo": p["titulo"], "detalle": p["detalle"]})
+        valor = respuestas.get(p["id"]) or respuestas.get(g["id"]) or p["defecto"]
+        return valor if valor in validos else p["defecto"]
+
     # 0 · Listas que no dicen qué son: se pregunta, con una sugerencia prudente.
     for d in propias:
         for b in d.bloques:
@@ -781,6 +818,18 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
                  ("ignorar", "No es contabilidad: no la use")], defecto, "tipo"))
             if b.tipo == "ignorar":
                 b.tipo = ""
+
+    for d in propias:
+        for b in d.bloques:
+            if b.tipo in ("cartera", "cxp") and b.tipo_dudoso:
+                defecto = b.tipo
+                b.tipo = responder(_pregunta(
+                    f"{d.id}:b{b.indice}:cartera_o_cxp", f"{d.archivo} › {d.hoja} › {b.nombre}",
+                    f"«{b.nombre}»: ¿es lo que le deben al cliente o lo que el cliente debe?",
+                    f"El título o la hoja dicen {'cuentas por pagar' if defecto == 'cxp' else 'cartera'}, pero la "
+                    f"columna de nombres dice «{b.hoja.texto(b.fila_encabezado, b.columnas.get('tercero', 0))}».",
+                    [("cxp", "Lo que el cliente debe (cuentas por pagar a proveedores)"),
+                     ("cartera", "Lo que le deben al cliente (cartera de clientes)")], defecto, "tipo"))
 
     # Rango de fechas que el propio archivo considera normal (sin las futuras).
     todas = [r.fecha_archivo for d in propias for b in d.bloques for r in b.registros
@@ -802,11 +851,12 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
                 if primero:
                     valor = {"forma_pago": primero.forma_pago, "tercero": primero.tercero,
                              "fecha": primero.fecha.isoformat() if primero.fecha else ""}[rol]
-                r_ = responder(_pregunta(
+                r_ = responder_grupo(("repetir", rol), _pregunta(
                     f"{base_id}:repetir:{rol}", lugar,
                     f"¿{etiqueta.capitalize()} «{valor}» aplica a todas las filas?",
                     f"En «{b.nombre}» {etiqueta} solo aparece en la primera fila; {n} filas de abajo la tienen vacía.",
-                    [("si", "Sí, aplica a todas las filas de abajo"), ("no", "No, solo a la primera")], "si", "repetir"))
+                    [("si", "Sí, aplica a todas las filas de abajo"), ("no", "No, solo a la primera")], "si", "repetir"),
+                    f"En {{n}} bloques {etiqueta} solo aparece en la primera fila. ¿Aplica a todas las filas de abajo?")
                 if r_ == "si":
                     previo = None
                     for reg in b.registros:
@@ -819,13 +869,14 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
                             else:
                                 setattr(reg, rol, previo)
 
-            if b.mes:
+            titulo_futuro = bool(b.mes) and date(b.mes[0], b.mes[1], 1) > hoy
+            if b.mes and not titulo_futuro:
                 distintas = [r for r in b.registros if r.fecha and (r.fecha.year, r.fecha.month) != b.mes]
                 if distintas:
                     meses_vistos = sorted({(r.fecha.year, r.fecha.month) for r in distintas})
                     texto_meses = ", ".join(f"{NOMBRE_MES[m].lower()} {a}" for a, m in meses_vistos[:4])
                     futuras = sum(1 for r in distintas if r.fecha > hoy)
-                    r_ = responder(_pregunta(
+                    r_ = responder_grupo(("fechas", "titulo"), _pregunta(
                         f"{base_id}:fechas:titulo", lugar,
                         f"¿Qué fecha uso en «{b.nombre}»?",
                         f"{len(distintas)} de {len(b.registros)} filas tienen fecha de {texto_meses}"
@@ -833,7 +884,9 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
                         + f", pero el título dice {NOMBRE_MES[b.mes[1]].lower()} de {b.mes[0]}. "
                           "Suele pasar al copiar las filas de otro mes.",
                         [("titulo", f"La del título: {NOMBRE_MES[b.mes[1]].lower()} de {b.mes[0]}, conservando el día"),
-                         ("archivo", "La que trae cada fila")], "titulo", "fechas"))
+                         ("archivo", "La que trae cada fila")], "titulo", "fechas"),
+                        "En {n} bloques hay filas con la fecha de otro mes (suele pasar al copiar filas). "
+                        "¿Uso el mes que dice el título de cada bloque?")
                     if r_ == "titulo":
                         for reg in distintas:
                             dia = min(reg.fecha.day, calendar.monthrange(*b.mes)[1])
@@ -842,32 +895,49 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
             if futuras:
                 cruzables = [r for r in futuras if _corregir_futura(r.fecha, rango)]
                 opciones = []
-                if cruzables:
+                if cruzables and not titulo_futuro:
                     opciones.append(("cruzar", "Cruzar día y mes (por ejemplo 11/05 → 05/11)"))
-                opciones += [("anio", "Mismo día y mes, del año anterior"), ("archivo", "Dejarlas como están")]
-                defecto = "cruzar" if len(cruzables) == len(futuras) else "anio"
+                opciones.append(("excluir", "Dejar fuera: todavía no ha ocurrido"))
+                # «Mismo día y mes del año anterior» solo se ofrece si ese año ya está en el
+                # archivo: nunca se inventan periodos de un año que el archivo no menciona (B2).
+                anios_archivo = {r.fecha_archivo.year for dd in propias for bb in dd.bloques
+                                 for r in bb.registros if r.fecha_archivo and r.fecha_archivo <= hoy}
+                if all(r.fecha.year - 1 in anios_archivo for r in futuras):
+                    opciones.append(("anio", "Mismo día y mes, del año anterior"))
+                opciones.append(("archivo", "Dejarlas como están"))
+                defecto = "cruzar" if cruzables and len(cruzables) == len(futuras) and not titulo_futuro else "excluir"
                 ejemplo = futuras[0].fecha.isoformat()
-                r_ = responder(_pregunta(
+                motivo = (f"El título dice {NOMBRE_MES[b.mes[1]].lower()} de {b.mes[0]}, que todavía no ha llegado."
+                          if titulo_futuro else "Una venta o una compra no puede tener fecha futura.")
+                r_ = responder_grupo(("fechas", "futuras"), _pregunta(
                     f"{base_id}:fechas:futuras", lugar,
                     f"Hay {len(futuras)} fecha(s) en el futuro en «{b.nombre}»",
-                    f"Por ejemplo {ejemplo} ({futuras[0].origen}). Hoy es {hoy.isoformat()}: una venta o una compra "
-                    "no puede tener fecha futura.", opciones, defecto, "fechas"))
+                    f"Por ejemplo {ejemplo} ({futuras[0].origen}). Hoy es {hoy.isoformat()}. {motivo}",
+                    opciones, defecto, "fechas"),
+                    "En {n} bloques hay filas con fecha en el futuro. ¿Qué hago con ellas?")
                 for reg in futuras:
                     if r_ == "cruzar":
                         reg.fecha = _corregir_futura(reg.fecha, rango) or reg.fecha
+                    elif r_ == "excluir":
+                        reg.excluido = True
                     elif r_ == "anio":
                         try:
                             reg.fecha = reg.fecha.replace(year=reg.fecha.year - 1)
                         except ValueError:
                             reg.fecha = reg.fecha - timedelta(days=365)
+                if r_ == "excluir":
+                    alertas[d.id].append(Alerta(
+                        "AUX-FECHAS", "info",
+                        f"«{b.nombre}»: {len(futuras)} fila(s) con fecha futura quedaron fuera del cálculo "
+                        f"(todavía no han ocurrido).", origen=futuras[0].origen))
 
     # Fecha por defecto de lo que no trae fecha: el mes del bloque o el final del rango.
-    fechas = [r.fecha for d in propias for b in d.bloques for r in b.registros if r.fecha]
+    fechas = [r.fecha for d in propias for b in d.bloques for r in b.registros if r.fecha and not r.excluido]
     fin_rango = max(fechas) if fechas else None
     ini_rango = min(fechas) if fechas else None
     for d in propias:
         for b in d.bloques:
-            sin = [r for r in b.registros if not r.fecha]
+            sin = [r for r in b.registros if not r.fecha and not r.excluido]
             for reg in sin:
                 if b.mes:
                     reg.fecha = date(b.mes[0], b.mes[1], 1) if b.tipo in ("compras", "inventario") \
@@ -925,7 +995,7 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
             if desconocidos:
                 nombres = sorted({r.tercero or "(sin nombre)" for r in desconocidos})
                 que = "ventas" if b.tipo == "cartera" else "compras"
-                r_ = responder(_pregunta(
+                r_ = responder_grupo(("terceros", b.tipo), _pregunta(
                     f"{d.id}:b{b.indice}:terceros", f"{d.archivo} › {d.hoja} › {b.nombre}",
                     f"{len(nombres)} tercero(s) de «{b.nombre}» no aparecen en las {que}",
                     "No encontré en las " + que + " a: " + ", ".join(nombres[:8]) + ("…" if len(nombres) > 8 else "")
@@ -934,7 +1004,9 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
                      ("adicional", f"{'Ventas' if b.tipo == 'cartera' else 'Compras'} a crédito que no están en la lista (se registran)"),
                      ("incluidas", f"Ya están en las {que} como de contado (se pasan de caja a "
                                    f"{'cartera' if b.tipo == 'cartera' else 'proveedores'})")],
-                    "saldo_anterior", "terceros"))
+                    "saldo_anterior", "terceros"),
+                    f"En {{n}} listas de {'cartera' if b.tipo == 'cartera' else 'cuentas por pagar'} hay terceros que no "
+                    f"aparecen en las {que}. ¿Qué son esos saldos?")
                 for r in desconocidos:
                     trato_tercero[id(r)] = r_
             for r in b.registros:
@@ -942,6 +1014,22 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
                     continue
                 trato_tercero[id(r)] = "abonos" if normalizar(r.tercero) in credito_terc or \
                     coincide(r.tercero, credito_terc) else "incluidas"
+
+    for _, llave in orden:
+        g = grupos[llave]
+        base = g["base"]
+        if len(g["bloques"]) == 1:
+            preguntas.append(base)
+            continue
+        n = len(g["bloques"])
+        preguntas.append({
+            "id": g["id"], "hoja": f"{n} bloques", "clase": base["clase"],
+            "titulo": g["titulo"].format(n=n),
+            "detalle": "La misma pregunta se repite en varios bloques: se responde una vez. Si algún bloque es distinto, "
+                       "respóndalo aparte.",
+            "opciones": base["opciones"], "defecto": base["defecto"],
+            "bloques": g["bloques"],
+        })
 
     # 4 · IVA: solo se discrimina si el archivo lo trae y la empresa es responsable.
     hay_iva = any(r.iva for d in propias for b in d.bloques for r in b.registros)
@@ -963,7 +1051,7 @@ def convertir(dets: list[Deteccion], respuestas: dict[str, str] | None, empresa:
         consecutivo[prefijo] += 1
         return f"{prefijo}-{consecutivo[prefijo]:04d}"
 
-    items = [(d, b, r) for d in propias for b in d.bloques if b.tipo for r in b.registros]
+    items = [(d, b, r) for d in propias for b in d.bloques if b.tipo for r in b.registros if not r.excluido]
     orden_tipo = {"inventario": 0, "compras": 1, "ventas": 2, "gastos": 3, "cartera": 4, "cxp": 5}
     items.sort(key=lambda x: (x[2].fecha or date.min, orden_tipo[x[1].tipo], x[0].id, x[2].fila))
 

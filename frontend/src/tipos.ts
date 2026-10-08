@@ -364,6 +364,8 @@ export interface Pregunta {
   detalle: string;
   opciones: { valor: string; etiqueta: string }[];
   defecto: string;
+  /** La misma pregunta en varios bloques (v2.3 · B3): se responde una vez; cada bloque se puede responder aparte. */
+  bloques?: { id: string; lugar: string; titulo: string; detalle: string }[];
 }
 
 export interface Periodizacion {

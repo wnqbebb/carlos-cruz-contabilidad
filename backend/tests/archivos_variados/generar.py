@@ -382,6 +382,60 @@ def listas_sin_tipo() -> bytes:
     })
 
 
+# 19 · (v2.3 · B1) hoja «CUENTAS POR PAGAR» cuya columna de nombres dice «CLIENTE»
+def cxp_con_columna_cliente() -> bytes:
+    return _libro({
+        "COMPRAS": [
+            ["COMPRAS MARZO 2026"],
+            ["FECHA", "PROVEEDOR", "PRODUCTO", "TOTAL", "FORMA DE PAGO"],
+            [date(2026, 3, 2), "DISTRIBUIDORA NORTE", "ARROZ", 300000, "CREDITO"],
+            [date(2026, 3, 5), "DISTRIBUIDORA NORTE", "FRIJOL", 100000, "CONTADO"],
+        ],
+        "CUENTAS POR PAGAR": [
+            ["CUENTAS POR PAGAR MARZO 2026"],
+            ["CLIENTE", "VALOR", "ABONO", "SALDO"],
+            ["DISTRIBUIDORA NORTE", 300000, 100000, 200000],
+            ["GRANOS DEL SUR", 150000, 0, 150000],
+        ],
+    })
+
+
+# 20 · (v2.3 · B2) un bloque titulado con un mes que todavía no llega
+def bloque_de_mes_futuro() -> bytes:
+    return _libro({
+        "VENTAS": [
+            ["VENTAS SEPTIEMBRE 2026"],
+            ["FECHA", "CLIENTE", "VALOR"],
+            [date(2026, 9, 5), "CLIENTE A", 100000],
+            [date(2026, 9, 20), "CLIENTE B", 50000],
+            [],
+            ["VENTAS NOVIEMBRE 2026"],
+            ["FECHA", "CLIENTE", "VALOR"],
+            [date(2026, 11, 3), "CLIENTE C", 70000],
+            [date(2026, 11, 15), "CLIENTE D", 30000],
+        ],
+        "GASTOS": [
+            ["GASTOS SEPTIEMBRE 2026"],
+            ["FECHA", "CONCEPTO", "VALOR"],
+            [date(2026, 9, 30), "ARRIENDO", 40000],
+        ],
+    })
+
+
+# 21 · (v2.3 · B3) once bloques mensuales con la misma rareza: la forma de pago solo
+#      en la primera fila, y en cuatro de ellos una fecha copiada del mes anterior
+def muchos_bloques_iguales() -> bytes:
+    filas = []
+    for m in range(1, 12):
+        filas += [[f"VENTAS {('ENERO FEBRERO MARZO ABRIL MAYO JUNIO JULIO AGOSTO SEPTIEMBRE OCTUBRE NOVIEMBRE').split()[m - 1]} 2025"],
+                  ["FECHA", "CLIENTE", "VALOR", "FORMA DE PAGO"]]
+        primera = date(2025, m - 1, 28) if m in (3, 5, 7, 9) else date(2025, m, 2)
+        filas += [[primera, "CLIENTE UNO", 100000, "CONTADO"],
+                  [date(2025, m, 10), "CLIENTE DOS", 50000, None],
+                  [date(2025, m, 20), "CLIENTE TRES", 30000, None], []]
+    return _libro({"VENTAS 2025": filas})
+
+
 ARCHIVOS = {
     "01_ventas_compras_bloques.xlsx": ventas_compras_bloques,
     "02_columnas_mal_rotuladas.xlsx": columnas_mal_rotuladas,
@@ -402,6 +456,9 @@ ARCHIVOS = {
     "16_balance_excel.xlsx": balance_excel,
     "17_hoja_por_mes_lado_a_lado.xlsx": hoja_por_mes_lado_a_lado,
     "18_listas_sin_tipo.xlsx": listas_sin_tipo,
+    "19_cxp_con_columna_cliente.xlsx": cxp_con_columna_cliente,
+    "20_bloque_de_mes_futuro.xlsx": bloque_de_mes_futuro,
+    "21_muchos_bloques_iguales.xlsx": muchos_bloques_iguales,
 }
 
 

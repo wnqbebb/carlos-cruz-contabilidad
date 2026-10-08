@@ -4,7 +4,7 @@ import { api } from "../api";
 import { ListaAlertas } from "../componentes/Alertas";
 import { ETAPAS_CALCULO, Procesando } from "../componentes/Procesando";
 import { EtiquetaSeccion } from "../ui";
-import { Aviso, Boton, Campo, Dialogo, Insignia, Rotulo, Tarjeta, estiloInput } from "../componentes/ui";
+import { Aviso, Boton, Campo, Dialogo, Insignia, Rotulo, Tarjeta, estiloCampoAuto, estiloInput } from "../componentes/ui";
 import { clases, fecha, numero, pesos, sumar } from "../formato";
 import type { Config, Empresa, Importacion, Peticion, Pregunta } from "../tipos";
 
@@ -445,6 +445,43 @@ const NOMBRE_PERIODICIDAD: Record<string, string> = {
   cuatrimestral: "cuatrimestre a cuatrimestre", semestral: "semestre a semestre", anual: "año a año",
 };
 
+/** Detalle plegable de una pregunta agrupada: los bloques, y cada uno se puede responder aparte (B3). */
+function BloquesDelGrupo({
+  pregunta, respuestas, onResponder,
+}: {
+  pregunta: Pregunta;
+  respuestas: Record<string, string>;
+  onResponder: (id: string, valor: string) => void;
+}) {
+  const bloques = pregunta.bloques ?? [];
+  const aparte = bloques.filter((b) => respuestas[b.id]).length;
+  return (
+    <details className="mt-3">
+      <summary className="t-small cursor-pointer text-azul-tinta underline underline-offset-4">
+        Ver los {bloques.length} bloques{aparte ? ` · ${aparte} con respuesta propia` : ""} y responder alguno aparte
+      </summary>
+      <ul className="mt-3 space-y-2">
+        {bloques.map((b) => (
+          <li key={b.id} className="flex flex-wrap items-center justify-between gap-2 border-b border-linea pb-2">
+            <span className="t-small min-w-0 text-grafito">{b.lugar}</span>
+            <select
+              aria-label={`Respuesta para ${b.lugar}`}
+              value={respuestas[b.id] ?? ""}
+              onChange={(e) => onResponder(b.id, e.target.value)}
+              className={estiloCampoAuto}
+            >
+              <option value="">Igual que todos</option>
+              {pregunta.opciones.map((o) => (
+                <option key={o.valor} value={o.valor}>{o.etiqueta}</option>
+              ))}
+            </select>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 function PanelPreguntas({
   preguntas, respuestas, onResponder, periodizacion, modo, onModo, calculando, onSugeridas,
 }: {
@@ -457,7 +494,8 @@ function PanelPreguntas({
   calculando: boolean;
   onSugeridas: () => void;
 }) {
-  const cambiadas = preguntas.filter((p) => (respuestas[p.id] ?? p.defecto) !== p.defecto).length;
+  const cambiadas = preguntas.filter((p) => (respuestas[p.id] ?? p.defecto) !== p.defecto).length
+    + preguntas.reduce((n, p) => n + (p.bloques ?? []).filter((b) => respuestas[b.id]).length, 0);
   const total = preguntas.length + (periodizacion?.posible ? 1 : 0);
   const periodos = periodizacion?.periodos ?? [];
   return (
@@ -516,6 +554,9 @@ function PanelPreguntas({
                 />
               ))}
             </div>
+            {p.bloques && p.bloques.length > 1 && (
+              <BloquesDelGrupo pregunta={p} respuestas={respuestas} onResponder={onResponder} />
+            )}
           </fieldset>
         ))}
         {cambiadas > 0 && (

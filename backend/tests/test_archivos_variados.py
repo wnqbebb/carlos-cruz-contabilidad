@@ -139,12 +139,15 @@ def test_03_fechas_que_no_cuadran_con_el_titulo_preguntan_con_respuesta_sugerida
 def test_03_si_el_contador_responde_otra_cosa_se_respeta(cliente_api):
     imp = _subir(cliente_api, "03_fechas_copiadas_y_futuras.xlsx")
     ids = {p["id"].split(":", 2)[-1]: p["id"] for p in imp["preguntas"]}
-    res = _calcular(cliente_api, imp, respuestas={ids["fechas:titulo"]: "archivo", ids["fechas:futuras"]: "anio"},
-                    periodizacion="por_periodo", empresa={"periodo_desde": "2025-11-01", "periodo_hasta": "2026-02-28"})
+    futuras = next(p for p in imp["preguntas"] if p["id"].endswith("fechas:futuras"))
+    # B2: «mismo día del año anterior» inventaría 2025, que el archivo no menciona: ni se ofrece.
+    assert "anio" not in {o["valor"] for o in futuras["opciones"]}
+    res = _calcular(cliente_api, imp, respuestas={ids["fechas:titulo"]: "archivo", ids["fechas:futuras"]: "excluir"},
+                    periodizacion="por_periodo")
     utilidades = {p["desde"]: D(p["utilidad"]) for p in res["periodos_procesados"] if p.get("utilidad") is not None}
     # Fechas del archivo: enero 100.000+50.000+70.000+30.000 − 80.000 = 170.000; febrero 20.000.
-    # La fecha futura, un año atrás: noviembre de 2025 con −15.000.
-    assert utilidades == {"2025-11-01": D("-15000"), "2026-01-01": D("170000"), "2026-02-01": D("20000")}
+    # La fecha futura (servicios 15.000 en noviembre) queda fuera: no ha ocurrido.
+    assert utilidades == {"2026-01-01": D("170000"), "2026-02-01": D("20000")}
 
 
 # 4 ─ totales mezclados y números escritos como texto ─────────────────────────
@@ -374,3 +377,63 @@ def test_cada_asiento_lleva_a_su_fila_original(cliente_api):
     venta = next(m for m in movs if m["comprobante"] == "VTA-0001")
     assert venta["origen"].endswith("› VENTAS › fila 3")
     assert res["origenes"][venta["origen"]][:3] == ["2026-01-10", "JUAN PEREZ", "ARROZ"]
+
+
+# ── v2.3 · fallos de la prueba ciega (B1, B2, B3) ─────────────────────────────
+def test_19_cuentas_por_pagar_aunque_la_columna_diga_cliente(cliente_api):
+    """B1: la hoja y el título dicen «cuentas por pagar»; la columna dice «CLIENTE». Gana la hoja, y se pregunta."""
+    imp = _subir(cliente_api, "19_cxp_con_columna_cliente.xlsx")
+    duda = next(p for p in imp["preguntas"] if p["id"].endswith("cartera_o_cxp"))
+    assert duda["defecto"] == "cxp" and "lo que el cliente debe" in duda["titulo"]
+    terceros = next(p for p in imp["preguntas"] if p["clase"] == "terceros")
+    assert "compras" in terceros["titulo"] and "ventas" not in terceros["titulo"]
+    res = _calcular(cliente_api, imp)
+    # Proveedores: 300.000 a crédito − abono 100.000 + saldo anterior de Granos del Sur 150.000 = 350.000.
+    assert _r(res, "total_pasivo") == D("350000")
+    # Caja: −100.000 (compra de contado) − 100.000 (abono) = −200.000.
+    assert _r(res, "efectivo") == D("-200000")
+    assert _r(res, "ingresos") == D("0")
+
+
+def test_20_un_mes_que_no_ha_llegado_queda_fuera(cliente_api, monkeypatch):
+    """B2: «VENTAS NOVIEMBRE 2026» visto el 8 de octubre de 2026: se deja fuera, no se mueve a 2025."""
+    from datetime import date
+
+    from app.importadores import auxiliares
+
+    monkeypatch.setattr(auxiliares, "_hoy", lambda: date(2026, 10, 8))
+    imp = _subir(cliente_api, "20_bloque_de_mes_futuro.xlsx")
+    futuras = next(p for p in imp["preguntas"] if p["id"].endswith("fechas:futuras"))
+    assert futuras["defecto"] == "excluir" and "anio" not in {o["valor"] for o in futuras["opciones"]}
+    assert imp["periodo_sugerido"]["desde"] == "2026-09-01" and imp["periodo_sugerido"]["hasta"] == "2026-09-30"
+    res = _calcular(cliente_api, imp, periodizacion="por_periodo")
+    # Solo septiembre: 100.000 + 50.000 − arriendo 40.000 = 110.000. Nada en noviembre ni en 2025.
+    assert _r(res, "ingresos") == D("150000") and _r(res, "utilidad_neta") == D("110000")
+    assert not res.get("periodos_procesados") or {p["desde"] for p in res["periodos_procesados"]} == {"2026-09-01"}
+    assert any("quedaron fuera" in a["mensaje"] for a in res["alertas"])
+
+
+def test_21_la_misma_pregunta_en_once_bloques_se_hace_una_vez(cliente_api):
+    """B3: 11 bloques con la forma de pago solo en la primera fila y 4 con una fecha copiada → 2 preguntas."""
+    imp = _subir(cliente_api, "21_muchos_bloques_iguales.xlsx")
+    assert len(imp["preguntas"]) <= 6
+    repetir = next(p for p in imp["preguntas"] if p["clase"] == "repetir")
+    assert repetir["id"].startswith("grupo:") and len(repetir["bloques"]) == 11
+    assert repetir["titulo"].startswith("En 11 bloques la forma de pago")
+    fechas = next(p for p in imp["preguntas"] if p["clase"] == "fechas")
+    assert len(fechas["bloques"]) == 4
+    res = _calcular(cliente_api, imp, periodizacion="por_periodo")
+    # 11 meses × (100.000 + 50.000 + 30.000) = 1.980.000, cada mes 180.000 (la fecha copiada vuelve a su mes).
+    utilidades = [D(p["utilidad"]) for p in res["periodos_procesados"]]
+    assert len(utilidades) == 11 and set(utilidades) == {D("180000")}
+
+
+def test_21_un_bloque_se_puede_responder_aparte(cliente_api):
+    imp = _subir(cliente_api, "21_muchos_bloques_iguales.xlsx")
+    fechas = next(p for p in imp["preguntas"] if p["clase"] == "fechas")
+    # El grupo dice «título»; un bloque concreto (marzo) se deja con la fecha que trae la fila.
+    marzo = next(b["id"] for b in fechas["bloques"] if "MARZO" in b["lugar"])
+    res = _calcular(cliente_api, imp, respuestas={marzo: "archivo"}, periodizacion="por_periodo")
+    por_mes = {p["desde"]: D(p["utilidad"]) for p in res["periodos_procesados"]}
+    # La fila del 28 de febrero de marzo queda en febrero: febrero 280.000, marzo 80.000.
+    assert por_mes["2025-02-01"] == D("280000") and por_mes["2025-03-01"] == D("80000")
