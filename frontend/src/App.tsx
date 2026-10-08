@@ -1,15 +1,14 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { animarPantalla, gsap, salirPantalla } from "./animacion";
 import { Marco } from "./componentes/Marco";
 import { Preloader } from "./componentes/Preloader";
 import { Puerta } from "./componentes/Subir";
 import { ClienteEditor } from "./paginas/ClienteEditor";
-import { ClienteFicha } from "./paginas/ClienteFicha";
 import { Clientes } from "./paginas/Clientes";
 import { Diseno } from "./paginas/Diseno";
+import { Expediente } from "./paginas/Expediente";
 import { Tablero } from "./paginas/Tablero";
-import { Trabajo } from "./paginas/Trabajo";
 import { Ingreso } from "./paginas/Ingreso";
 import { sesionApi } from "./api";
 import { BotonFantasma, BotonPrimario, ProveedorAvisos } from "./ui";
@@ -100,18 +99,30 @@ function Contenido() {
         <Route path="/" element={<Tablero />} />
         <Route path="/clientes" element={<Clientes />} />
         <Route path="/clientes/nuevo" element={<ClienteEditor />} />
-        <Route path="/clientes/:id" element={<ClienteFicha />} />
+        <Route path="/clientes/:id" element={<Expediente />} />
         <Route path="/clientes/:id/editar" element={<ClienteEditor />} />
-        <Route path="/trabajo" element={<Trabajo />} />
+        {/* v2.3: Trabajar vive dentro del expediente del cliente */}
+        <Route path="/trabajo" element={<RedirigirTrabajo />} />
         <Route path="/parametros" element={<Navigate to="/" replace />} />
         {/* Catálogo vivo del sistema de diseño: uso interno, fuera del menú */}
         <Route path="/diseno" element={<Diseno />} />
         {/* rutas del diseño anterior, para que los enlaces guardados sigan sirviendo */}
-        <Route path="/inicio" element={<Navigate to="/trabajo" replace />} />
+        <Route path="/inicio" element={<Navigate to="/clientes" replace />} />
         <Route path="*" element={<NoEncontrado />} />
       </Routes>
     </div>
   );
+}
+
+/** `/trabajo?cliente=X[&sesion=S]` → `/clientes/X?seccion=contabilidad[&sesion=S]`; sin cliente, al directorio. */
+function RedirigirTrabajo() {
+  const [params] = useSearchParams();
+  const cliente = params.get("cliente");
+  if (!cliente) return <Navigate to="/clientes" replace />;
+  const n = new URLSearchParams({ seccion: "contabilidad" });
+  const sesion = params.get("sesion");
+  if (sesion) n.set("sesion", sesion);
+  return <Navigate to={`/clientes/${cliente}?${n.toString()}`} replace />;
 }
 
 function NoEncontrado() {

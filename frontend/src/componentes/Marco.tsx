@@ -1,4 +1,4 @@
-import { LayoutGrid, LogOut, Monitor, Moon, PenLine, Plus, Search, Settings2, Sun, Users } from "lucide-react";
+import { LayoutGrid, LogOut, Monitor, Moon, Search, Settings2, Sun, Users } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -12,14 +12,14 @@ import {
   type ReactNode,
 } from "react";
 import { createPortal } from "react-dom";
-import { Link, NavLink, useLocation } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { sesionApi, sistema } from "../api";
 import { clases } from "../formato";
 import type { EstadoSistema } from "../tipos";
 import { DialogoSistema } from "./Sistema";
 import { colorCliente } from "../colorCliente";
 import { useTema, type PreferenciaTema } from "../tema";
-import { BotonAcento, Flip, Interruptor, MetaEncabezado, sinMovimiento, DURACION } from "../ui";
+import { Flip, Interruptor, MetaEncabezado, sinMovimiento, DURACION } from "../ui";
 import { Buscador, useAtajoBuscador } from "./Buscador";
 import { Logotipo, MARCA, Monograma, useFirmaContador } from "./Marca";
 
@@ -27,20 +27,19 @@ import { Logotipo, MARCA, Monograma, useFirmaContador } from "./Marca";
  * Estructura de la aplicación (spec 6.1).
  *
  * Escritorio (≥ 900 px): barra lateral de 248 px sobre el papel, con borde
- * derecho --linea; navegación con índices (Tablero⁰¹ … Parámetros⁰⁴) y una
+ * derecho --linea; navegación con índices (Tablero⁰¹ Clientes⁰²) y una
  * píldora de tinta que se desliza con Flip hasta la sección activa. Abajo,
  * el estado de sincronización en lenguaje humano.
  *
- * Barra superior: buscador ⌘K de cristal, «Nuevo periodo» (BotonAcento) y
- * avatar con iniciales. Sin repetir el nombre.
+ * Barra superior: buscador ⌘K de cristal, tema y cuenta. Subir un archivo se
+ * hace desde el expediente del cliente o soltándolo en cualquier pantalla.
  *
- * Móvil (< 900 px): barra inferior de cuatro íconos con etiqueta.
+ * Móvil (< 900 px): barra inferior con un ícono y etiqueta por sección.
  */
 
 const SECCIONES = [
   { ruta: "/", texto: "Tablero", indice: "01", icono: LayoutGrid, exacto: true },
   { ruta: "/clientes", texto: "Clientes", indice: "02", icono: Users },
-  { ruta: "/trabajo", texto: "Trabajar", indice: "03", icono: PenLine },
 ] as const;
 
 function seccionDe(ruta: string): { indice: string; nombre: string } {
@@ -48,15 +47,13 @@ function seccionDe(ruta: string): { indice: string; nombre: string } {
   if (ruta === "/clientes") return { indice: "02", nombre: "Clientes" };
   if (ruta === "/clientes/nuevo") return { indice: "02", nombre: "Clientes › Nuevo" };
   if (ruta.endsWith("/editar")) return { indice: "02", nombre: "Clientes › Editar ficha" };
-  if (ruta.startsWith("/clientes/")) return { indice: "02", nombre: "Clientes › Ficha" };
-  if (ruta.startsWith("/trabajo")) return { indice: "03", nombre: "Trabajar" };
+  if (ruta.startsWith("/clientes/")) return { indice: "02", nombre: "Clientes › Expediente" };
   if (ruta.startsWith("/diseno")) return { indice: "00", nombre: "Catálogo" };
   return { indice: "—", nombre: "Página no encontrada" };
 }
 
 /** Identidad de la página (8.2): la clave que leen los tokens en `data-seccion`. */
-function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" | "trabajar" {
-  if (ruta.startsWith("/trabajo")) return "trabajar";
+function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" {
   if (/^\/clientes\/[0-9a-f-]{8,}$/i.test(ruta)) return "ficha";
   if (ruta.startsWith("/clientes")) return "clientes";
   return "tablero";
@@ -200,12 +197,6 @@ export function Marco({ children }: { children: ReactNode }) {
               </button>
 
               <div className="ml-auto flex shrink-0 items-center gap-3">
-                {/* En Trabajar sobra: ya está ahí, y sería un segundo azul en la vista. */}
-                <span className={ubicacion.pathname.startsWith("/trabajo") ? "hidden" : "hidden sm:contents"}>
-                  <BotonAcento a="/trabajo" icono={<Plus size={18} strokeWidth={1.5} aria-hidden />}>
-                    Nuevo periodo
-                  </BotonAcento>
-                </span>
                 <SelectorTema />
                 <MenuCuenta titulo={[MARCA, cargo, tp].filter(Boolean).join(" · ")} />
               </div>
@@ -213,7 +204,6 @@ export function Marco({ children }: { children: ReactNode }) {
           </div>
 
           <div
-            data-banda={clave === "trabajar" ? "taller" : undefined}
             data-cliente={varsCliente ? "" : undefined}
             className="franja-cabecera -mt-[68px] overflow-hidden pt-[68px] escritorio:-mt-[80px] escritorio:pt-[80px]"
           >

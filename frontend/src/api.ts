@@ -1,14 +1,12 @@
 import type {
   Actividad,
   ArchivoImportado,
-  CasoEjemplo,
   Cierre,
   Cliente,
   ComparacionFicha,
   Contador,
   FichaExtraida,
   Confirmacion,
-  ConteoClientes,
   IdentidadDetectada,
   Importacion,
   InformeImportacionClientes,
@@ -214,6 +212,9 @@ export const analisis = {
     pedir<{ ok: boolean }>(`/api/periodos/${periodoId}`, { method: "DELETE" }),
   reabrirPeriodo: (periodoId: string) =>
     pedir<{ ok: boolean; mensaje: string }>(`/api/periodos/${periodoId}/reabrir`, { method: "POST" }),
+  /** Cierra con los saldos guardados: no hace falta la sesión de trabajo (v2.3). */
+  cerrarPeriodo: (periodoId: string) =>
+    pedir<{ ok: boolean; fecha_corte: string; cuentas: number }>(`/api/periodos/${periodoId}/cerrar`, { method: "POST" }),
 };
 
 /* ── flujo de trabajo contable ─────────────────────────────────────────── */
@@ -228,15 +229,9 @@ export const trabajo = {
   },
   ejemplo: (clienteId?: string | null) =>
     pedir<Importacion>(`/api/importar/ejemplo${qs({ cliente_id: clienteId ?? "" })}`, { method: "POST" }),
-  /** Los tres ejemplos: completo, mediocre y basico. */
-  casos: () => pedir<CasoEjemplo[]>("/api/casos"),
-  demo: (clienteId?: string | null, caso = "completo") =>
-    pedir<Importacion>(`/api/importar/demo${qs({ cliente_id: clienteId ?? "", caso })}`, { method: "POST" }),
   calcular: (p: Peticion) => pedir<Resultado>("/api/calcular", { method: "POST", ...json(p) }),
   /** Vuelve a abrir una subida que quedó con preguntas sin responder. */
   verImportacion: (sid: string) => pedir<Importacion>(`/api/importar/${sid}`),
-  guardarCierre: (sid: string) =>
-    pedir<{ ok: boolean; mensaje: string }>(`/api/cierre/${sid}`, { method: "POST" }),
 };
 
 /* ── una sola puerta: se sube lo que sea y el backend decide ───────────── */
@@ -279,7 +274,6 @@ export const descargas = {
   pdf: (sid: string) => `${BASE}/api/exportar/${sid}/pdf`,
   saldos: (sid: string) => `${BASE}/api/exportar/${sid}/saldos`,
   plantilla: `${BASE}/api/plantilla`,
-  plantillaCaso: (caso: string) => `${BASE}/api/plantilla-demo?caso=${caso}`,
   plantillaClientes: `${BASE}/api/clientes/plantilla`,
   // Descargas de un periodo ya guardado: no hace falta volver a subir los Excel.
   excelPeriodo: (periodoId: string) => `${BASE}/api/periodos/${periodoId}/excel`,

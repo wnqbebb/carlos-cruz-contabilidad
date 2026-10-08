@@ -72,16 +72,19 @@ def _en_cero(p: dict) -> bool:
 
 def _accion(tipo: str, cliente_id: str, dato: dict) -> dict:
     """La acción directa de cada tarea: a dónde lleva el botón «Hacer ahora»."""
+    base = f"/clientes/{cliente_id}"
     if tipo == "subir":
-        return {"tipo": "subir", "etiqueta": "Subir el archivo", "ruta": f"/clientes/{cliente_id}"}
+        return {"tipo": "subir", "etiqueta": "Subir el archivo", "ruta": f"{base}?seccion=contabilidad"}
     if tipo == "preguntas":
         return {"tipo": "ir", "etiqueta": "Responder ahora",
-                "ruta": f"/trabajo?cliente={cliente_id}&sesion={dato.get('sesion', '')}"}
+                "ruta": f"{base}?seccion=contabilidad&sesion={dato.get('sesion', '')}"}
     if tipo == "editar":
-        return {"tipo": "ir", "etiqueta": "Completar la ficha", "ruta": f"/clientes/{cliente_id}/editar"}
-    vista = {"estados": "estados", "periodos": "periodos", "resumen": "resumen"}[tipo]
-    etiqueta = {"estados": "Ver el periodo", "periodos": "Ir a los periodos", "resumen": "Ver el detalle"}[tipo]
-    return {"tipo": "ir", "etiqueta": etiqueta, "ruta": f"/clientes/{cliente_id}?vista={vista}"}
+        return {"tipo": "ir", "etiqueta": "Completar la ficha", "ruta": f"{base}/editar"}
+    if tipo == "estados":
+        return {"tipo": "ir", "etiqueta": "Ver el periodo", "ruta": f"{base}?seccion=contabilidad"}
+    if tipo == "periodos":
+        return {"tipo": "ir", "etiqueta": "Ir a los periodos", "ruta": f"{base}?seccion=archivos"}
+    return {"tipo": "ir", "etiqueta": "Ver el detalle", "ruta": f"{base}?seccion=resumen"}
 
 
 def _pospuestas(hoy: date) -> set[str]:

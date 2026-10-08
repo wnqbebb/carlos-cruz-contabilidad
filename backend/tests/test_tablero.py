@@ -36,7 +36,7 @@ def test_tareas_con_prioridad_cliente_que_por_que_y_accion(cliente_api):
     assert ("SIN_PERIODOS", "SIN NADA") in codigos
     cerrar = next(x for x in t["tareas"] if x["codigo"] == "SIN_CERRAR")
     assert cerrar["prioridad"] == "alta" and cerrar["que"] == "Cerrar el periodo calculado"
-    assert cerrar["por_que"] and cerrar["accion"]["ruta"].endswith("?vista=periodos")
+    assert cerrar["por_que"] and cerrar["accion"]["ruta"].endswith("?seccion=archivos")
     primera = next(x for x in t["tareas"] if x["codigo"] == "SIN_PERIODOS")
     assert primera["accion"]["tipo"] == "subir"
     # Ordenadas por prioridad.
@@ -127,3 +127,17 @@ def test_h18_los_datos_del_contador_salen_de_la_configuracion(cliente_api):
     assert c["tarjeta_profesional"] and c["municipio"]
     # v2.3 · Fase 2: ya no se editan desde la interfaz.
     assert cliente_api.put("/api/contador", json={"municipio": "Buga"}).status_code in (404, 405)
+
+
+def test_cerrar_un_periodo_guardado_sin_sesion_de_trabajo(cliente_api):
+    """v2.3 · Fase 3: el expediente cierra el periodo con los saldos guardados, sin volver a subir nada."""
+    from tests.test_archivos_variados import _calcular, _subir
+
+    imp = _subir(cliente_api, "11_libro_diario.csv")
+    res = _calcular(cliente_api, imp)
+    pid = res["periodo"]["id"]
+    r = cliente_api.post(f"/api/periodos/{pid}/cerrar")
+    assert r.status_code == 200, r.text
+    periodos = cliente_api.get(f"/api/clientes/{imp['cliente_id']}/periodos").json()
+    assert periodos["periodos"][0]["estado"] == "cerrado" and periodos["cierres"]
+    assert cliente_api.post(f"/api/periodos/{pid}/cerrar").status_code == 409

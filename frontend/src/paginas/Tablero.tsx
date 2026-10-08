@@ -163,7 +163,7 @@ function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
   const hacer = async (t: Tarea) => {
     setOcupada(t.clave);
     await analisis.hacerTarea(t.clave).catch(() => undefined);
-    navegar(t.accion.ruta);
+    if (t.accion.ruta) navegar(t.accion.ruta);
   };
   const posponer = async (t: Tarea) => {
     setOcupada(t.clave);
@@ -206,15 +206,20 @@ function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
                   <p className="t-body font-semibold text-tinta">
                     {t.que}
                     <span className="font-normal text-grafito"> · </span>
-                    <Link to={`/clientes/${t.cliente_id}`} className="font-normal text-azul-tinta underline-offset-4 hover:underline">
-                      {t.razon_social}
-                    </Link>
+                    {t.cliente_id ? (
+                      <Link to={`/clientes/${t.cliente_id}`} className="font-normal text-azul-tinta underline-offset-4 hover:underline">
+                        {t.razon_social}
+                      </Link>
+                    ) : (
+                      <span className="font-normal text-grafito">{t.razon_social}</span>
+                    )}
                   </p>
                   <p className="t-small mt-1 text-grafito">
                     <span className="text-tinta">{t.titulo}.</span> {t.por_que}
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
+                  {t.accion.tipo !== "informar" && (
                   <button
                     type="button"
                     disabled={ocupada === t.clave}
@@ -223,6 +228,7 @@ function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
                   >
                     Hacer ahora <ArrowRight size={14} strokeWidth={1.5} aria-hidden />
                   </button>
+                  )}
                   <button
                     type="button"
                     disabled={ocupada === t.clave}

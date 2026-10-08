@@ -64,19 +64,6 @@ export interface Empresa {
   [k: string]: unknown;
 }
 
-/* ── ejemplos para probar sin datos reales ─────────────────────────────── */
-export interface CasoEjemplo {
-  id: "completo" | "mediocre" | "basico" | string;
-  nombre: string;
-  descripcion: string;
-  empresa: string;
-  nit: string;
-  movimientos: number;
-  con_inventario: boolean;
-  con_nomina: boolean;
-  con_activos: boolean;
-}
-
 /* ── directorio de clientes ────────────────────────────────────────────── */
 export type EstadoCliente = "activo" | "inactivo" | "archivado";
 export type Periodicidad = "mensual" | "bimestral" | "trimestral" | "cuatrimestral" | "anual";
@@ -284,7 +271,8 @@ export interface Tarea {
   titulo: string;
   /** Por qué: el dato exacto que la sustenta. */
   por_que: string;
-  accion: { tipo: "ir" | "subir"; etiqueta: string; ruta: string };
+  /** «informar»: solo avisa (p. ej. faltan los valores legales del año); no hay pantalla a donde ir. */
+  accion: { tipo: "ir" | "subir" | "informar"; etiqueta: string; ruta?: string };
 }
 
 export interface MesTablero {

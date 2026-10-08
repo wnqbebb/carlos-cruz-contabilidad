@@ -1,11 +1,11 @@
-import { ArrowLeft, Download, History, PenLine } from "lucide-react";
+import { ArrowLeft, History, PenLine } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
-import { analisis, clientes as api, descargas, trabajo as apiTrabajo } from "../api";
+import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { analisis, clientes as api, trabajo as apiTrabajo } from "../api";
+import { Contabilidad } from "../componentes/Contabilidad";
 import { Cabecera, useColorCliente, useMetaPagina } from "../componentes/Marco";
 import { EnLinea } from "../componentes/EnLinea";
-import { BotonSubirArchivo } from "../componentes/Subir";
-import { clases, esCero, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
+import { clases, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
 import type {
   ArchivoImportado,
   Actividad as ActividadLinea,
@@ -13,15 +13,12 @@ import type {
   Cliente,
   InformeSugerencias,
   Periodo,
-  Resultado,
   Severidad,
   Sugerencia,
   VersionPeriodo,
 } from "../tipos";
 import { GraficaHistorico, TablaHistorico } from "../componentes/Grafica";
 import { PanelMetricas } from "../componentes/PanelMetricas";
-import { LibroDiario as LibroDiarioOficial } from "../componentes/LibroDiario";
-import { ResultadoGuardado } from "../componentes/ResultadoGuardado";
 import {
   Aviso,
   Boton,
@@ -29,7 +26,6 @@ import {
   Cifra,
   Dialogo,
   Dinero,
-  Enlace,
   Insignia,
   Pestanas,
   Rotulo,
@@ -47,19 +43,30 @@ import {
 } from "../ui";
 
 /**
- * Ficha del cliente (spec 6.4).
+ * Expediente del cliente (v2.3 · Fases 3 y 4). Clientes y Trabajar son ahora un
+ * solo lugar con cinco secciones como máximo:
  *
- * Cabecera Escaparate: esfera de 240 px que deriva, razón social en display y
- * metadatos en las esquinas como ref-04. Debajo, pestañas con índice:
- * Resumen⁰¹ Periodos⁰² Estados financieros⁰³ Inventario⁰⁴ Nómina⁰⁵ Socios⁰⁶,
- * y las dos que ya existían: Libro diario⁰⁷ y Datos⁰⁸.
+ *   Resumen · Contabilidad · Archivos y actividad · Datos
+ *
+ * Contabilidad es la sección por defecto: con periodos abre el último; sin
+ * periodos, la zona de subida. `?seccion=` lleva directo a una de ellas.
  */
 
-type Vista =
-  | "resumen" | "periodos" | "estados" | "inventario" | "nomina"
-  | "socios" | "movimientos" | "actividad" | "ficha";
-const VISTAS: Vista[] = ["resumen", "periodos", "estados", "inventario", "nomina",
-  "socios", "movimientos", "actividad", "ficha"];
+type Seccion = "resumen" | "contabilidad" | "archivos" | "datos";
+const SECCIONES: Seccion[] = ["resumen", "contabilidad", "archivos", "datos"];
+
+/** Enlaces viejos (`?vista=` de la ficha anterior) → sección y vista nuevas. */
+const SECCION_ANTIGUA: Record<string, [Seccion, string | null]> = {
+  resumen: ["resumen", null],
+  periodos: ["archivos", null],
+  actividad: ["archivos", null],
+  estados: ["contabilidad", "situacion"],
+  inventario: ["contabilidad", "inventario"],
+  nomina: ["contabilidad", "nomina"],
+  movimientos: ["contabilidad", "diario"],
+  socios: ["datos", null],
+  ficha: ["datos", null],
+};
 
 const TONO: Record<Severidad, Tono> = {
   critica: "rojo",
@@ -81,27 +88,25 @@ const fechaEsquina = (iso: string | null | undefined) => {
   return `${d} — ${m} — ${a}`;
 };
 
-export function ClienteFicha() {
+export function Expediente() {
   const { id = "" } = useParams<{ id: string }>();
   const navegar = useNavigate();
+  const [params, setParams] = useSearchParams();
 
   const [cliente, setCliente] = useState<Cliente | null>(null);
   const [periodos, setPeriodos] = useState<Periodo[]>([]);
   const [cierres, setCierres] = useState<Cierre[]>([]);
   const [serie, setSerie] = useState<Periodo[]>([]);
   const [informe, setInforme] = useState<InformeSugerencias | null>(null);
-  // `?vista=estados` permite llegar directo a una pestaña (p. ej. desde el Tablero).
-  const [parametrosUrl] = useSearchParams();
-  const [vista, setVista] = useState<Vista>(() => {
-    const v = parametrosUrl.get("vista") as Vista | null;
-    return v && VISTAS.includes(v) ? v : "resumen";
-  });
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [confirmarBorrado, setConfirmarBorrado] = useState(false);
 
+  const antigua = params.get("vista");
+  const pedida = params.get("seccion") as Seccion | null;
+  const seccion: Seccion = pedida && SECCIONES.includes(pedida) ? pedida : "contabilidad";
+
   const cargar = useCallback(async () => {
-    setCargando(true);
     setError("");
     try {
       const [c, p, s, g] = await Promise.all([
@@ -123,16 +128,25 @@ export function ClienteFicha() {
   }, [id]);
 
   useEffect(() => {
+    setCargando(true);
     cargar();
   }, [cargar]);
 
   const ultimo = serie.length ? serie[serie.length - 1] : null;
-  // 8.3: la cabecera, la píldora, las pestañas y el foco toman el color del cliente.
   useColorCliente(cliente?.nit);
   useMetaPagina(ultimo ? `Corte ${fechaLarga(ultimo.hasta)}` : null);
 
+  // Un enlace viejo con ?vista= se traduce una vez y se reemplaza.
+  if (antigua && !pedida) {
+    const [s, v] = SECCION_ANTIGUA[antigua] ?? ["contabilidad", antigua];
+    const n = new URLSearchParams(params);
+    n.delete("vista");
+    n.set("seccion", s);
+    if (v) n.set("vista", v);
+    return <Navigate to={`/clientes/${id}?${n.toString()}`} replace />;
+  }
+
   if (error && /no existe/i.test(error)) {
-    // No es un fallo de conexión: el expediente no está (pudo haberse eliminado).
     return (
       <CarpetaVacia
         titulo="Ese expediente no existe"
@@ -142,24 +156,39 @@ export function ClienteFicha() {
       </CarpetaVacia>
     );
   }
-  if (error) return <EstadoError titulo="No se pudo abrir el expediente" detalle={error} onReintentar={cargar} />;
+  if (error && !cliente) return <EstadoError titulo="No se pudo abrir el expediente" detalle={error} onReintentar={cargar} />;
   if (cargando) return <EsqueletoFicha />;
   if (!cliente) return null;
 
   const criticas = informe?.conteo.critica ?? 0;
   const altas = informe?.conteo.alta ?? 0;
-  const calculados = periodos.filter((p) => p.estado !== "borrador").length;
-  const socios = cliente.socios ?? [];
+  const irA = (s: Seccion) => {
+    const n = new URLSearchParams();
+    n.set("seccion", s);
+    setParams(n);
+  };
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8">
       <Cabecera>
-      <CabeceraCliente
-        cliente={cliente}
-        onCambio={async (campo, valor) => {
-          setCliente(await api.actualizar(id, { [campo]: valor }));
-        }}
-      />
+        <CabeceraCliente
+          cliente={cliente}
+          onCambio={async (campo, valor) => {
+            setCliente(await api.actualizar(id, { [campo]: valor }));
+          }}
+        />
+        <div className="mt-6">
+          <Pestanas<Seccion>
+            valor={seccion}
+            onCambio={irA}
+            opciones={[
+              { id: "resumen", texto: "Resumen", cuenta: criticas + altas },
+              { id: "contabilidad", texto: "Contabilidad" },
+              { id: "archivos", texto: "Archivos y actividad" },
+              { id: "datos", texto: "Datos" },
+            ]}
+          />
+        </div>
       </Cabecera>
 
       {cliente.estado === "archivado" && (
@@ -179,120 +208,98 @@ export function ClienteFicha() {
         </Aviso>
       )}
 
-      {cliente.notas && (
-        <Aviso tono="ambar" titulo="Nota de revisión del contador">
-          <p className="whitespace-pre-line">{cliente.notas}</p>
-        </Aviso>
-      )}
-
-      {(criticas > 0 || altas > 0) && vista !== "resumen" && (
-        <Aviso tono={criticas ? "rojo" : "ambar"}>
-          Este cliente tiene {criticas + altas} {criticas + altas === 1 ? "asunto" : "asuntos"} por atender.{" "}
-          <button type="button" onClick={() => setVista("resumen")} className="font-semibold underline underline-offset-4">
-            Verlos en el resumen
-          </button>
-        </Aviso>
-      )}
-
-      <div className="space-y-8">
-        <Pestanas<Vista>
-          valor={vista}
-          onCambio={setVista}
-          opciones={[
-            { id: "resumen", texto: "Resumen", cuenta: criticas + altas },
-            { id: "periodos", texto: "Periodos", cuenta: periodos.length },
-            { id: "estados", texto: "Estados financieros", cuenta: calculados },
-            { id: "inventario", texto: "Inventario" },
-            { id: "nomina", texto: "Nómina" },
-            { id: "socios", texto: "Socios", cuenta: socios.length },
-            { id: "movimientos", texto: "Libro diario" },
-            { id: "actividad", texto: "Actividad" },
-            { id: "ficha", texto: "Datos" },
-          ]}
-        />
-
-        {/* ── 01 resumen ─────────────────────────────────────────────── */}
-        {vista === "resumen" && (
-          <div className="space-y-8">
-            {ultimo ? (
-              <div className="space-y-4">
-                <div className="flex flex-wrap items-baseline justify-between gap-3">
-                  <p className="t-body text-grafito">
-                    Último periodo: <span className="font-semibold text-tinta">{periodoCorto(ultimo.desde, ultimo.hasta)}</span>
-                    {" · "}
-                    {ultimo.estado === "cerrado" ? "cerrado, listo para firmar" : "abierto"}
-                  </p>
-                  <EnlaceSubrayado href="#" onClick={(e) => { e.preventDefault(); setVista("estados"); }}>
-                    Ver estados financieros y descargas
-                  </EnlaceSubrayado>
-                </div>
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 escritorio:grid-cols-4">
-                  <Cifra rotulo={`Activo · ${periodoCorto(ultimo.desde, ultimo.hasta)}`} valor={pesos(ultimo.total_activo)} />
-                  <Cifra rotulo="Pasivo total" valor={pesos(ultimo.total_pasivo)} />
-                  <Cifra rotulo="Patrimonio" valor={pesos(ultimo.total_patrimonio)} />
-                  <Cifra
-                    rotulo={esNegativo(ultimo.utilidad) ? "Pérdida del periodo" : "Utilidad del periodo"}
-                    valor={pesos(ultimo.utilidad)}
-                    tono={esNegativo(ultimo.utilidad) ? "rojo" : undefined}
-                    destacada={!esNegativo(ultimo.utilidad)}
-                    detalle={ultimo.estado === "cerrado" ? "Periodo cerrado" : "Periodo abierto"}
-                  />
-                </div>
-              </div>
-            ) : (
-              <Vacio
-                titulo="Este cliente aún no tiene periodos"
-                accion={<BotonPrimario a={`/trabajo?cliente=${id}`} flecha>Trabajar el primer periodo</BotonPrimario>}
-              >
-                Suba sus archivos contables y aquí quedan el balance, los estados financieros, la nómina y el inventario.
-              </Vacio>
-            )}
-
-            {ultimo && <PanelMetricas cliente={cliente} periodo={ultimo} />}
-
-            <ListaSugerencias informe={informe} />
-
-            {serie.length >= 2 && (
-              <Tarjeta rotulo="Evolución" titulo="Cómo viene el cliente">
-                <GraficaHistorico serie={serie} />
-                <details className="mt-6">
-                  <summary className="t-meta cursor-pointer select-none text-gris">Ver los mismos datos en tabla</summary>
-                  <div className="barra-fina mt-3 overflow-x-auto">
-                    <TablaHistorico serie={serie} />
-                  </div>
-                </details>
-              </Tarjeta>
-            )}
-          </div>
-        )}
-
-        {/* ── 02 periodos ────────────────────────────────────────────── */}
-        {vista === "periodos" && <ListaPeriodos periodos={periodos} cierres={cierres} onCambio={cargar} />}
-
-        {/* ── 03 estados financieros · 04 inventario · 05 nómina ─────── */}
-        {vista === "estados" && <ResultadoGuardado periodos={periodos} excluir={["inventario", "nomina"]} />}
-        {vista === "inventario" && <ResultadoGuardado periodos={periodos} grupos={["inventario"]} conPanel={false} />}
-        {vista === "nomina" && <ResultadoGuardado periodos={periodos} grupos={["nomina"]} conPanel={false} />}
-
-        {/* ── 06 socios ──────────────────────────────────────────────── */}
-        {vista === "socios" && <Socios cliente={cliente} />}
-
-        {/* ── 07 libro diario ────────────────────────────────────────── */}
-        {vista === "movimientos" && <LibroDiarioFicha periodos={periodos} />}
-
-        {/* ── 08 actividad ───────────────────────────────────────────── */}
-        {vista === "actividad" && <Actividad clienteId={id} />}
-
-        {/* ── 08 datos ───────────────────────────────────────────────── */}
-        {vista === "ficha" && (
-          <div className="space-y-8">
-            <DatosCliente cliente={cliente} />
-            <Tarjeta rotulo="Zona delicada" titulo="Archivar o eliminar este cliente">
+      {seccion === "resumen" && (
+        <div className="space-y-8">
+          {cliente.notas && (
+            <Aviso tono="ambar" titulo="Nota de revisión del contador">
+              <p className="whitespace-pre-line">{cliente.notas}</p>
+            </Aviso>
+          )}
+          {ultimo ? (
+            <div className="space-y-4">
               <p className="t-body text-grafito">
+                Último periodo:{" "}
+                <EnlaceSubrayado a={`/clientes/${id}?seccion=contabilidad`}>{periodoCorto(ultimo.desde, ultimo.hasta)}</EnlaceSubrayado>
+                {" · "}
+                {ultimo.estado === "cerrado" ? "cerrado, listo para firmar" : "abierto"}
+              </p>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 escritorio:grid-cols-4">
+                <Cifra rotulo="Activo" valor={pesos(ultimo.total_activo)} />
+                <Cifra rotulo="Pasivo" valor={pesos(ultimo.total_pasivo)} />
+                <Cifra rotulo="Patrimonio" valor={pesos(ultimo.total_patrimonio)} />
+                <Cifra
+                  rotulo={esNegativo(ultimo.utilidad) ? "Pérdida" : "Utilidad"}
+                  valor={pesos(ultimo.utilidad)}
+                  tono={esNegativo(ultimo.utilidad) ? "rojo" : undefined}
+                  destacada={!esNegativo(ultimo.utilidad)}
+                />
+              </div>
+            </div>
+          ) : (
+            <Vacio
+              titulo="Este cliente aún no tiene periodos"
+              accion={<BotonPrimario a={`/clientes/${id}?seccion=contabilidad`} flecha>Subir el primer periodo</BotonPrimario>}
+            >
+              Suba sus archivos contables y aquí quedan el balance, los estados financieros, la nómina y el inventario.
+            </Vacio>
+          )}
+
+          <ListaSugerencias informe={informe} />
+
+          {serie.length >= 2 && (
+            <Tarjeta rotulo="Evolución" titulo="Cómo viene el cliente">
+              <GraficaHistorico serie={serie} />
+              <details className="mt-6">
+                <summary className="t-meta cursor-pointer select-none text-gris">Ver los mismos datos en tabla</summary>
+                <div className="barra-fina mt-3 overflow-x-auto">
+                  <TablaHistorico serie={serie} />
+                </div>
+              </details>
+            </Tarjeta>
+          )}
+
+          {ultimo && (
+            <details>
+              <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+                Ver indicadores y gráficas del último periodo
+              </summary>
+              <div className="mt-6">
+                <PanelMetricas cliente={cliente} periodo={ultimo} />
+              </div>
+            </details>
+          )}
+        </div>
+      )}
+
+      {seccion === "contabilidad" && <Contabilidad cliente={cliente} periodos={periodos} onCambio={cargar} />}
+
+      {seccion === "archivos" && (
+        <div className="space-y-10">
+          <ListaPeriodos periodos={periodos} cierres={cierres} onCambio={cargar} />
+          <Actividad clienteId={id} />
+        </div>
+      )}
+
+      {seccion === "datos" && (
+        <div className="space-y-8">
+          <div className="flex flex-wrap gap-3">
+            <BotonFantasma a={`/clientes/${cliente.id}/editar`} icono={<PenLine size={18} strokeWidth={1.5} aria-hidden />}>
+              Editar ficha
+            </BotonFantasma>
+            <ArchivosDeMuestra cliente={cliente} />
+          </div>
+          <DatosCliente cliente={cliente} />
+          <Socios cliente={cliente} />
+          <details>
+            <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+              Archivar o eliminar este cliente
+            </summary>
+            <div className="mt-4 space-y-4">
+              <p className="t-body max-w-2xl text-grafito">
                 Archivar lo saca de las listas pero conserva toda su contabilidad. Eliminar borra el cliente y{" "}
                 <strong className="text-tinta">todos sus periodos, resultados y movimientos</strong>, y no se puede deshacer.
               </p>
-              <div className="mt-5 flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3">
                 <Boton
                   variante="contorno"
                   onClick={async () => {
@@ -306,10 +313,10 @@ export function ClienteFicha() {
                   Eliminar definitivamente
                 </Boton>
               </div>
-            </Tarjeta>
-          </div>
-        )}
-      </div>
+            </div>
+          </details>
+        </div>
+      )}
 
       {confirmarBorrado && (
         <DialogoBorrar
@@ -336,18 +343,18 @@ function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (c
     ? `Constituida ${fechaEsquina(cliente.fecha_constitucion)}`
     : `Ficha desde ${fechaEsquina(cliente.creado)}`;
   return (
-    <header className="relative border-b border-linea pb-8">
+    <header className="relative pb-2">
       <div className="t-meta flex flex-wrap justify-between gap-3 text-gris">
         <span>{codigo}</span>
         <span>{cliente.turno_dian ? `Turno DIAN — ${String(cliente.turno_dian).padStart(2, "0")}` : "Sin turno DIAN"}</span>
       </div>
 
-      <div className="mt-8 grid gap-10 escritorio:grid-cols-12 escritorio:items-center">
+      <div className="mt-6 grid gap-8 escritorio:grid-cols-12 escritorio:items-center">
         <div className="min-w-0 escritorio:col-span-8">
           <EnlaceSubrayado a="/clientes">
             <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> Clientes
           </EnlaceSubrayado>
-          <h1 className="t-display mt-5 text-balance text-tinta">
+          <h1 className="t-h1 mt-4 text-balance text-tinta">
             <EnLinea valor={cliente.razon_social} etiqueta="Razón social" onGuardar={(v) => onCambio("razon_social", v)}>
               {cliente.razon_social}
             </EnLinea>
@@ -363,42 +370,14 @@ function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (c
             <InsigniaEstado estado={cliente.estado} />
           </p>
 
-          <dl className="mt-8 grid gap-x-8 gap-y-4 sm:grid-cols-2">
-            {cliente.rep_legal && (
-              <div className="min-w-0">
-                <dt className="t-meta text-gris">Representante legal</dt>
-                <dd className="t-body mt-1 text-tinta">{cliente.rep_legal}</dd>
-              </div>
-            )}
-            {cliente.contador && (
-              <div className="min-w-0">
-                <dt className="t-meta text-gris">Contador</dt>
-                <dd className="t-body mt-1 text-tinta">
-                  {cliente.contador}
-                  {cliente.contador_tp && <span className="codigo ml-2 text-[12px] text-gris">T.P. {cliente.contador_tp}</span>}
-                </dd>
-              </div>
-            )}
-          </dl>
-
-          <div className="mt-8 flex flex-wrap gap-3">
-            <BotonSubirArchivo />
-            <BotonFantasma a={`/trabajo?cliente=${cliente.id}`} flecha>
-              Trabajar un periodo
-            </BotonFantasma>
-            <BotonFantasma a={`/clientes/${cliente.id}/editar`} icono={<PenLine size={18} strokeWidth={1.5} aria-hidden />}>
-              Editar ficha
-            </BotonFantasma>
-            <ArchivosDeMuestra cliente={cliente} />
-          </div>
         </div>
 
-        <div className="flex justify-center escritorio:col-span-4 escritorio:justify-end">
-          <EsferaCliente nit={cliente.nit} nombre={cliente.razon_social} tamano={240} />
+        <div className="hidden justify-end escritorio:col-span-4 escritorio:flex">
+          <EsferaCliente nit={cliente.nit} nombre={cliente.razon_social} tamano={56} />
         </div>
       </div>
 
-      <div className="t-meta mt-10 flex flex-wrap items-center justify-between gap-3 text-gris">
+      <div className="t-meta mt-6 hidden flex-wrap items-center justify-between gap-3 text-gris sm:flex">
         <span>{desde}</span>
         <span className="flex flex-wrap items-center gap-x-6 gap-y-2">
           <span className="inline-flex items-center gap-1">
@@ -427,7 +406,7 @@ function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (c
   );
 }
 
-/* ── 06 socios ──────────────────────────────────────────────────────── */
+/* ── socios ──────────────────────────────────────────────────────── */
 function Socios({ cliente }: { cliente: Cliente }) {
   const socios = cliente.socios ?? [];
   if (!socios.length) {
@@ -536,7 +515,7 @@ function ListaPeriodos({
   if (!periodos.length) {
     return (
       <Vacio titulo="Sin periodos todavía">
-        Suba el primer archivo de este cliente desde «Trabajar un periodo» y aquí quedará su historia.
+        Suba el primer archivo de este cliente en Contabilidad y aquí quedará su historia.
       </Vacio>
     );
   }
@@ -646,104 +625,6 @@ function ListaPeriodos({
             ))}
           </ul>
         </Tarjeta>
-      )}
-    </div>
-  );
-}
-
-/* ── libro diario ────────────────────────────────────────────────────── */
-function LibroDiarioFicha({ periodos }: { periodos: Periodo[] }) {
-  const calculados = periodos.filter((p) => p.estado !== "borrador");
-  const [periodoId, setPeriodoId] = useState(calculados[0]?.id ?? "");
-  const [cuenta, setCuenta] = useState("");
-  const [datos, setDatos] = useState<Resultado | null>(null);
-  const [cargando, setCargando] = useState(false);
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    if (!calculados.length) return;
-    if (!calculados.some((p) => p.id === periodoId)) setPeriodoId(calculados[0].id);
-  }, [calculados, periodoId]);
-
-  useEffect(() => {
-    if (!periodoId) return;
-    let vivo = true;
-    setCargando(true);
-    setError("");
-    analisis
-      .resultadoDePeriodo(periodoId)
-      .then((r) => vivo && setDatos(r.resultado))
-      .catch((e) => vivo && setError((e as Error).message))
-      .finally(() => vivo && setCargando(false));
-    return () => {
-      vivo = false;
-    };
-  }, [periodoId]);
-
-  if (!calculados.length) {
-    return (
-      <Vacio titulo="Sin libro diario todavía">
-        Este cliente aún no tiene periodos calculados. Suba sus archivos y el libro diario se arma solo.
-      </Vacio>
-    );
-  }
-
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div className="min-w-0">
-          <Rotulo className="mb-2 block">Periodo</Rotulo>
-          <div className="barra-fina flex gap-2 overflow-x-auto pb-1">
-            {calculados.map((p) => (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => setPeriodoId(p.id)}
-                aria-pressed={p.id === periodoId}
-                className={clases(
-                  "shrink-0 rounded-full px-4 py-2 text-[13px] font-medium transition-colors duration-200",
-                  p.id === periodoId
-                    ? "bg-tinta text-sobre-tinta"
-                    : "border border-linea bg-hoja text-grafito hover:bg-hoja-2 hover:text-tinta",
-                )}
-              >
-                {periodoCorto(p.desde, p.hasta)}
-                {p.estado === "cerrado" && <span className="ml-1.5 text-[11px] opacity-70">· cerrado</span>}
-              </button>
-            ))}
-          </div>
-        </div>
-        {periodoId && (
-          <div className="flex flex-wrap gap-2">
-            <Enlace href={descargas.libro(periodoId, "libro-diario", "excel")} variante="contorno" tamano="sm">
-              <Download size={16} strokeWidth={1.5} aria-hidden /> Libro diario · Excel
-            </Enlace>
-            <Enlace href={descargas.libro(periodoId, "libro-diario", "pdf")} variante="contorno" tamano="sm">
-              <Download size={16} strokeWidth={1.5} aria-hidden /> PDF
-            </Enlace>
-            <Enlace href={descargas.libro(periodoId, "mayor-balances", "excel")} variante="contorno" tamano="sm">
-              <Download size={16} strokeWidth={1.5} aria-hidden /> Mayor y balances · Excel
-            </Enlace>
-            <Enlace href={descargas.libro(periodoId, "mayor-balances", "pdf")} variante="contorno" tamano="sm">
-              <Download size={16} strokeWidth={1.5} aria-hidden /> PDF
-            </Enlace>
-          </div>
-        )}
-      </div>
-
-      <input
-        value={cuenta}
-        onChange={(e) => setCuenta(e.target.value.replace(/\D/g, ""))}
-        placeholder="Filtrar por cuenta PUC: 1, 11, 1105…"
-        inputMode="numeric"
-        aria-label="Filtrar por cuenta"
-        className={clases(estiloCampo, "cifras max-w-xs")}
-      />
-
-      {error && <Aviso tono="rojo" titulo="No se pudo abrir el libro">{error}</Aviso>}
-      {cargando && !datos && <Cargando texto="Abriendo el libro diario" />}
-      {datos?.reportes?.libro_diario && (
-        <LibroDiarioOficial rep={datos.reportes.libro_diario} origenes={datos.origenes} filtroCuenta={cuenta} />
       )}
     </div>
   );
@@ -1008,7 +889,7 @@ function Versiones({ periodoId, onCambio }: { periodoId: string; onCambio: () =>
   );
 }
 
-/* ── 08 actividad: qué se hizo con este cliente y cuándo ───────────────── */
+/* ── actividad: qué se hizo con este cliente y cuándo ───────────────── */
 function Actividad({ clienteId }: { clienteId: string }) {
   const [datos, setDatos] = useState<{ actividad: ActividadLinea[]; importaciones: ArchivoImportado[] } | null>(null);
   const [error, setError] = useState("");
@@ -1104,7 +985,7 @@ function ArchivosDeMuestra({ cliente }: { cliente: Cliente }) {
         setCargando(true);
         try {
           const importacion = await apiTrabajo.ejemplo(cliente.id);
-          navegar(`/trabajo?cliente=${cliente.id}`, { state: { importacion } });
+          navegar(`/clientes/${cliente.id}?seccion=contabilidad`, { state: { importacion } });
         } catch (e) {
           avisar((e as Error).message, "rojo");
         } finally {

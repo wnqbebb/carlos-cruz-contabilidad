@@ -155,6 +155,25 @@ def reabrir_periodo(periodo_id: str):
     return salida
 
 
+@router.post("/periodos/{periodo_id}/cerrar")
+def cerrar_periodo(periodo_id: str):
+    """Cierra un periodo calculado con los saldos que quedaron guardados (no hace falta la sesión de trabajo)."""
+    try:
+        periodo = repo.obtener(periodo_id)
+    except repo.ErrorPeriodo as ex:
+        raise HTTPException(404, str(ex)) from ex
+    if periodo["estado"] == "cerrado":
+        raise HTTPException(409, {"codigo": "ya_cerrado", "mensaje": "Este periodo ya está cerrado."})
+    guardado = repo.resultado(periodo_id)
+    if not guardado or "saldos_siguiente" not in (guardado["resultado"] or {}):
+        raise HTTPException(409, {"codigo": "sin_resultado",
+                                  "mensaje": "Este periodo no tiene un cálculo guardado: súbalo y calcúlelo de nuevo."})
+    salida = repo.cerrar(periodo["cliente_id"], periodo_id, guardado["resultado"]["saldos_siguiente"])
+    bitacora.registrar("periodo_cerrado", periodo["cliente_id"], periodo=periodo_id,
+                       fecha_corte=salida.get("fecha_corte"), cuentas=salida.get("cuentas"))
+    return salida
+
+
 # ── panorama general ────────────────────────────────────────────────────────
 @router.get("/tablero")
 def tablero():

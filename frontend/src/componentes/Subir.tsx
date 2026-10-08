@@ -249,7 +249,7 @@ function DialogoSubida({
       // Contabilidad: se entra directo a revisar, con el archivo ya leído.
       const { clase: _, ...importacion } = r;
       onCerrar();
-      navegar(`/trabajo?cliente=${r.cliente_id}`, { state: { importacion: importacion as Importacion } });
+      navegar(`/clientes/${r.cliente_id}?seccion=contabilidad`, { state: { importacion: importacion as Importacion } });
     } catch (e) {
       const err = e as ErrorApi;
       setError(err.message);

@@ -9,7 +9,6 @@ import { Rotulo } from "./ui";
 /** Acciones fijas que siempre se pueden invocar desde el buscador. */
 const ACCIONES: { id: string; titulo: string; subtitulo: string; ruta: string; palabras: string }[] = [
   { id: "a-nuevo", titulo: "Nuevo cliente", subtitulo: "Agregar una ficha al directorio", ruta: "/clientes/nuevo", palabras: "crear alta agregar empresa" },
-  { id: "a-trabajo", titulo: "Trabajar un periodo", subtitulo: "Subir archivos y calcular", ruta: "/trabajo", palabras: "calcular importar excel balance estados" },
   { id: "a-clientes", titulo: "Ver todos los clientes", subtitulo: "Directorio completo", ruta: "/clientes", palabras: "directorio listado cartera" },
   { id: "a-tablero", titulo: "Tablero", subtitulo: "Pendientes y resumen del día", ruta: "/", palabras: "inicio resumen pendientes" },
 ];
