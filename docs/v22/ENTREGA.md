@@ -62,6 +62,13 @@ Preguntas que hizo el sistema: 03 (2), 06 (2), 13 (2), 18 (2); los demás no nec
 | Código | Sin `console.log`, `print`, `TODO` ni código muerto: pyflakes limpio; se quitaron 8 funciones del backend y 6 exportaciones del frontend sin uso, y la plantilla oficial ya no dice «FANANT» en su título |
 | Ejecutable (4.4) | ✅ reconstruido (`empaquetar/salida/CarlosCruz`, 102 MB); probado con un perfil vacío: arranca en v2.2.0, pide ingreso, sin errores |
 
+## Base real (4.5)
+- Supabase (proyecto `jnyakmcnplrhnpvkunfq`), con la aplicación arrancada como la arranca el contador (`iniciar.bat`).
+- **FANANT enero 2025**: leído sin recalcular; sigue cerrado y sus cifras de control son **idénticas**. Se le escribió la nota A6 en el periodo y en la ficha (se ve en el aviso «Nota de revisión del contador»):
+  «Calculado con una hoja de trabajo titulada septiembre-octubre 2012 y la nómina de enero 2025; capital en libros 37.800.000 frente a 30.000.000 en estatutos; posible doble registro de 300.000 en sueldos. Pendiente de revisión del contador.»
+- **Clientes de demostración**: cargados por la API (91 periodos, todos cuadran salvo el descuadre intencional). Se probó el botón «Eliminar clientes de demostración» en la aplicación real: borró los cinco y **dejó solo FANANT**, con sus cifras intactas. Después se volvieron a cargar: quedan los cinco con la etiqueta «Demostración».
+- No se cargó nada más.
+
 ## Inicio de sesión (4.2)
 - Un usuario (el contador). En `backend/.env`: `CC_USUARIO`, `CC_CLAVE_HASH` (bcrypt) y `CLAVE_SESION`. Se crean o cambian con `python backend/crear_usuario.py` (pregunta usuario y contraseña; nunca guarda la contraseña).
 - Cookie firmada (HMAC-SHA256), HttpOnly, SameSite=Lax, Secure si la conexión es HTTPS; dura 12 horas.
