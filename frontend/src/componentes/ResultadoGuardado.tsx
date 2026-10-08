@@ -142,6 +142,11 @@ export function ResultadoGuardado({
         )}
       </div>
 
+      {periodo?.nota && (
+        <Aviso tono="ambar" titulo="Nota de revisión de este periodo">
+          {periodo.nota}
+        </Aviso>
+      )}
       {error && <Aviso tono="rojo" titulo="No se pudo abrir el periodo">{error}</Aviso>}
       {cargando && <Cargando texto="Abriendo estados financieros del expediente" />}
 

@@ -86,6 +86,7 @@ def de_cliente(cliente_id: str, hoy: date | None = None) -> dict:
     salida += _perdidas(historia)
     salida += _estructura_financiera(historia)
     salida += _capital_por_pagar(cliente)
+    salida += _capital_vs_estatutos(todos)
     salida += _causal_disolucion(cliente, historia)
     salida += _turno_tributario(cliente)
 
@@ -104,6 +105,33 @@ def de_cliente(cliente_id: str, hoy: date | None = None) -> dict:
 
 
 # ── reglas ──────────────────────────────────────────────────────────────────
+def _capital_vs_estatutos(periodos: list[dict]) -> list[dict]:
+    """A3 · El capital en libros no coincide con los estatutos o con el libro de aportes.
+
+    El aviso sale del cálculo (código E5) y se muestra en la ficha como
+    advertencia, no como dato informativo: un capital que no cuadra con los
+    estatutos es lo primero que pregunta una revisión.
+    """
+    calculados = [p for p in periodos if p.get("estado") in ("calculado", "cerrado")]
+    if not calculados:
+        return []
+    ultimo = max(calculados, key=lambda p: str(p.get("hasta")))
+    datos = repo_periodos.resultado(ultimo["id"])
+    if not datos:
+        return []
+    alertas = [a for a in (datos["resultado"].get("alertas") or []) if a.get("codigo") == "E5"]
+    if not alertas:
+        return []
+    return [_sug(
+        "CAPITAL_ESTATUTOS", "alta",
+        "El capital en libros no coincide con los estatutos",
+        " ".join(a["mensaje"] for a in alertas[:2]),
+        "Revise el registro de los aportes antes de firmar: puede haber un aporte contabilizado dos veces o capital no consignado.",
+        periodo_id=ultimo["id"],
+    )]
+
+
+
 def _ficha_incompleta(cliente: dict) -> list[dict]:
     """Datos de la ficha que harán falta al momento de firmar los estados."""
     faltantes = [

@@ -2,7 +2,7 @@ import { ArrowDownWideNarrow, ArrowLeft, ArrowRight, ArrowUpNarrowWide, Search, 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { clientes as api, descargas } from "../api";
-import { clases, fecha } from "../formato";
+import { clases, esNegativo, fecha, periodoCorto } from "../formato";
 import type { Cliente, InformeImportacionClientes, PaginaClientes } from "../tipos";
 import { Aviso, Boton, Cargando, Dialogo, Insignia, Rotulo } from "../componentes/ui";
 import { BotonSubirArchivo, usePuerta } from "../componentes/Subir";
@@ -30,7 +30,9 @@ import {
 
 type Estado = "activo" | "inactivo" | "archivado" | "todos";
 type Vista = "expedientes" | "tabla";
-type Orden = "razon_social" | "nit" | "municipio" | "honorarios_mes" | "actualizado";
+type Orden =
+  | "razon_social" | "nit" | "municipio" | "honorarios_mes" | "actualizado"
+  | "ingresos" | "utilidad" | "margen" | "estado_periodo";
 
 const ESTADOS: { valor: Estado; texto: string }[] = [
   { valor: "activo", texto: "Activos" },
@@ -45,6 +47,10 @@ const ORDENES: { valor: Orden; texto: string }[] = [
   { valor: "municipio", texto: "Municipio" },
   { valor: "honorarios_mes", texto: "Honorarios" },
   { valor: "actualizado", texto: "Movimiento reciente" },
+  { valor: "ingresos", texto: "Ingresos del último periodo" },
+  { valor: "utilidad", texto: "Utilidad del último periodo" },
+  { valor: "margen", texto: "Margen del último periodo" },
+  { valor: "estado_periodo", texto: "Estado del último periodo" },
 ];
 
 const POR_PAGINA = 50;
@@ -123,6 +129,12 @@ export function Clientes() {
 
   const total = datos?.total ?? 0;
 
+
+  // Un cliente archivado vuelve a la lista activa con un clic (H09).
+  const restaurar = async (id: string) => {
+    await api.restaurar(id);
+    cargar();
+  };
   return (
     <div className="space-y-10">
       {/* ── título y acciones ───────────────────────────────────────── */}
@@ -235,9 +247,26 @@ export function Clientes() {
       {datos && datos.clientes.length > 0 && (
         <div className={clases("space-y-8 transition-opacity duration-200", cargando && "opacity-60")}>
           {vista === "expedientes" ? (
-            <RejillaExpedientes clientes={datos.clientes} desde={(datos.pagina - 1) * datos.por_pagina} />
+            <RejillaExpedientes
+              clientes={datos.clientes}
+              desde={(datos.pagina - 1) * datos.por_pagina}
+              onRestaurar={restaurar}
+            />
           ) : (
-            <TablaClientes clientes={datos.clientes} />
+            <TablaClientes
+              clientes={datos.clientes}
+              orden={orden}
+              descendente={descendente}
+              onOrdenar={(o) => {
+                if (o === orden) setDescendente(!descendente);
+                else {
+                  setOrden(o);
+                  // Las cifras se comparan de mayor a menor; los textos, de la A a la Z.
+                  setDescendente(["ingresos", "utilidad", "margen", "honorarios_mes"].includes(o));
+                }
+              }}
+              onRestaurar={restaurar}
+            />
           )}
           <Paginador
             pagina={datos.pagina}
@@ -263,7 +292,13 @@ export function Clientes() {
 }
 
 /* ── vista Expedientes ──────────────────────────────────────────────── */
-function RejillaExpedientes({ clientes, desde }: { clientes: Cliente[]; desde: number }) {
+function RejillaExpedientes({
+  clientes, desde, onRestaurar,
+}: {
+  clientes: Cliente[];
+  desde: number;
+  onRestaurar: (id: string) => void;
+}) {
   return (
     <ul className="grid gap-x-6 gap-y-10 pt-4 sm:grid-cols-2 escritorio:grid-cols-3">
       {clientes.map((c, i) => (
@@ -296,6 +331,19 @@ function RejillaExpedientes({ clientes, desde }: { clientes: Cliente[]; desde: n
             </dl>
             <div className="mt-4 flex flex-wrap items-center gap-2">
               <InsigniaEstado estado={c.estado} />
+              {c.estado === "archivado" && (
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRestaurar(c.id);
+                  }}
+                  className="t-small rounded-full border border-tinta px-3 py-0.5 font-medium text-tinta hover:bg-tinta hover:text-sobre-tinta"
+                >
+                  Restaurar
+                </button>
+              )}
               {c.etiquetas.slice(0, 2).map((e) => (
                 <span key={e} className="t-small rounded-full border border-linea px-2.5 py-0.5 text-grafito">
                   {e}
@@ -318,57 +366,128 @@ function Dato({ nombre, children }: { nombre: string; children: ReactNode }) {
   );
 }
 
-/* ── vista Tabla (registro Taller: sin animación de entrada) ────────── */
-const COLUMNAS = ["Cliente", "NIT", "Municipio", "Periodicidad", "Honorarios/mes", "Estado", "Actualizado"];
+/* ── vista Tabla (registro Taller: sin animación de entrada) ────────────
+   Fase 6.5: las cifras del ÚLTIMO periodo de cada cliente, para comparar,
+   ordenables con un clic en el encabezado. */
+const COLUMNAS: { texto: string; orden?: Orden; derecha?: boolean }[] = [
+  { texto: "Cliente", orden: "razon_social" },
+  { texto: "NIT", orden: "nit" },
+  { texto: "Municipio", orden: "municipio" },
+  { texto: "Honorarios/mes", orden: "honorarios_mes", derecha: true },
+  { texto: "Último periodo" },
+  { texto: "Ingresos", orden: "ingresos", derecha: true },
+  { texto: "Utilidad", orden: "utilidad", derecha: true },
+  { texto: "Margen", orden: "margen", derecha: true },
+  { texto: "Estado", orden: "estado_periodo" },
+];
 
-function TablaClientes({ clientes }: { clientes: Cliente[] }) {
+const ESTADO_PERIODO: Record<string, { texto: string; tono: "tinta" | "azul" | "neutro" }> = {
+  cerrado: { texto: "Cerrado", tono: "tinta" },
+  calculado: { texto: "Por cerrar", tono: "azul" },
+  borrador: { texto: "Borrador", tono: "neutro" },
+};
+
+function TablaClientes({
+  clientes, orden, descendente, onOrdenar, onRestaurar,
+}: {
+  clientes: Cliente[];
+  orden: Orden;
+  descendente: boolean;
+  onOrdenar: (o: Orden) => void;
+  onRestaurar: (id: string) => void;
+}) {
   return (
     <section className="material-hoja contener overflow-hidden">
       <div className="barra-fina max-h-[70vh] overflow-auto">
-        <table className="t-tabla w-full min-w-[860px] border-separate border-spacing-0">
+        <table className="t-tabla w-full min-w-[1080px] border-separate border-spacing-0">
           <thead className="sticky top-0 z-10 bg-hoja">
             <tr>
-              {COLUMNAS.map((t, i) => (
-                <th
-                  key={t}
-                  scope="col"
-                  className={clases(
-                    "t-meta border-b border-linea px-4 py-3 text-gris",
-                    i === 0 && "pl-5",
-                    i === 4 || i === 6 ? "text-right" : "text-left",
-                  )}
-                >
-                  {t}
-                </th>
-              ))}
+              {COLUMNAS.map((col, i) => {
+                const activa = col.orden === orden;
+                return (
+                  <th
+                    key={col.texto}
+                    scope="col"
+                    aria-sort={activa ? (descendente ? "descending" : "ascending") : undefined}
+                    className={clases(
+                      "t-meta border-b border-linea px-4 py-3 text-gris",
+                      i === 0 && "pl-5",
+                      col.derecha ? "text-right" : "text-left",
+                    )}
+                  >
+                    {col.orden ? (
+                      <button
+                        type="button"
+                        onClick={() => onOrdenar(col.orden!)}
+                        className={clases("inline-flex items-center gap-1 hover:text-tinta", activa && "text-tinta")}
+                      >
+                        {col.texto}
+                        {activa && (descendente ? <ArrowDownWideNarrow size={13} strokeWidth={1.5} aria-hidden />
+                          : <ArrowUpNarrowWide size={13} strokeWidth={1.5} aria-hidden />)}
+                      </button>
+                    ) : (
+                      col.texto
+                    )}
+                  </th>
+                );
+              })}
             </tr>
           </thead>
           <tbody>
-            {clientes.map((c) => (
-              <tr key={c.id} className="transition-colors duration-150 hover:bg-hoja-2">
-                <td className="border-b border-linea py-3 pr-4 pl-5">
-                  <Link to={`/clientes/${c.id}`} className="flex items-center gap-3">
-                    <EsferaCliente nit={c.nit} nombre={c.razon_social} tamano={32} />
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium text-tinta">{c.razon_social}</span>
-                      {c.sigla && <span className="t-small block text-gris">{c.sigla}</span>}
-                    </span>
-                  </Link>
-                </td>
-                <td className="codigo border-b border-linea px-4 py-3 whitespace-nowrap text-grafito">{c.nit_formateado}</td>
-                <td className="border-b border-linea px-4 py-3 text-grafito">{c.municipio || "—"}</td>
-                <td className="border-b border-linea px-4 py-3 capitalize text-grafito">{c.periodicidad}</td>
-                <td className="border-b border-linea px-4 py-3 text-right">
-                  <Cifra valor={c.honorarios_mes} tamano="tabla" />
-                </td>
-                <td className="border-b border-linea px-4 py-3">
-                  <InsigniaEstado estado={c.estado} />
-                </td>
-                <td className="border-b border-linea px-4 py-3 text-right whitespace-nowrap text-gris tabular-nums">
-                  {fecha(c.actualizado)}
-                </td>
-              </tr>
-            ))}
+            {clientes.map((c) => {
+              const u = c.ultimo_periodo;
+              const e = u ? ESTADO_PERIODO[u.estado] ?? ESTADO_PERIODO.calculado : null;
+              return (
+                <tr key={c.id} className="transition-colors duration-150 hover:bg-hoja-2">
+                  <td className="border-b border-linea py-3 pr-4 pl-5">
+                    <Link to={`/clientes/${c.id}`} className="flex items-center gap-3">
+                      <EsferaCliente nit={c.nit} nombre={c.razon_social} tamano={32} />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium text-tinta">{c.razon_social}</span>
+                        {c.sigla && <span className="t-small block text-gris">{c.sigla}</span>}
+                      </span>
+                    </Link>
+                    {c.estado === "archivado" && (
+                      <button
+                        type="button"
+                        onClick={() => onRestaurar(c.id)}
+                        className="t-small mt-1.5 ml-11 rounded-full border border-tinta px-2.5 py-0.5 font-medium text-tinta hover:bg-tinta hover:text-sobre-tinta"
+                      >
+                        Restaurar
+                      </button>
+                    )}
+                  </td>
+                  <td className="codigo border-b border-linea px-4 py-3 whitespace-nowrap text-grafito">{c.nit_formateado}</td>
+                  <td className="border-b border-linea px-4 py-3 text-grafito">{c.municipio || "—"}</td>
+                  <td className="border-b border-linea px-4 py-3 text-right">
+                    <Cifra valor={c.honorarios_mes} tamano="tabla" />
+                  </td>
+                  <td className="border-b border-linea px-4 py-3 whitespace-nowrap text-grafito">
+                    {u ? periodoCorto(u.desde, u.hasta) : <span className="text-gris">Sin periodos</span>}
+                  </td>
+                  <td className="border-b border-linea px-4 py-3 text-right">
+                    {u ? <Cifra valor={u.ingresos} tamano="tabla" /> : <span className="text-gris">—</span>}
+                  </td>
+                  <td className="border-b border-linea px-4 py-3 text-right">
+                    {u ? <Cifra valor={u.utilidad} tamano="tabla" /> : <span className="text-gris">—</span>}
+                  </td>
+                  <td className={clases("cifras border-b border-linea px-4 py-3 text-right",
+                    u?.margen && esNegativo(u.margen) ? "text-rojo" : "text-tinta")}>
+                    {u?.margen != null ? `${String(u.margen).replace(".", ",")} %` : <span className="text-gris">—</span>}
+                  </td>
+                  <td className="border-b border-linea px-4 py-3">
+                    {e ? (
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        <Insignia tono={e.tono}>{e.texto}</Insignia>
+                        {u && !u.cuadra && <Insignia tono="rojo">No cuadra</Insignia>}
+                      </span>
+                    ) : (
+                      <InsigniaEstado estado={c.estado} />
+                    )}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

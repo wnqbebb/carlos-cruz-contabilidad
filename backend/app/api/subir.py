@@ -116,6 +116,7 @@ def _propuesta(lectura: clas.Lectura, cliente_id: str | None) -> dict:
         if not nit:
             falta.append("nit")
 
+    ficha = lectura.ficha()
     formatos = []
     for h in lectura.hojas_de(clas.CONTABILIDAD):
         for parte in (h.razon or "").split(", "):
@@ -134,6 +135,8 @@ def _propuesta(lectura: clas.Lectura, cliente_id: str | None) -> dict:
         "falta": falta,
         "contenido": formatos,
         "periodo": periodo,
+        # La ficha completa que traen los documentos: se usa al crear el cliente.
+        "ficha": ficha.a_json(),
         "hojas": [
             {"archivo": h.hoja.archivo, "hoja": h.hoja.nombre, "clase": h.clase,
              "formato": h.formato, "razon": h.razon, "filas": h.filas_datos}
@@ -251,6 +254,17 @@ def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
                 "falta": [k for k in ("razon_social", "nit") if not ficha.get(k)],
             })
         ficha.setdefault("_origen", "documentos")
+        # Un DV mal escrito en un documento no debe impedir crear el cliente: el
+        # DV se calcula del NIT. Se descarta el leído si no coincide.
+        if ficha.get("dv") and str(ficha["dv"]) != unit.digito_verificacion(ficha.get("nit")):
+            ficha.pop("dv")
+        socios = []
+        extraida = (s.get("propuesta") or {}).get("ficha") or {}
+        if not cuerpo.get("solo_minimo"):
+            for campo, dato in (extraida.get("campos") or {}).items():
+                if campo not in ficha and campo in repo_clientes.CAMPOS_FICHA and campo != "dv":
+                    ficha[campo] = dato["valor"]
+            socios = extraida.get("socios") or []
         try:
             cliente = repo_clientes.crear(ficha)
         except repo_clientes.ErrorCliente as ex:
@@ -261,8 +275,11 @@ def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
                 raise HTTPException(400, str(ex)) from ex
             cliente = exacto
         else:
+            if socios:
+                repo_clientes.guardar_socios(cliente["id"], socios)
             repo_bitacora.registrar("cliente_creado", cliente["id"], nit=cliente["nit"],
-                                    razon_social=cliente["razon_social"], origen="documentos")
+                                    razon_social=cliente["razon_social"], origen="documentos",
+                                    campos=sorted(k for k in ficha if not k.startswith("_")))
         cliente_id = cliente["id"]
 
     # Se reusa el mismo camino de siempre: los bytes ya están en memoria.
@@ -294,6 +311,46 @@ async def solo_identidad(archivos: list[UploadFile] = File(...)):
     lectura = clas.leer(datos)
     return a_json({
         "identidad": lectura.identidad.a_json(),
+        "ficha": lectura.ficha().a_json(),
         "sugerido_del_nombre": ident.nombre_desde_archivo(datos[0][0]),
         "ilegibles": lectura.ilegibles,
     })
+
+
+@router.post("/clientes/{cliente_id}/ficha/comparar")
+async def comparar_ficha(cliente_id: str, archivos: list[UploadFile] = File(...)):
+    """Qué campos de la ficha cambiarían con estos documentos. No guarda nada."""
+    try:
+        actual = repo_clientes.obtener(cliente_id)
+    except repo_clientes.ErrorCliente as ex:
+        raise HTTPException(404, str(ex)) from ex
+    datos = await _leer_subida(archivos)
+    ficha = clas.leer(datos).ficha()
+    j = ficha.a_json()
+    cambios = []
+    for campo, dato in j["campos"].items():
+        if campo not in actual:
+            continue
+        antes = actual.get(campo)
+        antes_txt = "" if antes in (None, "") else str(antes)
+        if _igual(antes_txt, dato["valor"]):
+            continue
+        cambios.append({"campo": campo, "actual": antes_txt, "nuevo": dato["valor"], "origen": dato["origen"],
+                        "confianza": dato["confianza"], "conflicto": j["conflictos"].get(campo, [])})
+    socios_actuales = actual.get("socios") or []
+    return a_json({"cambios": cambios, "documentos": j["documentos"],
+                   "socios": {"actual": len(socios_actuales), "nuevo": j["socios"], "origen": j["socios_origen"]}
+                   if j["socios"] else None})
+
+
+def _igual(a: str, b: str) -> bool:
+    """Igualdad tolerante: mayúsculas, tildes, puntos de miles y decimales en cero no son un cambio."""
+    from decimal import Decimal, InvalidOperation
+
+    from ..utils.numeros import normalizar
+
+    try:
+        return Decimal(a) == Decimal(b)
+    except (InvalidOperation, ValueError):
+        pass
+    return normalizar(a).replace(" ", "") == normalizar(b).replace(" ", "")

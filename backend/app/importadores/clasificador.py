@@ -66,6 +66,15 @@ class Lectura:
     def hojas_de(self, clase: str) -> list[HojaClasificada]:
         return [h for h in self.hojas if h.clase == clase]
 
+    def ficha(self):
+        """La ficha del cliente que se puede sacar de estos documentos (Fase 6)."""
+        from .ficha import extraer
+
+        por_archivo: dict[str, list[Hoja]] = {}
+        for h in self.hojas:
+            por_archivo.setdefault(h.hoja.archivo, []).append(h.hoja)
+        return extraer(por_archivo)
+
 
 def _parece_directorio(hoja: Hoja) -> tuple[bool, str, int]:
     """¿Es una LISTA de clientes? Hacen falta las dos columnas y varias filas.

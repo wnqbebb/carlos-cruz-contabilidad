@@ -129,6 +129,49 @@ export interface Cliente {
   creado: string;
   actualizado: string;
   socios?: Socio[];
+  /* v2.2 · Fase 6: lo que traen estatutos, RUT y cámara de comercio. */
+  tipo_sociedad: string;
+  objeto_social: string;
+  documento_constitucion: string;
+  capital_autorizado: Monto;
+  capital_pagado: Monto;
+  numero_acciones: Monto;
+  rep_legal_suplente_cc: string;
+  revisor_fiscal: string;
+  revisor_fiscal_tp: string;
+  matricula_mercantil: string;
+  fecha_renovacion: string | null;
+  ciiu_secundarios: string;
+  responsabilidades: string;
+  /** Último periodo calculado (solo en el listado). */
+  ultimo_periodo?: UltimoPeriodo | null;
+}
+
+export interface UltimoPeriodo {
+  id: string;
+  desde: string;
+  hasta: string;
+  estado: "calculado" | "cerrado" | "borrador";
+  ingresos: Monto;
+  utilidad: Monto;
+  /** Utilidad / ingresos × 100, con un decimal. Nulo si no hubo ingresos. */
+  margen: Monto | null;
+  cuadra: boolean;
+}
+
+/** La ficha que se puede sacar de los documentos del cliente. */
+export interface FichaExtraida {
+  campos: Record<string, CampoDetectado>;
+  conflictos: Record<string, CampoDetectado[]>;
+  socios: Socio[];
+  socios_origen: string;
+  documentos: { archivo: string; tipo: string; nombre_tipo: string }[];
+}
+
+export interface ComparacionFicha {
+  cambios: { campo: string; actual: string; nuevo: string; origen: string; confianza: string; conflicto: CampoDetectado[] }[];
+  documentos: FichaExtraida["documentos"];
+  socios: { actual: number; nuevo: Socio[]; origen: string } | null;
 }
 
 export interface PaginaClientes {
@@ -167,6 +210,8 @@ export interface Periodo {
   cuentas: number;
   calculado_en: string | null;
   cerrado_en: string | null;
+  /** Nota de revisión del contador (A6). */
+  nota?: string;
 }
 
 export interface Cierre {
@@ -548,6 +593,8 @@ export interface Propuesta {
   contenido: string[];
   /** Meses que cubren los registros, si traen fechas. */
   periodo: { desde: string; hasta: string; texto: string } | null;
+  /** La ficha completa que traen los documentos. */
+  ficha: FichaExtraida;
   hojas: HojaDetectada[];
   ilegibles: { archivo: string; motivo: string }[];
 }

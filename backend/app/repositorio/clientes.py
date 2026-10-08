@@ -29,13 +29,18 @@ TEXTOS = (
     "dv", "razon_social", "sigla", "tipo_persona", "regimen", "ciiu", "direccion",
     "municipio", "departamento", "telefono", "email", "rep_legal", "rep_legal_cc",
     "rep_legal_suplente", "contador", "contador_cc", "contador_tp", "periodicidad",
-    "estado", "notas",
+    "estado", "notas", "tipo_sociedad", "objeto_social", "documento_constitucion",
+    "rep_legal_suplente_cc", "revisor_fiscal", "revisor_fiscal_tp", "matricula_mercantil",
+    "ciiu_secundarios", "responsabilidades",
 )
-DINEROS = ("capital_suscrito", "valor_nominal_accion", "honorarios_mes")
+DINEROS = ("capital_suscrito", "valor_nominal_accion", "honorarios_mes", "capital_autorizado",
+           "capital_pagado", "numero_acciones")
 TASAS = ("tarifa_renta",)
 ENTEROS = ("grupo_niif",)
 BOOLEANOS = ("responsable_iva", "demo")
-FECHAS = ("fecha_constitucion",)
+FECHAS = ("fecha_constitucion", "fecha_renovacion")
+# Todo lo que se puede llenar desde los documentos del cliente.
+CAMPOS_FICHA = set(TEXTOS + DINEROS + FECHAS) | {"nit", "responsable_iva"}
 
 ORDENES = {
     "razon_social": T.c.razon_social,
@@ -136,6 +141,10 @@ def _defectos() -> dict:
         "capital_suscrito": Decimal("0"), "valor_nominal_accion": Decimal("0"),
         "honorarios_mes": Decimal("0"), "periodicidad": "mensual", "estado": "activo",
         "etiquetas": [], "notas": "", "demo": False,
+        "tipo_sociedad": "", "objeto_social": "", "documento_constitucion": "",
+        "capital_autorizado": Decimal("0"), "capital_pagado": Decimal("0"), "numero_acciones": Decimal("0"),
+        "rep_legal_suplente_cc": "", "revisor_fiscal": "", "revisor_fiscal_tp": "", "matricula_mercantil": "",
+        "fecha_renovacion": None, "ciiu_secundarios": "", "responsabilidades": "",
     }
 
 
@@ -273,6 +282,11 @@ def listar(
         filtros.append(cond)
     donde = and_(*filtros) if filtros else None
 
+    # Orden por las cifras del último periodo: se hace en Python con Decimal,
+    # porque en SQLite el dinero es texto y ordenarlo en SQL es alfabético.
+    if orden in ORDENES_ULTIMO:
+        return _listar_por_ultimo(donde, orden, descendente, pagina, por_pagina)
+
     columna = ORDENES.get(orden, T.c.razon_social)
     orden_sql = columna.desc() if descendente else columna.asc()
 
@@ -286,13 +300,78 @@ def listar(
         filas = cn.execute(
             consulta.order_by(orden_sql, T.c.id).limit(por_pagina).offset((pagina - 1) * por_pagina)
         ).all()
+    clientes = [_a_dict(f) for f in filas]
+    ultimos = ultimos_periodos([c["id"] for c in clientes])
+    for c in clientes:
+        c["ultimo_periodo"] = ultimos.get(c["id"])
     return {
         "total": total,
         "pagina": pagina,
         "por_pagina": por_pagina,
         "paginas": max(1, -(-total // por_pagina)),
-        "clientes": [_a_dict(f) for f in filas],
+        "clientes": clientes,
     }
+
+
+ORDENES_ULTIMO = {"ingresos", "utilidad", "margen", "estado_periodo"}
+_ESTADO_ORDEN = {"cerrado": 0, "calculado": 1, "borrador": 2}
+
+
+def ultimos_periodos(ids: list[str]) -> dict[str, dict]:
+    """Último periodo calculado de cada cliente: ingresos, utilidad, margen y estado."""
+    if not ids:
+        return {}
+    with lectura() as cn:
+        filas = cn.execute(
+            select(TP.c.cliente_id, TP.c.id, TP.c.desde, TP.c.hasta, TP.c.estado, TP.c.total_ingresos,
+                   TP.c.utilidad, TP.c.cuadra)
+            .where(and_(TP.c.cliente_id.in_(ids), TP.c.estado != "borrador"))
+        ).all()
+    salida: dict[str, dict] = {}
+    for f in filas:
+        cid = str(f.cliente_id)
+        previo = salida.get(cid)
+        if previo and previo["hasta"] >= f.hasta.isoformat():
+            continue
+        ingresos = D(f.total_ingresos)
+        utilidad = D(f.utilidad)
+        margen = (utilidad / ingresos * 100).quantize(Decimal("0.1")) if ingresos else None
+        salida[cid] = {"id": str(f.id), "desde": f.desde.isoformat(), "hasta": f.hasta.isoformat(),
+                       "estado": f.estado, "ingresos": format(ingresos, "f"), "utilidad": format(utilidad, "f"),
+                       "margen": format(margen, "f") if margen is not None else None, "cuadra": bool(f.cuadra)}
+    return salida
+
+
+def _listar_por_ultimo(donde, orden: str, descendente: bool, pagina: int, por_pagina: int) -> dict:
+    with lectura() as cn:
+        consulta = select(T.c.id, T.c.razon_social)
+        if donde is not None:
+            consulta = consulta.where(donde)
+        ids = [(str(f.id), f.razon_social) for f in cn.execute(consulta).all()]
+    ultimos = ultimos_periodos([i for i, _ in ids])
+
+    def clave(par):
+        u = ultimos.get(par[0])
+        if not u:
+            return (1, Decimal(0), par[1])          # sin periodos: siempre al final
+        if orden == "estado_periodo":
+            valor = Decimal(_ESTADO_ORDEN.get(u["estado"], 9))
+        else:
+            valor = D(u.get(orden)) if u.get(orden) is not None else Decimal("-1e30")
+        return (0, -valor if descendente else valor, par[1])
+
+    ordenados = sorted(ids, key=clave)
+    total = len(ordenados)
+    tramo = [i for i, _ in ordenados[(pagina - 1) * por_pagina: pagina * por_pagina]]
+    with lectura() as cn:
+        filas = {str(f.id): f for f in cn.execute(select(T).where(T.c.id.in_(tramo))).all()} if tramo else {}
+    clientes = []
+    for i in tramo:
+        c = _a_dict(filas[i])
+        c["ultimo_periodo"] = ultimos.get(i)
+        clientes.append(c)
+    return {"total": total, "pagina": pagina, "por_pagina": por_pagina,
+            "paginas": max(1, -(-total // por_pagina)), "clientes": clientes}
 
 
 def sugerencias_busqueda(q: str, limite: int = 8) -> list[dict]:

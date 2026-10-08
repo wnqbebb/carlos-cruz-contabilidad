@@ -443,6 +443,15 @@ def movimientos(cliente_id: str, cuenta: str = "", desde: date | None = None,
     }
 
 
+def poner_nota(periodo_id: str, nota: str) -> dict:
+    """Nota de revisión del contador sobre el periodo. No toca ninguna cifra."""
+    with conexion() as cn:
+        if not cn.execute(select(TP.c.id).where(TP.c.id == periodo_id)).first():
+            raise ErrorPeriodo("El periodo no existe.")
+        cn.execute(update(TP).where(TP.c.id == periodo_id).values(nota=(nota or "").strip()))
+        return _a_dict(cn.execute(select(TP).where(TP.c.id == periodo_id)).one())
+
+
 def movimientos_de_periodo(periodo_id: str) -> list[dict]:
     """Todo el libro diario guardado de un periodo, en el orden en que se registró."""
     with lectura() as cn:

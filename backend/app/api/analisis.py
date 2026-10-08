@@ -1,7 +1,7 @@
 """Histórico por cliente, libro diario consultable, sugerencias y buscador global."""
 from __future__ import annotations
 
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query
 from fastapi.responses import Response
 
 from ..contabilidad import libros
@@ -68,6 +68,19 @@ def periodo(periodo_id: str):
         return repo.obtener(periodo_id)
     except repo.ErrorPeriodo as ex:
         raise HTTPException(404, str(ex)) from ex
+
+
+@router.patch("/periodos/{periodo_id}")
+def nota_del_periodo(periodo_id: str, datos: dict = Body(...)):
+    """Solo la nota de revisión: las cifras de un periodo se cambian recalculando, nunca a mano."""
+    if set(datos) - {"nota"}:
+        raise HTTPException(400, "Del periodo solo se puede editar la nota de revisión.")
+    try:
+        periodo = repo.poner_nota(periodo_id, str(datos.get("nota") or ""))
+    except repo.ErrorPeriodo as ex:
+        raise HTTPException(404, str(ex)) from ex
+    bitacora.registrar("nota_periodo", periodo["cliente_id"], periodo=periodo_id)
+    return periodo
 
 
 @router.get("/periodos/{periodo_id}/resultado")

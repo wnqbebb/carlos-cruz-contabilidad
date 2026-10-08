@@ -80,7 +80,41 @@ def preparar() -> None:
     if _tablas_listas:
         return
     metadatos.create_all(motor_db, checkfirst=True)
+    _columnas_nuevas()
     _tablas_listas = True
+
+
+def _columnas_nuevas() -> None:
+    """Agrega las columnas que la versión nueva trae y la base todavía no tiene.
+
+    `create_all` crea tablas, pero no agrega columnas a una tabla que ya existe.
+    Las columnas nuevas son todas opcionales o con valor por defecto, así que
+    agregarlas no cambia ningún dato guardado. El SQL equivalente para Supabase
+    está en `supabase/migraciones/004_ficha_y_notas.sql`.
+    """
+    from sqlalchemy import inspect
+
+    insp = inspect(motor_db)
+    pendientes = []
+    for tabla in metadatos.sorted_tables:
+        if not insp.has_table(tabla.name):
+            continue
+        existentes = {c["name"] for c in insp.get_columns(tabla.name)}
+        for col in tabla.columns:
+            if col.name not in existentes:
+                pendientes.append((tabla.name, col))
+    if not pendientes:
+        return
+    with motor_db.begin() as cn:
+        for nombre, col in pendientes:
+            tipo = col.type.compile(dialect=motor_db.dialect)
+            defecto = ""
+            if col.default is not None and getattr(col.default, "is_scalar", False):
+                valor = col.default.arg
+                defecto = f" DEFAULT {int(valor) if isinstance(valor, bool) else repr(str(valor))}"
+            nulo = " NOT NULL" if not col.nullable and defecto else ""
+            cn.execute(text(f'ALTER TABLE {nombre} ADD COLUMN {col.name} {tipo}{defecto}{nulo}'))
+            log.info("Columna agregada: %s.%s", nombre, col.name)
 
 
 @contextmanager

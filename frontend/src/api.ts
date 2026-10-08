@@ -4,6 +4,8 @@ import type {
   CasoEjemplo,
   Cierre,
   Cliente,
+  ComparacionFicha,
+  FichaExtraida,
   Confirmacion,
   ConteoClientes,
   IdentidadDetectada,
@@ -127,6 +129,12 @@ export const clientes = {
       { method: "DELETE" },
     ),
   restaurar: (id: string) => pedir<Cliente>(`/api/clientes/${id}/restaurar`, { method: "POST" }),
+  /** Qué cambiaría en la ficha con estos documentos. No guarda nada. */
+  compararFicha(id: string, archivos: File[]) {
+    const fd = new FormData();
+    archivos.forEach((a) => fd.append("archivos", a));
+    return pedir<ComparacionFicha>(`/api/clientes/${id}/ficha/comparar`, { method: "POST", body: fd });
+  },
   resumen: () => pedir<{ clientes: ConteoClientes; trabajo: Tablero["trabajo"] }>("/api/clientes/resumen"),
   buscar: (q: string, limite = 8) =>
     pedir<{ q: string; resultados: ResultadoBusqueda[] }>(`/api/buscar${qs({ q, limite })}`),
@@ -172,6 +180,8 @@ export const analisis = {
   actividadGeneral: (limite = 20) =>
     pedir<{ actividad: Actividad[] }>(`/api/actividad${qs({ limite })}`),
 
+  notaPeriodo: (periodoId: string, nota: string) =>
+    pedir<Periodo>(`/api/periodos/${periodoId}`, { method: "PATCH", ...json({ nota }) }),
   eliminarPeriodo: (periodoId: string) =>
     pedir<{ ok: boolean }>(`/api/periodos/${periodoId}`, { method: "DELETE" }),
   reabrirPeriodo: (periodoId: string) =>
@@ -227,7 +237,7 @@ export const puerta = {
   identidad(archivos: File[]) {
     const fd = new FormData();
     archivos.forEach((a) => fd.append("archivos", a));
-    return pedir<{ identidad: IdentidadDetectada; sugerido_del_nombre: string }>("/api/identidad", {
+    return pedir<{ identidad: IdentidadDetectada; ficha: FichaExtraida; sugerido_del_nombre: string }>("/api/identidad", {
       method: "POST",
       body: fd,
     });

@@ -105,8 +105,10 @@ def conciliacion_capital(mayor: dict[str, CuentaMayor], empresa: Empresa, aporte
                                   f"El libro de aportes registra {pesos(pagado)} pagados de {pesos(comprometido)} comprometidos "
                                   f"(saldo por pagar {pesos(comprometido - pagado)}), pero los estatutos dicen capital pagado totalmente."))
         if comprometido and capital_libros and comprometido != capital_libros:
-            alertas.append(Alerta("E5", "info",
-                                  f"Libro de aportes ({pesos(comprometido)} comprometidos) ≠ capital en libros ({pesos(capital_libros)})."))
+            alertas.append(Alerta("E5", "advertencia",
+                                  f"Capital en libros (grupo 31) {pesos(capital_libros)} ≠ libro de aportes de socios "
+                                  f"({pesos(comprometido)} comprometidos; diferencia {pesos(capital_libros - comprometido)}). "
+                                  "Revise aportes registrados dos veces o capital no consignado."))
     return alertas
 
 

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { analisis, clientes as api, descargas, trabajo as apiTrabajo } from "../api";
 import { useMetaPagina } from "../componentes/Marco";
+import { EnLinea } from "../componentes/EnLinea";
 import { BotonSubirArchivo } from "../componentes/Subir";
 import { clases, esCero, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
 import type {
@@ -150,7 +151,35 @@ export function ClienteFicha() {
 
   return (
     <div className="space-y-12">
-      <CabeceraCliente cliente={cliente} />
+      <CabeceraCliente
+        cliente={cliente}
+        onCambio={async (campo, valor) => {
+          setCliente(await api.actualizar(id, { [campo]: valor }));
+        }}
+      />
+
+      {cliente.estado === "archivado" && (
+        <Aviso tono="ambar" titulo="Este cliente está archivado">
+          <p>No aparece en las listas ni en el tablero, pero toda su contabilidad sigue guardada.</p>
+          <div className="mt-3">
+            <Boton
+              variante="solido"
+              tamano="sm"
+              onClick={async () => {
+                setCliente(await api.restaurar(id));
+              }}
+            >
+              Restaurar cliente
+            </Boton>
+          </div>
+        </Aviso>
+      )}
+
+      {cliente.notas && (
+        <Aviso tono="ambar" titulo="Nota de revisión del contador">
+          <p className="whitespace-pre-line">{cliente.notas}</p>
+        </Aviso>
+      )}
 
       {(criticas > 0 || altas > 0) && vista !== "resumen" && (
         <Aviso tono={criticas ? "rojo" : "ambar"}>
@@ -290,8 +319,14 @@ export function ClienteFicha() {
   );
 }
 
-/* ── cabecera Escaparate (ref-04: esfera + metadatos en las esquinas) ── */
-function CabeceraCliente({ cliente }: { cliente: Cliente }) {
+/* ── cabecera Escaparate (ref-04: esfera + metadatos en las esquinas) ──
+   Fase 6.3: razón social, sigla, municipio, periodicidad y honorarios se
+   editan en su sitio. El resto, en «Editar ficha». */
+const PERIODICIDADES = ["mensual", "bimestral", "trimestral", "cuatrimestral", "anual"].map((p) => ({
+  valor: p, texto: p[0].toUpperCase() + p.slice(1),
+}));
+
+function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (campo: string, valor: string) => Promise<void> }) {
   const codigo = `${cliente.sigla || "Cliente"} — ${cliente.nit.slice(-3)}`;
   const desde = cliente.fecha_constitucion
     ? `Constituida ${fechaEsquina(cliente.fecha_constitucion)}`
@@ -308,11 +343,19 @@ function CabeceraCliente({ cliente }: { cliente: Cliente }) {
           <EnlaceSubrayado a="/clientes">
             <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> Clientes
           </EnlaceSubrayado>
-          <h1 className="t-display mt-5 text-balance text-tinta">{cliente.razon_social}</h1>
+          <h1 className="t-display mt-5 text-balance text-tinta">
+            <EnLinea valor={cliente.razon_social} etiqueta="Razón social" onGuardar={(v) => onCambio("razon_social", v)}>
+              {cliente.razon_social}
+            </EnLinea>
+          </h1>
           <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-grafito">
-            {cliente.sigla && <span className="t-body font-semibold text-tinta">{cliente.sigla}</span>}
+            <span className="t-body font-semibold text-tinta">
+              <EnLinea valor={cliente.sigla} etiqueta="Sigla" onGuardar={(v) => onCambio("sigla", v)} />
+            </span>
             <span className="codigo text-[13px]">NIT {cliente.nit_formateado}</span>
-            {cliente.municipio && <span className="t-body">{cliente.municipio}</span>}
+            <span className="t-body">
+              <EnLinea valor={cliente.municipio} etiqueta="Municipio" onGuardar={(v) => onCambio("municipio", v)} />
+            </span>
             <InsigniaEstado estado={cliente.estado} />
           </p>
 
@@ -351,9 +394,30 @@ function CabeceraCliente({ cliente }: { cliente: Cliente }) {
         </div>
       </div>
 
-      <div className="t-meta mt-10 flex flex-wrap justify-between gap-3 text-gris">
+      <div className="t-meta mt-10 flex flex-wrap items-center justify-between gap-3 text-gris">
         <span>{desde}</span>
-        <span className="capitalize">Periodicidad — {cliente.periodicidad}</span>
+        <span className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <span className="inline-flex items-center gap-1">
+            Honorarios —{" "}
+            <EnLinea
+              valor={String(cliente.honorarios_mes ?? "0").replace(/\.0+$/, "")}
+              etiqueta="Honorarios mensuales"
+              tipo="numero"
+              formatear={(v) => pesos(v)}
+              onGuardar={(v) => onCambio("honorarios_mes", v || "0")}
+            />
+          </span>
+          <span className="inline-flex items-center gap-1">
+            Periodicidad —{" "}
+            <EnLinea
+              valor={cliente.periodicidad}
+              etiqueta="Periodicidad"
+              opciones={PERIODICIDADES}
+              formatear={(v) => v[0].toUpperCase() + v.slice(1)}
+              onGuardar={(v) => onCambio("periodicidad", v)}
+            />
+          </span>
+        </span>
       </div>
     </header>
   );
@@ -510,6 +574,18 @@ function ListaPeriodos({
                     <Rotulo className="mt-0.5 block">
                       {fecha(p.desde)} – {fecha(p.hasta)} · {p.cuentas} cuentas
                     </Rotulo>
+                    <span className="t-small mt-1 block max-w-md text-ambar">
+                      <EnLinea
+                        valor={p.nota ?? ""}
+                        etiqueta="Nota de revisión"
+                        onGuardar={async (v) => {
+                          await analisis.notaPeriodo(p.id, v);
+                          onCambio();
+                        }}
+                      >
+                        {p.nota ? p.nota : <span className="text-gris">Agregar nota de revisión</span>}
+                      </EnLinea>
+                    </span>
                   </Td>
                   <Td>
                     <Insignia tono={p.estado === "cerrado" ? "verde" : p.estado === "calculado" ? "ambar" : "neutro"}>

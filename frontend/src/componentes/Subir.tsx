@@ -614,12 +614,14 @@ function Acciones({
               navegar(`/clientes/${propuesta.cliente.id}`);
               return;
             }
+            // La ficha completa que traen los documentos: el editor la muestra
+            // con el origen y la confianza de cada dato antes de guardar.
             navegar("/clientes/nuevo", {
               state: {
+                extraida: propuesta.ficha,
                 ficha: {
                   razon_social: campos.razon_social?.valor ?? "",
                   nit: (campos.nit ?? campos.cedula)?.valor ?? "",
-                  dv: campos.dv?.valor ?? "",
                 },
               },
             });
