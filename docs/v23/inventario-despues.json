@@ -1,9 +1,9 @@
 {
   "/": {
     "pestanas": 0,
-    "botones": 22,
+    "botones": 11,
     "tarjetas": 7,
-    "textos": 38
+    "textos": 21
   },
   "/clientes": {
     "pestanas": 0,
@@ -13,68 +13,68 @@
   },
   "/trabajo": {
     "pestanas": 0,
-    "botones": 14,
-    "tarjetas": 1,
-    "textos": 23
+    "botones": 11,
+    "tarjetas": 0,
+    "textos": 15
   },
   "/trabajo?cliente=8e4f4b64-0e51-4772-998b-073a86bd86fe": {
-    "pestanas": 0,
-    "botones": 13,
-    "tarjetas": 6,
-    "textos": 13
+    "pestanas": 4,
+    "botones": 23,
+    "tarjetas": 1,
+    "textos": 15
   },
   "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=resumen": {
-    "pestanas": 9,
-    "botones": 22,
-    "tarjetas": 13,
-    "textos": 22
+    "pestanas": 4,
+    "botones": 4,
+    "tarjetas": 3,
+    "textos": 6
   },
   "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=periodos": {
-    "pestanas": 9,
-    "botones": 85,
+    "pestanas": 4,
+    "botones": 4,
+    "tarjetas": 3,
+    "textos": 21
+  },
+  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=estados": {
+    "pestanas": 4,
+    "botones": 23,
+    "tarjetas": 1,
+    "textos": 15
+  },
+  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=inventario": {
+    "pestanas": 4,
+    "botones": 25,
+    "tarjetas": 2,
+    "textos": 7
+  },
+  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=nomina": {
+    "pestanas": 4,
+    "botones": 27,
+    "tarjetas": 3,
+    "textos": 7
+  },
+  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=socios": {
+    "pestanas": 4,
+    "botones": 5,
     "tarjetas": 2,
     "textos": 3
   },
-  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=estados": {
-    "pestanas": 18,
-    "botones": 63,
-    "tarjetas": 10,
-    "textos": 18
-  },
-  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=inventario": {
-    "pestanas": 10,
-    "botones": 49,
-    "tarjetas": 3,
-    "textos": 5
-  },
-  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=nomina": {
-    "pestanas": 10,
-    "botones": 51,
-    "tarjetas": 4,
+  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=movimientos": {
+    "pestanas": 4,
+    "botones": 25,
+    "tarjetas": 1,
     "textos": 6
   },
-  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=socios": {
-    "pestanas": 9,
-    "botones": 22,
-    "tarjetas": 1,
-    "textos": 4
-  },
-  "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=movimientos": {
-    "pestanas": 9,
-    "botones": 47,
-    "tarjetas": 0,
-    "textos": 4
-  },
   "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=actividad": {
-    "pestanas": 9,
-    "botones": 22,
-    "tarjetas": 2,
-    "textos": 143
+    "pestanas": 4,
+    "botones": 4,
+    "tarjetas": 3,
+    "textos": 21
   },
   "/clientes/8e4f4b64-0e51-4772-998b-073a86bd86fe?vista=ficha": {
-    "pestanas": 9,
-    "botones": 24,
-    "tarjetas": 5,
-    "textos": 5
+    "pestanas": 4,
+    "botones": 5,
+    "tarjetas": 2,
+    "textos": 3
   }
 }

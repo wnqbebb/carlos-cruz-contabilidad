@@ -18,10 +18,10 @@ import { Boton, Enlace, Insignia, Vacio, estiloCampo } from "./ui";
  */
 
 export type VistaId =
-  | "situacion" | "resultados" | "patrimonio" | "flujo" | "notas"
+  | "situacion" | "resultados" | "patrimonio" | "flujo"
   | "prueba" | "ajustes" | "hoja" | "definitivo"
   | "diario" | "mayor" | "cuentas_t"
-  | "inventario" | "nomina" | "indicadores" | "alertas";
+  | "inventario" | "nomina" | "alertas";
 
 export const GRUPOS_VISTA: { titulo: string; vistas: { id: VistaId; texto: string }[] }[] = [
   {
@@ -31,7 +31,6 @@ export const GRUPOS_VISTA: { titulo: string; vistas: { id: VistaId; texto: strin
       { id: "resultados", texto: "Resultados" },
       { id: "patrimonio", texto: "Cambios en el patrimonio" },
       { id: "flujo", texto: "Flujo de efectivo" },
-      { id: "notas", texto: "Notas" },
     ],
   },
   {
@@ -56,7 +55,6 @@ export const GRUPOS_VISTA: { titulo: string; vistas: { id: VistaId; texto: strin
     vistas: [
       { id: "inventario", texto: "Inventario" },
       { id: "nomina", texto: "Nómina" },
-      { id: "indicadores", texto: "Indicadores" },
       { id: "alertas", texto: "Alertas" },
     ],
   },
@@ -91,7 +89,23 @@ export function VistaContable({
 }) {
   const contrarias = useMemo(() => new Set(res.cuentas_t.filter((c) => c.contraria).map((c) => c.codigo)), [res]);
   const clave = DOCUMENTO[vista];
-  if (clave || vista === "notas") return <Documento res={res} clave={clave ?? null} />;
+  if (clave) {
+    return (
+      <div className="space-y-6">
+        <Documento res={res} clave={clave} />
+        {vista === "situacion" && (
+          <VerDetalle titulo="Ver las notas a los estados financieros">
+            <Documento res={res} clave={null} />
+          </VerDetalle>
+        )}
+        {vista === "resultados" && res.reportes.indicadores && (
+          <VerDetalle titulo="Ver los indicadores financieros">
+            <Reporte rep={res.reportes.indicadores} />
+          </VerDetalle>
+        )}
+      </div>
+    );
+  }
 
   switch (vista) {
     case "prueba":
@@ -131,12 +145,6 @@ export function VistaContable({
       );
     case "nomina":
       return <Nomina res={res} />;
-    case "indicadores":
-      return res.reportes.indicadores ? (
-        <Reporte rep={res.reportes.indicadores} />
-      ) : (
-        <Vacio titulo="Sin indicadores">Este periodo no generó indicadores.</Vacio>
-      );
     case "alertas":
       return <Alertas res={res} />;
     default:

@@ -3,7 +3,6 @@ import { useEffect, useMemo, useState } from "react";
 import { api } from "../api";
 import { ListaAlertas } from "../componentes/Alertas";
 import { ETAPAS_CALCULO, Procesando } from "../componentes/Procesando";
-import { EtiquetaSeccion } from "../ui";
 import { Aviso, Boton, Campo, Dialogo, Insignia, Rotulo, Tarjeta, estiloCampoAuto, estiloInput } from "../componentes/ui";
 import { clases, fecha, numero, pesos, sumar } from "../formato";
 import type { Config, Empresa, Importacion, Peticion, Pregunta } from "../tipos";
@@ -102,40 +101,11 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
     <div className="space-y-6">
       {/* ── qué falta para poder calcular ─────────────────────────────── */}
       <div className="contener">
-        <EtiquetaSeccion indice={3}>Mapeo</EtiquetaSeccion>
-        <h2 className="t-h1 mt-4 text-tinta">Revise y confirme</h2>
+        <h2 className="t-h1 text-tinta">Revise y confirme</h2>
         <p className="mt-2 max-w-2xl text-sm text-grafito">
-          El sistema ya reconoció las hojas y propuso un código PUC para cada cuenta.
-          Usted solo confirma lo que esté en duda.
+          {items.length - pendientes.length - porConfirmar.length} de {items.length} cuentas reconocidas en{" "}
+          {hojasActivas.size} hoja(s). Usted solo confirma lo que esté en duda.
         </p>
-      </div>
-
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Avance
-          rotulo="Hojas incluidas"
-          valor={`${hojasActivas.size} de ${datos.hojas.length}`}
-          detalle="Las demás se revisan pero no suman"
-        />
-        <Avance
-          rotulo="Cuentas reconocidas"
-          valor={String(items.length - pendientes.length - porConfirmar.length)}
-          detalle="Listas, no hay que tocarlas"
-          tono="positivo"
-        />
-        <Avance
-          rotulo="Por confirmar"
-          valor={String(porConfirmar.length)}
-          detalle={porConfirmar.length ? "Revise que el código sea el correcto" : "Nada que confirmar"}
-          tono={porConfirmar.length ? "ambar" : undefined}
-          onClick={porConfirmar.length ? () => setSoloPendientes(true) : undefined}
-        />
-        <Avance
-          rotulo="Sin mapear"
-          valor={String(pendientes.length)}
-          detalle={pendientes.length ? "Quedarían fuera del balance" : "Todo mapeado"}
-          tono={pendientes.length ? "rojo" : "positivo"}
-          onClick={pendientes.length ? () => setSoloPendientes(true) : undefined}
-        />
       </div>
 
       {(preguntas.length > 0 || datos.periodizacion?.posible) && (
@@ -169,7 +139,12 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
         </Aviso>
       )}
 
-      <Tarjeta titulo="Hojas detectadas" subtitulo="Marque las hojas que entran en el cálculo. Las marcadas «solo auditoría» se revisan igual aunque no se incluyan.">
+      <details>
+        <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+          Ver detalle: hojas detectadas ({datos.hojas.length}) y lo que el sistema interpretó
+        </summary>
+        <div className="mt-4">
+      <Tarjeta titulo="Hojas detectadas" subtitulo="Marque las hojas que entran en el cálculo; las de «solo auditoría» se revisan igual.">
         <div className="divide-y divide-linea">
           {datos.hojas.map((h) => {
             const nErr = h.alertas.filter((a) => a.severidad === "error").length;
@@ -215,6 +190,8 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
           })}
         </div>
       </Tarjeta>
+        </div>
+      </details>
 
       <Tarjeta
         titulo={`Mapeo de cuentas al PUC (${items.length})`}
@@ -292,7 +269,11 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
         )}
       </Tarjeta>
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <details>
+        <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+          Ver datos de la empresa, periodo ({fecha(empresa.periodo_desde)} a {fecha(empresa.periodo_hasta)}) y opciones de cálculo
+        </summary>
+      <div className="mt-4 grid gap-6 lg:grid-cols-2">
         <Tarjeta titulo="Empresa y periodo" subtitulo={`Periodo sugerido por: ${datos.periodo_sugerido.fuente}`}>
           <div className="grid gap-3 sm:grid-cols-2">
             <Campo etiqueta="Razón social"><input className={estiloInput} value={empresa.razon_social} onChange={(e) => cambiarEmpresa("razon_social", e.target.value)} /></Campo>
@@ -347,6 +328,7 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
           </div>
         </Tarjeta>
       </div>
+      </details>
 
       {/* Espacio para que la barra fija no tape el último bloque. */}
       <div className="h-40 escritorio:h-24" aria-hidden />
@@ -593,41 +575,6 @@ function Opcion({
         {detalle && <span className="t-small mt-0.5 block text-grafito">{detalle}</span>}
       </span>
     </label>
-  );
-}
-
-/* ── tarjeta de avance de la cabecera ─────────────────────────────────── */
-function Avance({
-  rotulo, valor, detalle, tono, onClick,
-}: {
-  rotulo: string;
-  valor: string;
-  detalle: string;
-  tono?: "positivo" | "ambar" | "rojo";
-  onClick?: () => void;
-}) {
-  const Elemento = onClick ? "button" : "div";
-  return (
-    <Elemento
-      onClick={onClick}
-      className={clases(
-        "contener material-hoja p-4 text-left",
-        onClick && "cursor-pointer transition-colors hover:bg-hoja-2",
-      )}
-    >
-      <Rotulo>{rotulo}</Rotulo>
-      <p
-        className={clases(
-          "cifras cifra-flexible t-kpi mt-2 leading-none",
-          tono === "rojo" && "text-rojo",
-          tono === "ambar" && "text-ambar",
-          tono === "positivo" && "text-tinta",
-        )}
-      >
-        {valor}
-      </p>
-      <p className="t-small mt-2 text-grafito">{detalle}</p>
-    </Elemento>
   );
 }
 

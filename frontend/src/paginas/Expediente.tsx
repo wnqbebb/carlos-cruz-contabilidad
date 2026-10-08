@@ -1,10 +1,9 @@
 import { ArrowLeft, History, PenLine } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { analisis, clientes as api, trabajo as apiTrabajo } from "../api";
 import { Contabilidad } from "../componentes/Contabilidad";
 import { Cabecera, useColorCliente, useMetaPagina } from "../componentes/Marco";
-import { EnLinea } from "../componentes/EnLinea";
 import { clases, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
 import type {
   ArchivoImportado,
@@ -23,7 +22,6 @@ import {
   Aviso,
   Boton,
   Cargando,
-  Cifra,
   Dialogo,
   Dinero,
   Insignia,
@@ -171,12 +169,7 @@ export function Expediente() {
   return (
     <div className="space-y-8">
       <Cabecera>
-        <CabeceraCliente
-          cliente={cliente}
-          onCambio={async (campo, valor) => {
-            setCliente(await api.actualizar(id, { [campo]: valor }));
-          }}
-        />
+        <CabeceraCliente cliente={cliente} />
         <div className="mt-6">
           <Pestanas<Seccion>
             valor={seccion}
@@ -223,17 +216,20 @@ export function Expediente() {
                 {" · "}
                 {ultimo.estado === "cerrado" ? "cerrado, listo para firmar" : "abierto"}
               </p>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 escritorio:grid-cols-4">
-                <Cifra rotulo="Activo" valor={pesos(ultimo.total_activo)} />
-                <Cifra rotulo="Pasivo" valor={pesos(ultimo.total_pasivo)} />
-                <Cifra rotulo="Patrimonio" valor={pesos(ultimo.total_patrimonio)} />
-                <Cifra
-                  rotulo={esNegativo(ultimo.utilidad) ? "Pérdida" : "Utilidad"}
-                  valor={pesos(ultimo.utilidad)}
-                  tono={esNegativo(ultimo.utilidad) ? "rojo" : undefined}
-                  destacada={!esNegativo(ultimo.utilidad)}
-                />
-              </div>
+              {/* Una sola franja con las cuatro cifras: el detalle está en Contabilidad. */}
+              <dl className="material-hoja grid grid-cols-2 gap-6 p-5 escritorio:grid-cols-4">
+                {([
+                  ["Activo", ultimo.total_activo],
+                  ["Pasivo", ultimo.total_pasivo],
+                  ["Patrimonio", ultimo.total_patrimonio],
+                  [esNegativo(ultimo.utilidad) ? "Pérdida" : "Utilidad", ultimo.utilidad],
+                ] as const).map(([k, v]) => (
+                  <div key={k} className="min-w-0">
+                    <dt className="t-meta text-gris">{k}</dt>
+                    <dd className={clases("cifras t-h2 mt-1", k === "Pérdida" ? "text-rojo" : "text-tinta")}>{pesos(v)}</dd>
+                  </div>
+                ))}
+              </dl>
             </div>
           ) : (
             <Vacio
@@ -275,7 +271,7 @@ export function Expediente() {
 
       {seccion === "archivos" && (
         <div className="space-y-10">
-          <ListaPeriodos periodos={periodos} cierres={cierres} onCambio={cargar} />
+          <ListaPeriodos clienteId={id} periodos={periodos} cierres={cierres} onCambio={cargar} />
           <Actividad clienteId={id} />
         </div>
       )}
@@ -330,14 +326,8 @@ export function Expediente() {
   );
 }
 
-/* ── cabecera Escaparate (ref-04: esfera + metadatos en las esquinas) ──
-   Fase 6.3: razón social, sigla, municipio, periodicidad y honorarios se
-   editan en su sitio. El resto, en «Editar ficha». */
-const PERIODICIDADES = ["mensual", "bimestral", "trimestral", "cuatrimestral", "anual"].map((p) => ({
-  valor: p, texto: p[0].toUpperCase() + p.slice(1),
-}));
-
-function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (campo: string, valor: string) => Promise<void> }) {
+/* ── cabecera: quién es el cliente. Se edita en «Editar ficha» (sección Datos). ── */
+function CabeceraCliente({ cliente }: { cliente: Cliente }) {
   const codigo = `${cliente.sigla || "Cliente"} — ${cliente.nit.slice(-3)}`;
   const desde = cliente.fecha_constitucion
     ? `Constituida ${fechaEsquina(cliente.fecha_constitucion)}`
@@ -355,18 +345,12 @@ function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (c
             <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> Clientes
           </EnlaceSubrayado>
           <h1 className="t-h1 mt-4 text-balance text-tinta">
-            <EnLinea valor={cliente.razon_social} etiqueta="Razón social" onGuardar={(v) => onCambio("razon_social", v)}>
-              {cliente.razon_social}
-            </EnLinea>
+            {cliente.razon_social}
           </h1>
           <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-grafito">
-            <span className="t-body font-semibold text-tinta">
-              <EnLinea valor={cliente.sigla} etiqueta="Sigla" onGuardar={(v) => onCambio("sigla", v)} />
-            </span>
+            {cliente.sigla && <span className="t-body font-semibold text-tinta">{cliente.sigla}</span>}
             <span className="codigo text-[13px]">NIT {cliente.nit_formateado}</span>
-            <span className="t-body">
-              <EnLinea valor={cliente.municipio} etiqueta="Municipio" onGuardar={(v) => onCambio("municipio", v)} />
-            </span>
+            {cliente.municipio && <span className="t-body">{cliente.municipio}</span>}
             <InsigniaEstado estado={cliente.estado} />
           </p>
 
@@ -379,27 +363,8 @@ function CabeceraCliente({ cliente, onCambio }: { cliente: Cliente; onCambio: (c
 
       <div className="t-meta mt-6 hidden flex-wrap items-center justify-between gap-3 text-gris sm:flex">
         <span>{desde}</span>
-        <span className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <span className="inline-flex items-center gap-1">
-            Honorarios —{" "}
-            <EnLinea
-              valor={String(cliente.honorarios_mes ?? "0").replace(/\.0+$/, "")}
-              etiqueta="Honorarios mensuales"
-              tipo="numero"
-              formatear={(v) => pesos(v)}
-              onGuardar={(v) => onCambio("honorarios_mes", v || "0")}
-            />
-          </span>
-          <span className="inline-flex items-center gap-1">
-            Periodicidad —{" "}
-            <EnLinea
-              valor={cliente.periodicidad}
-              etiqueta="Periodicidad"
-              opciones={PERIODICIDADES}
-              formatear={(v) => v[0].toUpperCase() + v.slice(1)}
-              onGuardar={(v) => onCambio("periodicidad", v)}
-            />
-          </span>
+        <span>
+          Honorarios — {pesos(cliente.honorarios_mes)} · {cliente.periodicidad}
         </span>
       </div>
     </header>
@@ -500,18 +465,19 @@ function FilaSugerencia({ sugerencia }: { sugerencia: Sugerencia }) {
   );
 }
 
-/* ── periodos ────────────────────────────────────────────────────────── */
+/* ── periodos: la historia del cliente. Abrir, cerrar, reabrir o anotar se hace
+   en Contabilidad; aquí se ve el conjunto y las versiones guardadas. ── */
 function ListaPeriodos({
+  clienteId,
   periodos,
   cierres,
   onCambio,
 }: {
+  clienteId: string;
   periodos: Periodo[];
   cierres: Cierre[];
   onCambio: () => void;
 }) {
-  const [trabajando, setTrabajando] = useState("");
-
   if (!periodos.length) {
     return (
       <Vacio titulo="Sin periodos todavía">
@@ -519,102 +485,52 @@ function ListaPeriodos({
       </Vacio>
     );
   }
-
-  const accion = async (fn: () => Promise<unknown>, id: string) => {
-    setTrabajando(id);
-    try {
-      await fn();
-      onCambio();
-    } finally {
-      setTrabajando("");
-    }
-  };
-
   return (
     <div className="space-y-4">
-      <Tarjeta sinRelleno>
+      <Tarjeta rotulo="Periodos" titulo={`${periodos.length} ${periodos.length === 1 ? "periodo" : "periodos"}`} sinRelleno>
         <Tabla>
           <thead>
             <tr>
               <Th>Periodo</Th>
               <Th>Estado</Th>
               <Th derecha>Activo</Th>
-              <Th derecha>Ingresos</Th>
               <Th derecha>Utilidad</Th>
-              <Th derecha>Descuadre</Th>
               <Th derecha>Historial</Th>
-              <Th derecha>Acciones</Th>
             </tr>
           </thead>
           <tbody>
-            {periodos.map((p) => {
-              // Se usa el booleano del servidor: comparar la cadena fallaba con "0.00".
-              const descuadrado = p.cuadra === false;
-              return (
-                <tr key={p.id} className={clases("transition hover:bg-hoja", descuadrado && "bg-rojo-suave/40")}>
-                  <Td>
-                    <span className="font-medium">{periodoCorto(p.desde, p.hasta)}</span>
-                    <Rotulo className="mt-0.5 block">
-                      {fecha(p.desde)} – {fecha(p.hasta)} · {p.cuentas} cuentas
-                    </Rotulo>
-                    <span className="t-small mt-1 block max-w-md text-ambar">
-                      <EnLinea
-                        valor={p.nota ?? ""}
-                        etiqueta="Nota de revisión"
-                        onGuardar={async (v) => {
-                          await analisis.notaPeriodo(p.id, v);
-                          onCambio();
-                        }}
-                      >
-                        {p.nota ? p.nota : <span className="text-gris">Agregar nota de revisión</span>}
-                      </EnLinea>
-                    </span>
-                  </Td>
-                  <Td>
-                    <Insignia tono={p.estado === "cerrado" ? "verde" : p.estado === "calculado" ? "ambar" : "neutro"}>
-                      {p.estado}
-                    </Insignia>
-                  </Td>
-                  <Td derecha><Dinero valor={p.total_activo} /></Td>
-                  <Td derecha><Dinero valor={p.total_ingresos} /></Td>
-                  <Td derecha className="font-semibold"><Dinero valor={p.utilidad} /></Td>
-                  <Td derecha>
-                    {descuadrado ? <Dinero valor={p.descuadre} /> : <span className="rotulo">cuadra</span>}
-                  </Td>
-                  <Td derecha>
-                    <Versiones periodoId={p.id} onCambio={onCambio} />
-                  </Td>
-                  <Td derecha>
-                    {p.estado === "cerrado" ? (
-                      <Boton
-                        variante="fantasma"
-                        tamano="sm"
-                        cargando={trabajando === p.id}
-                        onClick={() => accion(() => analisis.reabrirPeriodo(p.id), p.id)}
-                      >
-                        Reabrir
-                      </Boton>
-                    ) : (
-                      <Boton
-                        variante="fantasma"
-                        tamano="sm"
-                        cargando={trabajando === p.id}
-                        onClick={() => accion(() => analisis.eliminarPeriodo(p.id), p.id)}
-                      >
-                        Eliminar
-                      </Boton>
-                    )}
-                  </Td>
-                </tr>
-              );
-            })}
+            {periodos.map((p) => (
+              <tr key={p.id} className={clases("transition hover:bg-hoja", p.cuadra === false && "bg-rojo-suave/40")}>
+                <Td>
+                  <Link
+                    to={`/clientes/${clienteId}?seccion=contabilidad&periodo=${p.desde.slice(0, 7)}`}
+                    className="font-medium text-tinta underline-offset-4 hover:underline"
+                  >
+                    {periodoCorto(p.desde, p.hasta)}
+                  </Link>
+                  {p.nota && <span className="t-small mt-0.5 block max-w-md text-ambar">{p.nota}</span>}
+                </Td>
+                <Td>
+                  {p.estado}
+                  {p.cuadra === false && <span className="text-rojo"> · no cuadra</span>}
+                </Td>
+                <Td derecha><Dinero valor={p.total_activo} /></Td>
+                <Td derecha className="font-semibold"><Dinero valor={p.utilidad} /></Td>
+                <Td derecha>
+                  <Versiones periodoId={p.id} onCambio={onCambio} />
+                </Td>
+              </tr>
+            ))}
           </tbody>
         </Tabla>
       </Tarjeta>
 
       {cierres.length > 0 && (
-        <Tarjeta rotulo="Cierres guardados" titulo="Saldos que abren el periodo siguiente">
-          <ul className="space-y-1.5">
+        <details>
+          <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+            Ver los {cierres.length} cierres guardados (saldos que abren el periodo siguiente)
+          </summary>
+          <ul className="mt-3 space-y-1.5">
             {cierres.map((c) => (
               <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span>Corte al {fechaLarga(c.fecha_corte)}</span>
@@ -624,7 +540,7 @@ function ListaPeriodos({
               </li>
             ))}
           </ul>
-        </Tarjeta>
+        </details>
       )}
     </div>
   );
@@ -671,9 +587,11 @@ function DatosCliente({ cliente }: { cliente: Cliente }) {
   ];
 
   return (
-    <div className="grid gap-4 lg:grid-cols-3">
+    <Tarjeta rotulo="Ficha" titulo="Datos del cliente">
+    <div className="grid gap-8 lg:grid-cols-3">
       {grupos.map(([titulo, filas]) => (
-        <Tarjeta key={titulo} rotulo={titulo} titulo="">
+        <section key={titulo}>
+          <h3 className="t-meta mb-3 text-gris">{titulo}</h3>
           <dl className="space-y-2.5">
             {filas
               .filter(([, v]) => v)
@@ -684,15 +602,16 @@ function DatosCliente({ cliente }: { cliente: Cliente }) {
                 </div>
               ))}
           </dl>
-        </Tarjeta>
+        </section>
       ))}
-
       {cliente.notas && (
-        <Tarjeta rotulo="Notas" titulo="" className="lg:col-span-3">
+        <section className="lg:col-span-3">
+          <h3 className="t-meta mb-2 text-gris">Notas</h3>
           <p className="whitespace-pre-wrap text-sm text-grafito">{cliente.notas}</p>
-        </Tarjeta>
+        </section>
       )}
     </div>
+    </Tarjeta>
   );
 }
 
@@ -917,7 +836,7 @@ function Actividad({ clienteId }: { clienteId: string }) {
     <div className="grid gap-8 escritorio:grid-cols-12">
       <Tarjeta rotulo="Bitácora" titulo="Qué se hizo" className="escritorio:col-span-7" sinRelleno>
         <ul className="divide-y divide-linea">
-          {datos.actividad.map((a) => (
+          {datos.actividad.slice(0, VISIBLES).map((a) => (
             <li key={a.id} className="px-5 py-4">
               <div className="flex flex-wrap items-baseline justify-between gap-2">
                 <p className="t-body font-medium text-tinta">{a.titulo}</p>
@@ -931,19 +850,31 @@ function Actividad({ clienteId }: { clienteId: string }) {
             </li>
           ))}
         </ul>
+        {datos.actividad.length > VISIBLES && (
+          <details className="border-t border-linea px-5 py-3">
+            <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+              Ver {datos.actividad.length - VISIBLES} más
+            </summary>
+            <ul className="mt-2 divide-y divide-linea">
+              {datos.actividad.slice(VISIBLES).map((a) => (
+                <li key={a.id} className="t-small flex flex-wrap justify-between gap-2 py-2">
+                  <span className="text-tinta">{a.titulo}</span>
+                  <span className="text-gris">{fecha(a.creado)}</span>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </Tarjeta>
 
       <Tarjeta rotulo="Archivos" titulo="Lo que se subió" className="escritorio:col-span-5" sinRelleno>
         <ul className="divide-y divide-linea">
-          {datos.importaciones.map((i) => (
+          {datos.importaciones.slice(0, VISIBLES).map((i) => (
             <li key={i.id} className="px-5 py-4">
               <p className="t-body truncate font-medium text-tinta">{i.archivo}</p>
               <p className="t-small mt-0.5 text-gris">
                 {fecha(i.creado)} · {Math.ceil(i.bytes / 1024).toLocaleString("es-CO")} KB
                 {i.formato && ` · ${i.formato}`}
-              </p>
-              <p className="codigo mt-1 truncate text-[11px] text-gris" title={i.sha256}>
-                {i.sha256.slice(0, 16)}…
               </p>
             </li>
           ))}
@@ -955,6 +886,9 @@ function Actividad({ clienteId }: { clienteId: string }) {
     </div>
   );
 }
+
+/** Cuántas líneas de actividad y de archivos se ven sin desplegar. */
+const VISIBLES = 5;
 
 /** El detalle de la bitácora es un objeto libre: se resume en una línea legible. */
 function resumirDetalle(d: Record<string, unknown>): string {

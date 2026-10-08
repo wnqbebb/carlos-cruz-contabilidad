@@ -1,11 +1,11 @@
-import { ArrowRight, Clock, Plus } from "lucide-react";
+import { ArrowRight, Clock } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { marcarTableroListo, useAparicion } from "../animacion";
 import { analisis } from "../api";
 import { useContador } from "../contador";
 import { Cabecera, useMetaPagina } from "../componentes/Marco";
-import { BotonSubirArchivo, ZonaSubida } from "../componentes/Subir";
+import { BotonSubirArchivo } from "../componentes/Subir";
 import { clases, fecha, fechaLarga } from "../formato";
 import type { MesTablero, Tablero as DatosTablero, Tarea } from "../tipos";
 import {
@@ -22,13 +22,16 @@ import {
 
 /**
  * Tablero del contador (spec v2.2 · Fase 7). Básico y útil, en este orden:
- *   1. Saludo, fecha y «Subir archivo» con una zona de arrastre amplia.
+ *   1. Saludo, fecha y «Subir archivo» (también se puede soltar el archivo en cualquier parte).
  *   2. Cuatro indicadores: clientes activos, honorarios mensuales, al día, atrasados.
  *   3. Tareas sugeridas (el bloque principal): prioridad, cliente, qué hacer,
  *      por qué y acción directa; «Hacer ahora» o «Posponer hasta mañana».
  *   4. La cartera mes a mes (H13: cerrados, abiertos, sin contabilizar).
- *   5. Clientes recientes en carpetas, con «Ver todos».
- *   6. Actividad reciente: las últimas 8 líneas de la bitácora.
+ *   5. Los 4 clientes más recientes, con «Ver todos».
+ *   6. Actividad reciente: las últimas 5 líneas de la bitácora.
+ *
+ * v2.3 · Fase 4: un solo botón principal (la primera tarea); las demás tareas
+ * pasan a botones secundarios y, de la sexta en adelante, quedan plegadas.
  *
  * Ya no está: el resultado del mes de la cartera, la ecuación contable, la
  * tarjeta de nómina (vive en Parámetros) ni cifras financieras de un cliente.
@@ -80,7 +83,7 @@ export function Tablero() {
       {/* ── 1. saludo, fecha y subir: en la franja de cabecera ───────────── */}
       <Cabecera>
       <section aria-labelledby="saludo" className="columnas-12 items-end">
-        <div className="col-span-12 escritorio:col-span-5">
+        <div className="col-span-12">
           <p className="t-meta text-gris">{fechaLarga(datos.hoy)}</p>
           <h1 id="saludo" className="t-display mt-4 text-tinta">
             {saludo(hoy.getHours())}
@@ -95,9 +98,6 @@ export function Tablero() {
             <BotonSubirArchivo />
           </div>
         </div>
-        <div className="col-span-12 escritorio:col-span-7">
-          <ZonaSubida className="min-h-[220px]" />
-        </div>
       </section>
       </Cabecera>
 
@@ -109,10 +109,10 @@ export function Tablero() {
         <Indicador titulo="Honorarios mensuales">
           <Cifra valor={ind.honorarios_mensuales} tamano="h2" encajar />
         </Indicador>
-        <Indicador titulo="Al día" detalle="Contabilizados dentro de su periodicidad">
+        <Indicador titulo="Al día">
           <span className="cifras t-kpi text-tinta">{ind.al_dia.toLocaleString("es-CO")}</span>
         </Indicador>
-        <Indicador titulo="Atrasados" detalle={ind.atrasados ? "Con meses sin contabilizar" : "Ninguno"}>
+        <Indicador titulo="Atrasados">
           <span className={clases("cifras t-kpi", ind.atrasados ? "text-rojo" : "text-tinta")}>
             {ind.atrasados.toLocaleString("es-CO")}
           </span>
@@ -178,24 +178,8 @@ function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
     }
   };
 
-  return (
-    <section ref={bloque} aria-labelledby="titulo-tareas">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <EtiquetaSeccion indice={1}>Tareas sugeridas</EtiquetaSeccion>
-          <h2 id="titulo-tareas" className="t-h1 mt-4 text-tinta">Qué hacer, en orden</h2>
-        </div>
-        {total > inicial.length && <p className="t-small text-gris">Mostrando {inicial.length} de {total}</p>}
-      </div>
-
-      {tareas.length === 0 ? (
-        <p className="material-hoja t-body mt-8 p-6 text-grafito">
-          Nada pendiente: todos los clientes están al día, cerrados y cuadrados.
-        </p>
-      ) : (
-        <ol className="material-hoja mt-8 divide-y divide-linea">
-          {tareas.map((t) => {
-            const p = PRIORIDAD[t.prioridad];
+  const fila = (t: Tarea, principal: boolean) => {
+    const p = PRIORIDAD[t.prioridad];
             return (
               <li key={t.clave} className="grid gap-4 p-5 escritorio:grid-cols-[150px_minmax(0,1fr)_auto] escritorio:items-center">
                 <span className="flex items-center gap-2">
@@ -224,7 +208,12 @@ function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
                     type="button"
                     disabled={ocupada === t.clave}
                     onClick={() => hacer(t)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-full bg-tinta px-4 text-[13px] font-medium text-sobre-tinta transition-colors hover:bg-tinta-2 disabled:opacity-60"
+                    className={clases(
+                      "inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium transition-colors disabled:opacity-60",
+                      principal
+                        ? "bg-tinta text-sobre-tinta hover:bg-tinta-2"
+                        : "border border-linea text-tinta hover:bg-hoja-2",
+                    )}
                   >
                     Hacer ahora <ArrowRight size={14} strokeWidth={1.5} aria-hidden />
                   </button>
@@ -233,15 +222,45 @@ function Tareas({ inicial, total }: { inicial: Tarea[]; total: number }) {
                     type="button"
                     disabled={ocupada === t.clave}
                     onClick={() => posponer(t)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-full border border-linea px-4 text-[13px] text-grafito transition-colors hover:bg-hoja-2 hover:text-tinta disabled:opacity-60"
+                    aria-label="Posponer hasta mañana"
+                    title="Posponer hasta mañana"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full text-grafito transition-colors hover:bg-hoja-2 hover:text-tinta disabled:opacity-60"
                   >
-                    <Clock size={14} strokeWidth={1.5} aria-hidden /> Posponer hasta mañana
+                    <Clock size={16} strokeWidth={1.5} aria-hidden />
                   </button>
                 </div>
               </li>
             );
-          })}
+  };
+
+  return (
+    <section ref={bloque} aria-labelledby="titulo-tareas">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <EtiquetaSeccion indice={1}>Tareas sugeridas</EtiquetaSeccion>
+          <h2 id="titulo-tareas" className="t-h1 mt-4 text-tinta">Qué hacer, en orden</h2>
+        </div>
+        {total > inicial.length && <p className="t-small text-gris">Mostrando {inicial.length} de {total}</p>}
+      </div>
+
+      {tareas.length === 0 ? (
+        <p className="material-hoja t-body mt-8 p-6 text-grafito">
+          Nada pendiente: todos los clientes están al día, cerrados y cuadrados.
+        </p>
+      ) : (
+        <>
+        <ol className="material-hoja mt-8 divide-y divide-linea">
+          {tareas.slice(0, 5).map((t, n) => fila(t, n === 0))}
         </ol>
+        {tareas.length > 5 && (
+          <details className="mt-4">
+            <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">
+              Ver las otras {tareas.length - 5} tareas
+            </summary>
+            <ol className="material-hoja mt-4 divide-y divide-linea">{tareas.slice(5).map((t) => fila(t, false))}</ol>
+          </details>
+        )}
+        </>
       )}
     </section>
   );
@@ -320,7 +339,7 @@ function Recientes({ datos }: { datos: DatosTablero }) {
         <EnlaceSubrayado a="/clientes">Ver todos ({datos.clientes.activos})</EnlaceSubrayado>
       </div>
       <ul className="mt-8 grid gap-x-6 gap-y-10 pt-4 sm:grid-cols-2 escritorio:grid-cols-4">
-        {datos.recientes.map((c, i) => (
+        {datos.recientes.slice(0, 4).map((c, i) => (
           <li key={c.id} className="min-w-0">
             <Expediente
               variante="papel"
@@ -346,17 +365,6 @@ function Recientes({ datos }: { datos: DatosTablero }) {
             </Expediente>
           </li>
         ))}
-        <li className="min-w-0">
-          <Link
-            to="/clientes/nuevo"
-            className="flex h-full min-h-[170px] flex-col items-center justify-center gap-3 rounded-hoja border border-dashed border-tinta/25 text-grafito transition-colors hover:border-tinta/50 hover:text-tinta"
-          >
-            <span className="grid h-11 w-11 place-items-center rounded-full border border-linea bg-hoja">
-              <Plus size={18} strokeWidth={1.5} aria-hidden />
-            </span>
-            <span className="t-small font-medium">Cliente nuevo</span>
-          </Link>
-        </li>
       </ul>
     </section>
   );
@@ -372,7 +380,7 @@ function ActividadReciente({ datos }: { datos: DatosTablero }) {
         <p className="t-body mt-6 text-grafito">Todavía no hay actividad.</p>
       ) : (
         <ol className="material-hoja mt-8 divide-y divide-linea">
-          {datos.actividad.map((a) => (
+          {datos.actividad.slice(0, 5).map((a) => (
             <li key={a.id} className="flex flex-wrap items-baseline gap-x-4 gap-y-1 px-5 py-3">
               <span className="codigo w-36 shrink-0 text-[12px] text-gris">{cuando(a.creado)}</span>
               <span className="t-small font-medium text-tinta">{a.titulo}</span>

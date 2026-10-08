@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Download, MoreHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, MoreHorizontal, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { analisis, descargas, trabajo as apiTrabajo, ErrorApi } from "../api";
@@ -29,6 +29,8 @@ const clavePeriodo = (p: Periodo) => p.desde.slice(0, 7);
 const VISTA_ANTIGUA: Record<string, VistaId> = {
   estados: "situacion",
   resumen: "situacion",
+  notas: "situacion",
+  indicadores: "resultados",
   trabajo: "hoja",
   mayorbal: "mayor",
   auditoria: "alertas",
@@ -298,10 +300,13 @@ export function Contabilidad({
           {cargando && <span className="t-small text-gris" role="status">Abriendo…</span>}
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            <Boton variante="fantasma" tamano="sm" onClick={() => setFase("subir")} aria-label="Subir archivos de otro periodo">
+              <Upload size={16} strokeWidth={1.5} aria-hidden />
+              <span className="hidden sm:inline">Subir archivos</span>
+            </Boton>
             <MenuDescargas periodoId={periodo.id} />
             <MenuMas
               periodo={periodo}
-              onSubir={() => setFase("subir")}
               onCambio={async () => {
                 cache.current.delete(periodo.id);
                 await onCambio();
@@ -456,12 +461,10 @@ function MenuDescargas({ periodoId }: { periodoId: string }) {
 
 function MenuMas({
   periodo,
-  onSubir,
   onCambio,
   onEliminado,
 }: {
   periodo: Periodo;
-  onSubir: () => void;
   onCambio: () => Promise<void>;
   onEliminado: () => Promise<void>;
 }) {
@@ -490,9 +493,6 @@ function MenuMas({
       <Menu rotulo="Más acciones del periodo" boton={<MoreHorizontal size={18} strokeWidth={1.5} aria-hidden />}>
         {(cerrar) => (
           <>
-            <button type="button" role="menuitem" className={estiloOpcion} onClick={() => { cerrar(); onSubir(); }}>
-              Subir otro periodo
-            </button>
             <button type="button" role="menuitem" className={estiloOpcion} onClick={() => { cerrar(); setNota(periodo.nota ?? ""); setDialogo("nota"); }}>
               {periodo.nota ? "Editar la nota de revisión" : "Agregar nota de revisión"}
             </button>

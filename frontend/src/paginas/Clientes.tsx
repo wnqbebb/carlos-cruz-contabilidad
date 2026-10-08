@@ -1,4 +1,4 @@
-import { ArrowDownWideNarrow, ArrowLeft, ArrowRight, ArrowUpNarrowWide, Search, Upload } from "lucide-react";
+import { ArrowDownWideNarrow, ArrowLeft, ArrowUpNarrowWide, Search, Upload } from "lucide-react";
 import { Cabecera } from "../componentes/Marco";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
