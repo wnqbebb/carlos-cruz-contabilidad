@@ -13,6 +13,9 @@ NOMBRES_FORMATO = {
     "aportes": "Libro de aportes de socios",
     "nomina": "Nómina",
     "estados_existentes": "Estados financieros existentes (auditoría)",
+    "libro_diario": "Libro diario (partida doble)",
+    "balance": "Balance de prueba o saldos por cuenta",
+    "auxiliares": "Registros auxiliares (ventas, compras, gastos, cartera…)",
     "desconocido": "Formato no reconocido",
 }
 

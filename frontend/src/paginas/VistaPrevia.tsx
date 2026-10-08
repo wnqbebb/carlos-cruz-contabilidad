@@ -6,7 +6,7 @@ import { ETAPAS_CALCULO, Procesando } from "../componentes/Procesando";
 import { EtiquetaSeccion } from "../ui";
 import { Aviso, Boton, Campo, Dialogo, Insignia, Rotulo, Tarjeta, estiloInput } from "../componentes/ui";
 import { clases, fecha, numero, pesos, sumar } from "../formato";
-import type { Config, Empresa, Importacion, Peticion } from "../tipos";
+import type { Config, Empresa, Importacion, Peticion, Pregunta } from "../tipos";
 
 function resumenHoja(r: Record<string, unknown>): string {
   const partes: string[] = [];
@@ -28,6 +28,12 @@ function resumenHoja(r: Record<string, unknown>): string {
   if (num("total_debito") !== undefined) partes.push(`sumas ${pesos(num("total_debito"))}`);
   if (num("productos_movs")) partes.push(`${num("productos_movs")} movimientos de inventario`);
   if (num("activos_fijos")) partes.push(`${num("activos_fijos")} activos fijos`);
+  if (Array.isArray(r.bloques)) {
+    for (const b of r.bloques as { titulo: string; filas: number; nombre_tipo: string }[]) {
+      partes.push(`${b.titulo}: ${b.filas} fila(s) de ${b.nombre_tipo.toLowerCase()}`);
+    }
+  }
+  if (num("comprobantes")) partes.push(`${num("comprobantes")} comprobantes`);
   if (typeof r.titulo === "string" && r.titulo) partes.push(`título: «${r.titulo}»`);
   return partes.join(" · ");
 }
@@ -50,6 +56,11 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
   const [abierta, setAbierta] = useState<string | null>(null);
   const [confirmar, setConfirmar] = useState(false);
   const [puc, setPuc] = useState<{ codigo: string; nombre: string }[]>([]);
+  const preguntas = datos.preguntas ?? [];
+  const [respuestas, setRespuestas] = useState<Record<string, string>>(
+    () => peticionPrevia?.respuestas ?? Object.fromEntries(preguntas.map((p) => [p.id, p.defecto])));
+  const [periodizacion, setPeriodizacion] = useState<"por_periodo" | "unico">(
+    () => peticionPrevia?.periodizacion ?? datos.periodizacion?.defecto ?? "unico");
 
   useEffect(() => { api.puc().then(setPuc).catch(() => undefined); }, []);
   const nombrePuc = useMemo(() => Object.fromEntries(puc.map((p) => [p.codigo, p.nombre])), [puc]);
@@ -73,10 +84,11 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
     lanzar();
   };
 
-  const lanzar = () => {
+  const lanzar = (r: Record<string, string> = respuestas) => {
     setConfirmar(false);
     onCalcular({
       sesion_id: datos.sesion_id, incluir, mapeo, config, recordar_alias: recordar,
+      respuestas: r, periodizacion,
       decisiones: peticionPrevia?.decisiones ?? {},
       empresa: {
         periodo_desde: empresa.periodo_desde, periodo_hasta: empresa.periodo_hasta, rep_legal: empresa.rep_legal,
@@ -125,6 +137,27 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
           onClick={pendientes.length ? () => setSoloPendientes(true) : undefined}
         />
       </div>
+
+      {(preguntas.length > 0 || datos.periodizacion?.posible) && (
+        <PanelPreguntas
+          preguntas={preguntas}
+          respuestas={respuestas}
+          onResponder={(id, v) => setRespuestas({ ...respuestas, [id]: v })}
+          periodizacion={datos.periodizacion}
+          modo={periodizacion}
+          onModo={setPeriodizacion}
+          calculando={calculando}
+          onSugeridas={() => {
+            const sugeridas = Object.fromEntries(preguntas.map((p) => [p.id, p.defecto]));
+            setRespuestas(sugeridas);
+            if (pendientes.length) {
+              setConfirmar(true);
+              return;
+            }
+            lanzar(sugeridas);
+          }}
+        />
+      )}
 
       {pendientes.length > 0 && (
         <Aviso tono="ambar" titulo={`${pendientes.length} cuenta(s) sin código PUC`}>
@@ -366,7 +399,7 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
               <Boton variante="fantasma" onClick={() => setConfirmar(false)}>
                 Volver y mapearlas
               </Boton>
-              <Boton variante="peligro" cargando={calculando} onClick={lanzar}>
+              <Boton variante="peligro" cargando={calculando} onClick={() => lanzar()}>
                 Calcular sin ellas
               </Boton>
             </>
@@ -400,6 +433,125 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
         </Dialogo>
       )}
     </div>
+  );
+}
+
+/* ── preguntas sobre este archivo (spec v2.2 · 4.2) ─────────────────────
+   Todas juntas, con la respuesta sugerida ya marcada: el contador puede
+   aceptarlas de un clic o cambiar solo la que no le convence. Nada de
+   diálogos encadenados. */
+const NOMBRE_PERIODICIDAD: Record<string, string> = {
+  mensual: "mes a mes", bimestral: "bimestre a bimestre", trimestral: "trimestre a trimestre",
+  cuatrimestral: "cuatrimestre a cuatrimestre", semestral: "semestre a semestre", anual: "año a año",
+};
+
+function PanelPreguntas({
+  preguntas, respuestas, onResponder, periodizacion, modo, onModo, calculando, onSugeridas,
+}: {
+  preguntas: Pregunta[];
+  respuestas: Record<string, string>;
+  onResponder: (id: string, valor: string) => void;
+  periodizacion?: Importacion["periodizacion"];
+  modo: "por_periodo" | "unico";
+  onModo: (m: "por_periodo" | "unico") => void;
+  calculando: boolean;
+  onSugeridas: () => void;
+}) {
+  const cambiadas = preguntas.filter((p) => (respuestas[p.id] ?? p.defecto) !== p.defecto).length;
+  const total = preguntas.length + (periodizacion?.posible ? 1 : 0);
+  const periodos = periodizacion?.periodos ?? [];
+  return (
+    <Tarjeta
+      rotulo={`${total} ${total === 1 ? "decisión" : "decisiones"}`}
+      titulo="Preguntas sobre este archivo"
+      subtitulo="La respuesta sugerida ya está marcada. Cambie solo la que no corresponda."
+      acciones={
+        <Boton variante="lima" cargando={calculando} onClick={onSugeridas}>
+          Usar las respuestas sugeridas y calcular <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+        </Boton>
+      }
+    >
+      <div className="space-y-6">
+        {periodizacion?.posible && (
+          <fieldset className="contener">
+            <legend className="t-body font-semibold text-tinta">
+              El archivo cubre {periodizacion.meses} meses. ¿Cómo lo proceso?
+            </legend>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Opcion
+                nombre="periodizacion"
+                marcada={modo === "por_periodo"}
+                sugerida={periodizacion.defecto === "por_periodo"}
+                onElegir={() => onModo("por_periodo")}
+                etiqueta={`Procesar ${NOMBRE_PERIODICIDAD[periodizacion.periodicidad] ?? "mes a mes"}, cerrando cada uno`}
+                detalle={`${periodos.length} periodos, según la periodicidad del cliente. El último queda calculado para que usted lo revise y lo cierre.`}
+              />
+              <Opcion
+                nombre="periodizacion"
+                marcada={modo === "unico"}
+                sugerida={periodizacion.defecto === "unico"}
+                onElegir={() => onModo("unico")}
+                etiqueta="Un solo periodo"
+                detalle={periodos.length
+                  ? `Del ${fecha(periodos[0].desde)} al ${fecha(periodos[periodos.length - 1].hasta)}, en un solo juego de estados financieros.`
+                  : "Todo el archivo en un solo juego de estados financieros."}
+              />
+            </div>
+          </fieldset>
+        )}
+        {preguntas.map((p) => (
+          <fieldset key={p.id} className="contener border-t border-linea pt-5 first:border-t-0 first:pt-0">
+            <legend className="t-body font-semibold text-tinta">{p.titulo}</legend>
+            <p className="t-small mt-1 text-grafito">{p.detalle}</p>
+            <p className="t-meta mt-1 text-gris">{p.hoja}</p>
+            <div className="mt-3 grid gap-2 sm:grid-cols-2">
+              {p.opciones.map((o) => (
+                <Opcion
+                  key={o.valor}
+                  nombre={p.id}
+                  marcada={(respuestas[p.id] ?? p.defecto) === o.valor}
+                  sugerida={o.valor === p.defecto}
+                  onElegir={() => onResponder(p.id, o.valor)}
+                  etiqueta={o.etiqueta}
+                />
+              ))}
+            </div>
+          </fieldset>
+        ))}
+        {cambiadas > 0 && (
+          <p className="t-small text-grafito">
+            Cambió {cambiadas} {cambiadas === 1 ? "respuesta" : "respuestas"}: se usarán al pulsar «Calcular todo».
+          </p>
+        )}
+      </div>
+    </Tarjeta>
+  );
+}
+
+function Opcion({
+  nombre, marcada, sugerida, onElegir, etiqueta, detalle,
+}: {
+  nombre: string;
+  marcada: boolean;
+  sugerida: boolean;
+  onElegir: () => void;
+  etiqueta: string;
+  detalle?: string;
+}) {
+  return (
+    <label
+      className={clases(
+        "flex cursor-pointer items-start gap-3 rounded-control border px-3.5 py-3 transition-colors duration-150",
+        marcada ? "border-tinta bg-hoja" : "border-linea hover:bg-hoja-2",
+      )}
+    >
+      <input type="radio" name={nombre} checked={marcada} onChange={onElegir} className="mt-1 accent-azul" />
+      <span className="min-w-0">
+        <span className="t-body text-tinta">{etiqueta}</span>
+        {sugerida && <span className="t-meta ml-2 text-azul">sugerida</span>}
+        {detalle && <span className="t-small mt-0.5 block text-grafito">{detalle}</span>}
+      </span>
+    </label>
   );
 }
 

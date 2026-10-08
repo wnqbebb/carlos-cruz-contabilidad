@@ -65,10 +65,23 @@ def test_3_descuadre_plantilla_antigua(detectar, empresa):
     assert any(a.codigo == "E19" for a in res["alertas"])  # título 2012 vs periodo 2025
 
 
-def test_duplicado_cuenta_t_excluido(detectar):
+def test_h07_saldos_de_la_hoja_de_trabajo_y_detalle_de_la_cuenta_t(detectar, empresa):
+    """H07: la cuenta T y la hoja de trabajo coinciden cuenta por cuenta, así que se
+    usan las dos: los saldos iniciales de una y cada movimiento de la otra. Las cifras
+    son las mismas de siempre; lo que se gana es el detalle (29 líneas, no 6)."""
     dets = detectar("CONTABILIDAD.xls")
     ct = next(x for x in dets if x.hoja == "cuenta T")
-    assert ct.incluir is False and "Duplica" in ct.motivo
+    ht = next(x for x in dets if x.hoja == "HojaTRABAJO 01--02--03")
+    assert ct.incluir is True and ht.resumen["detalle_de"] == ct.id
+    incluir = {d.id: d.id in (ct.id, ht.id) for d in dets}
+    paq, res = _calcular(dets, empresa, incluir)
+    assert len(paq.movimientos) == 29                                   # el detalle de la cuenta T
+    assert sum(s.debito for s in paq.saldos_iniciales) == D("30000000")  # los saldos de la hoja de trabajo
+    assert res["resumen"]["utilidad_neta"] == D("-653215")
+    assert res["resumen"]["total_activo"] == D("37144505") and res["resumen"]["esf_cuadra"]
+    # Si el contador desmarca la cuenta T, la hoja de trabajo vuelve a aportar su movimiento agregado.
+    paq2, res2 = _calcular(dets, empresa, {d.id: d.id == ht.id for d in dets})
+    assert len(paq2.movimientos) == 6 and res2["resumen"]["utilidad_neta"] == D("-653215")
 
 
 # 4 ─ estados financieros del contador

@@ -48,6 +48,7 @@ class Lectura:
     identidad: ident.Identidad = field(default_factory=ident.Identidad)
     ilegibles: list[dict] = field(default_factory=list)
     archivos: list[str] = field(default_factory=list)
+    fechas: list = field(default_factory=list)      # fechas de los registros, para decir qué meses cubre
 
     @property
     def clase(self) -> str:
@@ -123,9 +124,20 @@ def leer(archivos: list[tuple[str, bytes]], mapeador: Mapeador | None = None,
 
             det = detectar_hoja(hoja, f"{i}-{j}", mapeador, empresa)
             if det.formato != "desconocido":
-                lectura.hojas.append(HojaClasificada(
-                    hoja, CONTABILIDAD, formato=det.formato,
-                    razon=det.formato_nombre, filas_datos=int(det.resumen.get("movimientos") or 0)))
+                razon = det.formato_nombre
+                filas = int(det.resumen.get("movimientos") or 0)
+                if det.formato == "auxiliares":
+                    # «ventas, compras y cartera», que es lo que el contador reconoce.
+                    from .auxiliares import NOMBRE_TIPO
+
+                    tipos = det.resumen.get("tipos") or []
+                    razon = ", ".join(NOMBRE_TIPO[t].lower() for t in tipos) or "listas sin tipo claro"
+                    filas = int(det.resumen.get("registros") or 0)
+                    lectura.fechas += [r.fecha_archivo for b in getattr(det, "bloques", []) for r in b.registros
+                                       if r.fecha_archivo]
+                lectura.fechas += [m.fecha for m in det.paquete.movimientos if m.fecha]
+                lectura.hojas.append(HojaClasificada(hoja, CONTABILIDAD, formato=det.formato, razon=razon,
+                                                     filas_datos=filas))
             else:
                 lectura.hojas.append(HojaClasificada(hoja, DESCONOCIDO, razon=det.motivo))
 

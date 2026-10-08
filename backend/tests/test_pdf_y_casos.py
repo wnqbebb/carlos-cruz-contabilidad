@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import io
+from decimal import Decimal
 
 import pytest
 from openpyxl import load_workbook
@@ -27,7 +28,7 @@ def test_reconoce_una_fila_de_balance(linea):
     assert fila is not None, f"no reconoció «{linea}»"
     assert fila[0].isdigit() and len(fila[0]) >= 4   # código PUC
     assert any(c.isalpha() for c in fila[1])         # nombre de cuenta
-    assert isinstance(fila[2], float)                # importe
+    assert isinstance(fila[2], Decimal)              # importe exacto, nunca float
 
 
 @pytest.mark.parametrize(

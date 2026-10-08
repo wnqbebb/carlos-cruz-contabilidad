@@ -6,7 +6,7 @@ Nada de esto se toca sin que usted lo autorice.
 
 ---
 
-## P01 · Un libro diario suelto en CSV todavía no se reconoce
+## P01 · Un libro diario suelto en CSV todavía no se reconoce — ✅ HECHO en la Fase 4 (`importadores/libro_diario.py`)
 **Hoy:** un archivo con las columnas `Fecha · Cuenta · Débito · Crédito` y nada más
 —el volcado típico de un programa contable— cae en «No reconocí lo que trae».
 La Fase 4 enseña a leer registros auxiliares (ventas, compras, cartera), que es

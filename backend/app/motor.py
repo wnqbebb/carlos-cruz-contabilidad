@@ -42,7 +42,15 @@ class Config:
 
 # ---------------------------------------------------------------- preparación
 
-def items_mapeo(dets: list[Deteccion], mapeador: Mapeador) -> list[dict]:
+def items_mapeo(dets: list[Deteccion], mapeador: Mapeador, sugeridos: dict[str, str] | None = None) -> list[dict]:
+    """Nombres de cuenta por mapear al PUC.
+
+    `sugeridos` trae la cuenta que propone un importador que SABE qué es la línea
+    (los registros auxiliares saben que «Gasto: arriendo» es un arrendamiento).
+    Una confirmación anterior del contador para ese cliente pesa más.
+    """
+    sugeridos = sugeridos or {}
+    p = puc()
     por_nombre: dict[str, dict] = {}
     for d in dets:
         for m in list(d.paquete.movimientos) + list(d.paquete.saldos_iniciales) + list(d.paquete.ajustes_manuales):
@@ -50,7 +58,11 @@ def items_mapeo(dets: list[Deteccion], mapeador: Mapeador) -> list[dict]:
                 continue
             n = normalizar(m.nombre_cuenta)
             if n not in por_nombre:
-                por_nombre[n] = {**mapeador.resolver(m.nombre_cuenta), "veces": 0, "hojas": [], "valor": CERO, "por_hoja": {}}
+                resuelto = mapeador.resolver(m.nombre_cuenta)
+                if n in sugeridos and resuelto.get("fuente") != "confirmado":
+                    resuelto = {**resuelto, "codigo": sugeridos[n], "estado": "exacto", "fuente": "registros",
+                                "candidatos": [{"codigo": sugeridos[n], "nombre": p.nombre(sugeridos[n]), "puntaje": 100}]}
+                por_nombre[n] = {**resuelto, "veces": 0, "hojas": [], "valor": CERO, "por_hoja": {}}
             item = por_nombre[n]
             item["veces"] += 1
             item["valor"] += m.debito + m.credito
@@ -68,14 +80,20 @@ def preparar_paquete(dets: list[Deteccion], incluir: dict[str, bool], mapeo: dic
     paquete = Paquete()
     alertas: list[Alerta] = []
     aud_nom, aud_ef = [], []
+    activos = {d.id for d in dets if incluir.get(d.id, d.incluir)}
     for d in dets:
-        activo = incluir.get(d.id, d.incluir)
+        activo = d.id in activos
         aud_nom += d.paquete.auditoria_nomina
         aud_ef += d.paquete.auditoria_ef
         for a in d.paquete.alertas:
             alertas.append(a if activo else dataclasses.replace(a, mensaje=f"{a.mensaje} (hoja no incluida en el cálculo)"))
         if activo:
             copia = dataclasses.replace(d.paquete, auditoria_nomina=[], auditoria_ef=[], alertas=[])
+            # H07: si la cuenta T con el detalle también entra, de la hoja de
+            # trabajo solo se toman los saldos iniciales (sus movimientos son la
+            # misma suma, agregada por cuenta).
+            if d.resumen.get("detalle_de") in activos:
+                copia = dataclasses.replace(copia, movimientos=[])
             paquete.unir(copia)
 
     def resolver(item):
@@ -249,6 +267,21 @@ def calcular(paquete: Paquete, empresa: Empresa, config: Config, decisiones: dic
 
     for a in propuestos:
         a.aceptado = decisiones.get(a.id, a.aceptado_defecto)
+
+    # A4 · Causación de nómina aceptada con sueldos ya registrados en el diario:
+    # puede ser el mismo salario dos veces. No se impide (el contador sabe si son
+    # pagos distintos), pero se dice con las dos cifras antes de cerrar.
+    causacion = next((a for a in propuestos if a.id == "nomina_causacion" and a.aceptado), None)
+    if causacion:
+        en_diario = sum((m.debito - m.credito for m in movs if m.cuenta.startswith("5105")), CERO)
+        en_ajuste = sum((m.debito - m.credito for m in causacion.lineas if m.cuenta.startswith("5105")), CERO)
+        if en_diario:
+            alertas.append(Alerta(
+                "DOBLE-NOMINA", "advertencia",
+                f"Posible doble registro del salario: el diario ya trae {pesos(en_diario)} en gastos de personal (5105) "
+                f"y la causación de nómina aceptada agrega {pesos(en_ajuste)}. Si son la misma nómina, rechace la "
+                "causación antes de cerrar.",
+                detalle="Se aceptó el ajuste «Causación de la nómina del periodo» con sueldos ya contabilizados."))
 
     # 7. Impuesto de renta (sobre la utilidad con los demás ajustes aceptados)
     if config.calcular_renta:

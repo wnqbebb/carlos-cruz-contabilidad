@@ -15,6 +15,8 @@ Ahora el flujo es:
 """
 from __future__ import annotations
 
+from datetime import date
+
 from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
 
 from ..contabilidad.puc import Mapeador
@@ -28,6 +30,7 @@ from ..repositorio import bitacora as repo_bitacora
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import sesiones
 from ..utils import nit as unit
+from ..utils.numeros import NOMBRE_MES
 
 router = APIRouter(prefix="/api", tags=["subir"])
 
@@ -113,13 +116,24 @@ def _propuesta(lectura: clas.Lectura, cliente_id: str | None) -> dict:
         if not nit:
             falta.append("nit")
 
-    formatos = sorted({h.razon for h in lectura.hojas_de(clas.CONTABILIDAD) if h.razon})
+    formatos = []
+    for h in lectura.hojas_de(clas.CONTABILIDAD):
+        for parte in (h.razon or "").split(", "):
+            if parte and parte not in formatos:
+                formatos.append(parte)
+    periodo = None
+    hoy = date.today()
+    fechas = sorted(f for f in lectura.fechas if f and f <= hoy)
+    if fechas:
+        periodo = {"desde": fechas[0].replace(day=1).isoformat(), "hasta": fechas[-1].isoformat(),
+                   "texto": _texto_periodo(fechas[0], fechas[-1])}
     return {
         "cliente": cliente,
         "coincidencias": coincidencias,
         "identidad": campos.a_json(),
         "falta": falta,
         "contenido": formatos,
+        "periodo": periodo,
         "hojas": [
             {"archivo": h.hoja.archivo, "hoja": h.hoja.nombre, "clase": h.clase,
              "formato": h.formato, "razon": h.razon, "filas": h.filas_datos}
@@ -127,6 +141,16 @@ def _propuesta(lectura: clas.Lectura, cliente_id: str | None) -> dict:
         ],
         "ilegibles": lectura.ilegibles,
     }
+
+
+def _texto_periodo(desde, hasta) -> str:
+    """«enero a septiembre de 2026», «diciembre de 2025 a marzo de 2026», «marzo de 2026»."""
+    m1, m2 = NOMBRE_MES[desde.month].lower(), NOMBRE_MES[hasta.month].lower()
+    if (desde.year, desde.month) == (hasta.year, hasta.month):
+        return f"{m1} de {desde.year}"
+    if desde.year == hasta.year:
+        return f"{m1} a {m2} de {hasta.year}"
+    return f"{m1} de {desde.year} a {m2} de {hasta.year}"
 
 
 @router.post("/subir")

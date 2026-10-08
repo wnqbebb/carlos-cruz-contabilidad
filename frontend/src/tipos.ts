@@ -311,12 +311,36 @@ export interface ItemMapeo {
   por_hoja: Record<string, { veces: number; valor: Monto }>;
 }
 
+/** Una decisión que el archivo no permite tomar solo (spec v2.2 · 4.2). */
+export interface Pregunta {
+  id: string;
+  /** archivo › hoja › bloque */
+  hoja: string;
+  /** tipo · fechas · repetir · terceros · inventario */
+  clase: string;
+  titulo: string;
+  detalle: string;
+  opciones: { valor: string; etiqueta: string }[];
+  defecto: string;
+}
+
+export interface Periodizacion {
+  posible: boolean;
+  meses: number;
+  periodicidad: string;
+  meses_por_periodo: number;
+  periodos: { desde: string; hasta: string }[];
+  defecto: "por_periodo" | "unico";
+}
+
 export interface Importacion {
   sesion_id: string;
   cliente_id: string | null;
   cliente: Cliente | null;
   empresa: Empresa;
   periodo_sugerido: { desde: string; hasta: string; fuente: string };
+  periodizacion?: Periodizacion;
+  preguntas?: Pregunta[];
   mapeo: ItemMapeo[];
   hojas: Hoja[];
 }
@@ -337,6 +361,11 @@ export interface Peticion {
   config: Config;
   decisiones: Record<string, boolean>;
   recordar_alias: boolean;
+  /** Respuestas al panel «Preguntas sobre este archivo». */
+  respuestas?: Record<string, string>;
+  /** «por_periodo»: mes a mes (o según la periodicidad), cerrando cada uno. */
+  periodizacion?: "por_periodo" | "unico";
+  cerrar_ultimo?: boolean;
 }
 
 export interface Ajuste {
@@ -402,6 +431,17 @@ export interface Resultado {
   periodo?: Periodo;
   movimientos_guardados?: number;
   aviso_guardado?: string;
+  /** Fila original de cada registro (origen → celdas), para verla desde el libro diario. */
+  origenes?: Record<string, string[]>;
+  /** Cuando se procesó periodo a periodo: qué pasó con cada uno. */
+  periodos_procesados?: {
+    desde: string;
+    hasta: string;
+    estado: "cerrado" | "calculado" | "ya_cerrado" | "sin_movimientos";
+    periodo_id?: string;
+    utilidad?: Monto;
+    cuadra?: boolean;
+  }[];
 }
 
 /* ── estado del sistema ────────────────────────────────────────────────── */
@@ -506,6 +546,8 @@ export interface Propuesta {
   falta: string[];
   /** Formatos contables reconocidos, en español, para la tarjeta. */
   contenido: string[];
+  /** Meses que cubren los registros, si traen fechas. */
+  periodo: { desde: string; hasta: string; texto: string } | null;
   hojas: HojaDetectada[];
   ilegibles: { archivo: string; motivo: string }[];
 }

@@ -391,8 +391,9 @@ function Explicacion({ clase, propuesta }: { clase: string; propuesta: Propuesta
     <div className="space-y-3">
       <p className="t-body text-grafito">
         {propuesta.contenido.length
-          ? `Encontré ${listar(propuesta.contenido)}.`
-          : "Encontré movimientos contables."}{" "}
+          ? `Encontré ${listar(propuesta.contenido)}`
+          : "Encontré movimientos contables"}
+        {propuesta.periodo ? ` de ${propuesta.periodo.texto}.` : "."}{" "}
         Confirme de quién es y sigo hasta el balance.
       </p>
       {propuesta.ilegibles.map((i) => (

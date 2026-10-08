@@ -142,6 +142,10 @@ def leer_pdf_completo(contenido: bytes, archivo: str) -> list[Hoja]:
         except PdfSinTexto:
             hojas = []
 
+    # Las tablas no traen el título del documento («BALANCE A 31 DE MARZO DE
+    # 2026»): se les deja el comienzo del texto para que sepan de qué fecha son.
+    for h in hojas:
+        h.contexto = plano[:600]          # type: ignore[attr-defined]
     hoja_texto = Hoja(archivo, "(texto)", [[p] for p in plano.splitlines() if p.strip()], {})
     hoja_texto.es_texto = True            # type: ignore[attr-defined]
     hoja_texto.texto_plano = plano        # type: ignore[attr-defined]

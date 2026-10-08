@@ -22,6 +22,7 @@ import unicodedata
 from dataclasses import dataclass, field
 
 from ..utils import nit as unit
+from ..utils.numeros import es_numero
 
 # ── confianza ───────────────────────────────────────────────────────────────
 SEGURO = "seguro"        # venía rotulado como tal («NIT: [NIT]»)
@@ -218,7 +219,8 @@ _RUIDO_ARCHIVO = {
     # tipo de documento
     "RUT", "CAMARA", "COMERCIO", "ESTATUTOS", "ACTA", "ACTAS", "CERTIFICADO",
     "CERTIFICACION", "CONSTITUCION", "CEDULA", "CARTA", "CARTAS", "ANEXO", "SOPORTE",
-    "SOPORTES", "FORMATO", "FORMULARIO", "PLANTILLA", "DECLARACION",
+    "SOPORTES", "FORMATO", "FORMULARIO", "PLANTILLA", "DECLARACION", "REGISTRO",
+    "REGISTROS",
     # tiempo
     "ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO",
     "SEPTIEMBRE", "SETIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE", "TRIMESTRE",
@@ -227,11 +229,49 @@ _RUIDO_ARCHIVO = {
     "COPIA", "COPY", "FINAL", "NUEVO", "NUEVA", "VERSION", "ULTIMO", "ULTIMA",
     "REVISADO", "CORREGIDO", "ORIGINAL", "BORRADOR", "ARCHIVO", "DATOS", "EXCEL",
     "DOCUMENTO", "DOCUMENTOS", "SCAN", "ESCANEADO", "IMG", "DOC", "PDF", "XLS", "XLSX",
+    # tamaño o tipo del negocio: dicen QUÉ es, no QUIÉN es
+    "PYME", "PYMES", "MIPYME", "MIPYMES", "MICROEMPRESA", "MICROEMPRESAS", "NEGOCIO",
+    "EMPRESA",
 }
+
+# Las palabras de ruido se escriben mal a menudo («CANTABILIDAD», «BALNCE»,
+# «ESTDOS»): se comparan por parecido además de exactas. Solo palabras de cinco
+# letras o más, porque en las cortas un 85 % de parecido ya es otra palabra.
+_UMBRAL_RUIDO = 85
+_LARGO_MIN_DIFUSO = 5
+
+
+def _fonetico(palabra: str) -> str:
+    """Cómo SUENA la palabra en español: los errores típicos son de oído.
+
+    «VENTAZ», «CONTAVILIDAD», «INVENTARIO» con «B»: se escriben distinto y
+    suenan igual. Comparar el sonido además de la letra los atrapa sin bajar el
+    umbral, que es lo que protegería el nombre del negocio.
+    """
+    p = palabra.upper()
+    p = re.sub(r"C(?=[EI])", "S", p)
+    for de, a in (("QU", "K"), ("Z", "S"), ("V", "B"), ("Y", "I"), ("LL", "I"), ("H", "")):
+        p = p.replace(de, a)
+    return re.sub(r"(.)\1+", r"\1", p)        # «CONTABILIDAAD» → «CONTABILIDAD»
+
+
+def _es_ruido(palabra: str) -> bool:
+    if palabra in _RUIDO_ARCHIVO:
+        return True
+    if len(palabra) < _LARGO_MIN_DIFUSO:
+        return False
+    from rapidfuzz import fuzz
+
+    sonido = _fonetico(palabra)
+    return any(
+        len(r) >= _LARGO_MIN_DIFUSO
+        and max(fuzz.ratio(palabra, r), fuzz.ratio(sonido, _fonetico(r))) >= _UMBRAL_RUIDO
+        for r in _RUIDO_ARCHIVO
+    )
 
 
 def nombre_desde_archivo(archivo: str) -> str:
-    """«CONTABILIDAD_TIENDA_JUAN_PEREZ_2026.xlsx» → «JUAN PEREZ».
+    """«CONTABILIDAD_TIENDA_JUAN_PEREZ_2026.xlsx» → «TIENDA JUAN PEREZ».
 
     Es una SUGERENCIA: siempre se muestra para que el contador la confirme.
     """
@@ -240,7 +280,7 @@ def nombre_desde_archivo(archivo: str) -> str:
     palabras = [p for p in base.split() if p]
     utiles = [
         p for p in palabras
-        if p not in _RUIDO_ARCHIVO
+        if not _es_ruido(p)
         and not re.fullmatch(r"(19|20)\d{2}", p)       # años
         and not re.fullmatch(r"V?\d{1,3}", p)          # v1, 02, 2
     ]
@@ -302,6 +342,12 @@ def de_hoja(hoja, identidad: Identidad, *, filas_max: int = 25) -> None:
         llenas = sum(1 for _, t in textos if t.strip())
         if llenas > 3:
             continue
+        # Una fila con importes es un registro («POSTOBON SA | 200.000 | 50.000»):
+        # ese nombre es el de un tercero, no el del dueño del archivo.
+        con_importes = any(
+            v is not None and not hasattr(v, "year") and es_numero(v)
+            for v in (hoja.valores[r] if r < hoja.nfilas else [])
+        )
 
         for c, texto in textos:
             etiqueta = _normalizar(texto)
@@ -314,7 +360,7 @@ def de_hoja(hoja, identidad: Identidad, *, filas_max: int = 25) -> None:
                         continue
                     identidad.poner("razon_social", valor, hoja.origen(r, cc), SEGURO)
                     break
-            elif parece_razon_social(texto):
+            elif not con_importes and parece_razon_social(texto):
                 identidad.poner("razon_social", _limpiar_nombre(texto), hoja.origen(r, c), PROBABLE)
 
 

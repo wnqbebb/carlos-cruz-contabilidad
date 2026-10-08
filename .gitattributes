@@ -1,0 +1,12 @@
+# Archivos binarios: git no debe tocar sus fines de línea.
+*.pdf binary
+*.xlsx binary
+*.xls binary
+*.xlsm binary
+*.docx binary
+*.png binary
+*.jpg binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.db binary

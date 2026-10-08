@@ -225,6 +225,15 @@ def restaurar_version(version_id: int) -> dict:
 
 
 # ── alta y consulta ─────────────────────────────────────────────────────────
+def buscar(cliente_id: str, desde: date, hasta: date) -> dict | None:
+    """El periodo con esas fechas, si existe. No crea nada."""
+    with lectura() as cn:
+        fila = cn.execute(
+            select(TP).where(and_(TP.c.cliente_id == cliente_id, TP.c.desde == desde, TP.c.hasta == hasta))
+        ).first()
+    return _a_dict(fila) if fila else None
+
+
 def asegurar(cliente_id: str, desde: date, hasta: date, etiqueta: str = "") -> dict:
     """Devuelve el periodo (lo crea si no existía). Idempotente."""
     desde, hasta = parse_fecha(desde), parse_fecha(hasta)

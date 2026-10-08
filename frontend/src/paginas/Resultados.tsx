@@ -5,7 +5,7 @@ import { ListaAlertas } from "../componentes/Alertas";
 import { CuentasT } from "../componentes/CuentasT";
 import { Reporte, tituloLegible } from "../componentes/Reporte";
 import { AnilloBalance, BarrasDesglose, Medidor } from "../componentes/Grafica";
-import { Boton, Enlace, Insignia, Pestanas, Rotulo, Tarjeta, Vacio } from "../componentes/ui";
+import { Aviso, Boton, Enlace, Insignia, Pestanas, Rotulo, Tarjeta, Vacio } from "../componentes/ui";
 import { cant, clases, esCero, esNegativo, fecha, fechaLarga, numero, pesos, porcentaje } from "../formato";
 import type { Monto, Peticion, Resultado } from "../tipos";
 import { BotonFantasma, Cifra as CifraExacta, InsigniaEstado, useAvisos } from "../ui";
@@ -62,6 +62,8 @@ export function Resultados({
   const [mensaje, setMensaje] = useState("");
   const r = res.resumen;
   const sid = peticion.sesion_id;
+  // A4: la causación de nómina aceptada con sueldos que ya estaban en el diario.
+  const dobleNomina = res.alertas.find((a) => a.codigo === "DOBLE-NOMINA");
   const hayInventario = res.inventario.productos.length > 0;
 
   const avisar = useAvisos();
@@ -130,6 +132,10 @@ export function Resultados({
         <Kpi titulo="Inventario final" valor={r.inventario_final} />
       </div>
 
+      {res.periodos_procesados && res.periodos_procesados.length > 0 && (
+        <PeriodosProcesados periodos={res.periodos_procesados} />
+      )}
+
       {/* Tarjeta de Contenido con Pestañas Segmentadas */}
       <Tarjeta sinRelleno>
         <div className="px-5 pt-4 sm:px-6">
@@ -178,9 +184,17 @@ export function Resultados({
                   <p className="mt-1 text-xs text-gris leading-relaxed">
                     Guarde el cierre para que estos saldos alimenten automáticamente el periodo siguiente.
                   </p>
+                  {dobleNomina && (
+                    <div className="mt-3">
+                      <Aviso tono="ambar" titulo="Posible doble registro del salario">
+                        {dobleNomina.mensaje}
+                      </Aviso>
+                    </div>
+                  )}
                   <div className="mt-4 flex flex-col gap-2">
                     <Boton variante="lima" tamano="sm" onClick={guardarCierre}>
-                      <Save size={16} strokeWidth={1.5} aria-hidden /> Guardar cierre definitivo
+                      <Save size={16} strokeWidth={1.5} aria-hidden />{" "}
+                      {dobleNomina ? "Cerrar de todos modos" : "Guardar cierre definitivo"}
                     </Boton>
                     <Enlace href={descargas.saldos(sid)} variante="contorno" tamano="sm">
                       <Download size={16} strokeWidth={1.5} aria-hidden /> Saldos siguiente periodo
@@ -780,5 +794,46 @@ function PanelVisual({ res }: { res: Resultado }) {
         />
       </div>
     </div>
+  );
+}
+
+
+/* ── archivo procesado periodo a periodo (spec v2.2 · 4.3) ──────────────── */
+const ESTADO_PERIODO: Record<string, { texto: string; tono: "tinta" | "azul" | "neutro" | "gris" }> = {
+  cerrado: { texto: "Cerrado", tono: "tinta" },
+  calculado: { texto: "Calculado, por cerrar", tono: "azul" },
+  ya_cerrado: { texto: "Ya estaba cerrado: no se tocó", tono: "neutro" },
+  sin_movimientos: { texto: "Sin movimientos", tono: "gris" },
+};
+
+function PeriodosProcesados({ periodos }: { periodos: NonNullable<Resultado["periodos_procesados"]> }) {
+  const cerrados = periodos.filter((p) => p.estado === "cerrado").length;
+  return (
+    <Tarjeta
+      rotulo={`${periodos.length} periodos`}
+      titulo="Procesado periodo a periodo"
+      subtitulo={`${cerrados} cerrado(s): el cierre de cada uno abrió el siguiente. Abajo, el último, para que lo revise y lo cierre.`}
+      className="no-imprimir"
+    >
+      <ul className="divide-y divide-linea">
+        {periodos.map((p) => {
+          const e = ESTADO_PERIODO[p.estado] ?? ESTADO_PERIODO.calculado;
+          return (
+            <li key={p.desde} className="flex flex-wrap items-center justify-between gap-3 py-2.5">
+              <span className="t-body text-tinta">{fecha(p.desde)} — {fecha(p.hasta)}</span>
+              <span className="flex flex-wrap items-center gap-3">
+                {p.utilidad != null && (
+                  <span className={clases("cifras text-[14px]", esNegativo(p.utilidad) ? "text-rojo" : "text-tinta")}>
+                    {esNegativo(p.utilidad) ? "Pérdida " : "Utilidad "}{pesos(p.utilidad)}
+                  </span>
+                )}
+                {p.cuadra === false && <Insignia tono="rojo">No cuadra</Insignia>}
+                <Insignia tono={e.tono}>{e.texto}</Insignia>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </Tarjeta>
   );
 }

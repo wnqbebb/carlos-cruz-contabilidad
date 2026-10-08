@@ -112,7 +112,7 @@ def _partir_linea(linea: str) -> list | None:
     for cruda in importes:
         v = parse_numero(cruda.group(0))
         if v is not None:
-            valores.append(float(v))
+            valores.append(v)          # Decimal: un importe nunca pasa por float
     if not valores:
         return None
 
@@ -129,14 +129,17 @@ def leer_pdf(contenido: bytes, archivo: str) -> list[Hoja]:
             "programa contable, que sí trae el texto."
         )
 
-    filas: list[list] = [["Código PUC", "Nombre cuenta", "Saldo débito", "Saldo crédito", "Valor 3"]]
+    # Encabezado neutro a propósito: en el texto de un PDF las columnas vacías
+    # desaparecen, así que el primer valor de una fila no es necesariamente el
+    # débito. `balance.py` decide qué es cada valor (y lo avisa).
+    filas: list[list] = [["Código", "Nombre", "Valor 1", "Valor 2", "Valor 3", "Valor 4"]]
     reconocidas = 0
     descartadas = 0
     for pagina in paginas:
         for linea in pagina.splitlines():
             fila = _partir_linea(linea)
             if fila:
-                filas.append((fila + [None] * 5)[:5])
+                filas.append((fila + [None] * 6)[:6])
                 reconocidas += 1
             elif linea.strip():
                 descartadas += 1
@@ -150,6 +153,7 @@ def leer_pdf(contenido: bytes, archivo: str) -> list[Hoja]:
         )
 
     hoja = Hoja(archivo, "PDF", filas, {})
+    hoja.sin_encabezado = True  # type: ignore[attr-defined]
     hoja.diagnostico_pdf = {  # type: ignore[attr-defined]
         "paginas": len(paginas),
         "filas_reconocidas": reconocidas,
