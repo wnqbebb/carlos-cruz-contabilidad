@@ -64,7 +64,7 @@ _cargar_env()
 MARCA = "Carlos Cruz"
 LEMA = "Contabilidad que cuadra."
 LEMA_LARGO = "Cuadramos sus cuentas; usted atiende su negocio."
-VERSION = "2.0.0"
+VERSION = "2.2.0"
 
 # Ruta del archivo SQLite local. `CC_SQLITE` permite apuntarla a otro sitio,
 # que es como las pruebas trabajan contra una base desechable.

@@ -47,6 +47,9 @@ analisis = Analysis(
         "pypdf",
         "xlrd",
         "reportlab.graphics.barcode",
+        # Inicio de sesión (A2): el hash de la contraseña y el asistente que la crea.
+        "bcrypt",
+        "crear_usuario",
         "app",
     ],
     hookspath=[],

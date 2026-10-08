@@ -85,12 +85,6 @@ def construir_mayor(saldos: list[SaldoInicial], movimientos: list[Movimiento]) -
     return dict(sorted(cuentas.items()))
 
 
-def aplicar_movimientos(mayor: dict[str, CuentaMayor], extra: list[Movimiento]) -> dict[str, CuentaMayor]:
-    """Nuevo mayor = saldos finales de `mayor` como iniciales + `extra` como movimientos."""
-    saldos = [SaldoInicial(c.codigo, c.fin_d, c.fin_c, c.nombre) for c in mayor.values() if c.neto != 0]
-    return construir_mayor(saldos, extra)
-
-
 def totales(mayor: dict[str, CuentaMayor]) -> dict[str, Decimal]:
     t = defaultdict(lambda: CERO)
     for c in mayor.values():

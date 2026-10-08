@@ -355,9 +355,10 @@ def test_cartera_pone_primero_lo_critico(base_limpia):
         problematico["id"],
         _resultado("2025-01-01", "2025-01-31", patrimonio="-2204760.72", descuadre="598"))
 
-    cartera = sug.de_cartera(date(2026, 10, 6))
-    assert cartera["clientes"][0]["cliente_id"] == problematico["id"]
-    assert cartera["criticas"] >= 1
+    from app.inteligencia import tablero
+
+    tareas = tablero.armar(date(2026, 10, 6))["tareas"]
+    assert tareas[0]["cliente_id"] == problematico["id"] and tareas[0]["prioridad"] == "critica"
 
 
 # ── regresión: el dinero no se compara dentro del SQL ───────────────────────

@@ -1,7 +1,7 @@
 # Fase 9 · Cinco clientes históricos de demostración
 
 Generador: `backend/demo/generar_historicos.py` (semilla fija). Archivos generados: `docs/demo/<cliente>/` (68 archivos, 1,1 MB, todo ficticio).
-Capturas: `docs/v22/capturas/fase-9/` (claro y oscuro; 1440 y 390 px). Probado en la copia aislada; **no se tocó la base real** (se carga en la sección 4.5).
+Capturas: `privado/capturas/v22/fase-9/` (claro y oscuro; 1440 y 390 px). Probado en la copia aislada; **no se tocó la base real** (se carga en la sección 4.5).
 
 ```
 cd backend

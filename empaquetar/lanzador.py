@@ -93,6 +93,34 @@ def _puerto_libre(preferido: int = 8000) -> int:
     return 8000
 
 
+def _hay_usuario(env: Path) -> bool:
+    """¿El archivo de configuración ya tiene usuario y contraseña (A2)?"""
+    if not env.exists():
+        return False
+    valores = {}
+    for linea in env.read_text(encoding="utf-8-sig").splitlines():
+        if "=" in linea and not linea.lstrip().startswith("#"):
+            k, _, v = linea.partition("=")
+            valores[k.strip()] = v.strip()
+    return bool(valores.get("CC_USUARIO") and valores.get("CC_CLAVE_HASH"))
+
+
+def _usuario(env: Path) -> bool:
+    """La primera vez (o con --cambiar-clave) se crea el usuario aquí mismo, en esta ventana."""
+    if "--cambiar-clave" not in sys.argv and _hay_usuario(env):
+        return True
+    import crear_usuario
+
+    print("  Para entrar a Carlos Cruz hace falta un usuario y una contrasena.")
+    print("  (La contrasena no se muestra mientras la escribe.)")
+    print()
+    if crear_usuario.main(["--archivo", str(env)]) != 0:
+        return False
+    os.environ["CC_ENV"] = str(env)
+    print()
+    return True
+
+
 def _abrir_navegador(url: str) -> None:
     def tarea() -> None:
         time.sleep(2.0)
@@ -106,6 +134,9 @@ def _abrir_navegador(url: str) -> None:
 
 def main() -> int:
     recursos, datos = _preparar_entorno()
+    if not _usuario(datos / "configuracion.env"):
+        input("No se creo el usuario. Presione Enter para cerrar...")
+        return 1
 
     import uvicorn
 

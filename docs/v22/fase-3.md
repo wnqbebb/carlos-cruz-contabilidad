@@ -1,6 +1,6 @@
 # Fase 3 · Una sola puerta (H03, H10)
 
-Capturas: `docs/v22/capturas/fase-3/`. Probado en la copia aislada (puerto 8001, SQLite desechable). La base real no se tocó.
+Capturas: `privado/capturas/v22/fase-3/`. Probado en la copia aislada (puerto 8001, SQLite desechable). La base real no se tocó.
 
 ## El defecto que se cierra
 

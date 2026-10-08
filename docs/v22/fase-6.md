@@ -1,6 +1,6 @@
 # Fase 6 · Cliente: crear fácil, editar todo (+ A3 y A6)
 
-Capturas: `docs/v22/capturas/fase-6/`. Probado en la copia aislada (puerto 8001). La base real no se tocó.
+Capturas: `privado/capturas/v22/fase-6/`. Probado en la copia aislada (puerto 8001). La base real no se tocó.
 
 ## 1. La ficha se llena sola con los documentos — `backend/app/importadores/ficha.py`
 | Documento | Qué se extrae |
@@ -15,7 +15,7 @@ Capturas: `docs/v22/capturas/fase-6/`. Probado en la copia aislada (puerto 8001)
 - Cada dato sale con **origen** (archivo y línea, o tabla) y **confianza**: *seguro* si venía rotulado, *por confirmar* si se dedujo de la redacción.
 - **Conflictos**: si dos documentos no coinciden, se marcan y el contador elige. Ejemplo real: la carta de FANANT dice «FARMACIA NATURITA» (errata del original) y el estatuto «NATURISTA».
 - Lo que no aparece queda vacío. Las tablas de Excel no se toman como socios (una nómina también tiene «NOMBRE | CÉDULA»).
-- **Prueba obligatoria con `docs/fuentes/`** (`test_los_estatutos_y_las_cartas_llenan_la_ficha_de_fanant`): estatutos + `CARTAS_VARIAS.docx` llenan **4 socios, capital 30.000.000, 4.000 acciones de 7.500, representante legal y suplente con cédula, contador con T.P. 103028-T, CIIU 2100 y 4645, 4773, 8292**. Se compara contra la ficha de referencia `data/empresa_fanant.json` **en modo lectura**: no se creó ni modificó ningún cliente real.
+- **Prueba obligatoria con `privado/fuentes/`** (`test_los_estatutos_y_las_cartas_llenan_la_ficha_de_fanant`): estatutos + `CARTAS_VARIAS.docx` llenan **4 socios, capital 30.000.000, 4.000 acciones de 7.500, representante legal y suplente con cédula, contador con T.P. 103028-T, CIIU 2100 y 4645, 4773, 8292**. Se compara contra la ficha de referencia `data/empresa_fanant.json` **en modo lectura**: no se creó ni modificó ningún cliente real.
 
 Para que todo esto tenga dónde guardarse se agregaron 13 columnas opcionales a `clientes` y `nota` a `periodos`. La aplicación las agrega sola al arrancar si faltan (`db.py · _columnas_nuevas`, probado quitando una columna y volviendo a arrancar); el SQL equivalente para Supabase está en `supabase/migraciones/004_ficha_y_notas.sql`. Ningún dato existente cambia.
 

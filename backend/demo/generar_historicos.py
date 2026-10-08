@@ -39,7 +39,9 @@ import argparse
 import csv
 import io
 import random
+import re
 import sys
+import zipfile
 from datetime import date, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -126,6 +128,21 @@ class Diario:
                                celda(deb) if deb else None, celda(cre) if cre else None, None])
 
 
+FECHA_FIJA = (2026, 1, 1, 0, 0, 0)
+
+
+def fijar_zip(datos: bytes) -> bytes:
+    """Excel y Word son zips con fechas adentro: se fijan para que el archivo salga idéntico byte a byte."""
+    entrada, salida = zipfile.ZipFile(io.BytesIO(datos)), io.BytesIO()
+    with zipfile.ZipFile(salida, "w", zipfile.ZIP_DEFLATED) as z:
+        for item in entrada.infolist():
+            contenido = entrada.read(item.filename)
+            if item.filename == "docProps/core.xml":
+                contenido = re.sub(rb"(<dcterms:(?:created|modified)[^>]*>)[^<]*", rb"\g<1>2026-01-01T00:00:00Z", contenido)
+            z.writestr(zipfile.ZipInfo(item.filename, date_time=FECHA_FIJA), contenido, compress_type=zipfile.ZIP_DEFLATED)
+    return salida.getvalue()
+
+
 def libro(hojas: dict[str, list[list]]) -> bytes:
     wb = Workbook()
     wb.remove(wb.active)
@@ -135,7 +152,7 @@ def libro(hojas: dict[str, list[list]]) -> bytes:
             ws.append([celda(v) for v in f])
     buf = io.BytesIO()
     wb.save(buf)
-    return buf.getvalue()
+    return fijar_zip(buf.getvalue())
 
 
 def plantilla(empresa: list[tuple], hojas: dict[str, list[list]]) -> bytes:
@@ -192,7 +209,7 @@ def estatutos_docx(c: dict) -> bytes:
     doc.add_paragraph("Firman los accionistas en constancia.")
     buf = io.BytesIO()
     doc.save(buf)
-    return buf.getvalue()
+    return fijar_zip(buf.getvalue())
 
 
 def rut_pdf(c: dict) -> bytes:
@@ -200,7 +217,7 @@ def rut_pdf(c: dict) -> bytes:
     from reportlab.pdfgen import canvas
 
     buf = io.BytesIO()
-    pdf = canvas.Canvas(buf, pagesize=letter)
+    pdf = canvas.Canvas(buf, pagesize=letter, invariant=1)  # sin fecha ni identificador al azar
     y = 740
     lineas = [
         ("Helvetica-Bold", 13, "REGISTRO ÚNICO TRIBUTARIO — COPIA FICTICIA PARA DEMOSTRACIÓN"),

@@ -24,7 +24,7 @@ Con un cliente ya creado, subir el Excel produce sin intervención el balance de
 4. **H05/H06 · Alta.** Libro diario y libro mayor incompletos frente a lo que pidió el cliente.
 5. **H04 · Alta.** El PDF con texto se lee pero el detector lo marca «desconocido»: no aporta ninguna cuenta.
 
-**Datos reales de FANANT hoy:** 1 cliente y 1 periodo (enero 2025, estado «cerrado», 0 cuentas, todas las cifras en $ 0), 0 movimientos guardados, 1 resultado guardado vacío y **1 cierre intacto con 13 saldos** (caja 37.144.505, capital 37.800.000, pérdida 2.857.975,72). Se recupera volviendo a calcular con `docs/fuentes/CONTABILIDAD.xls` y `NOMINA__enero__2025.xlsx` (ver §4.10).
+**Datos reales de FANANT hoy:** 1 cliente y 1 periodo (enero 2025, estado «cerrado», 0 cuentas, todas las cifras en $ 0), 0 movimientos guardados, 1 resultado guardado vacío y **1 cierre intacto con 13 saldos** (caja 37.144.505, capital 37.800.000, pérdida 2.857.975,72). Se recupera volviendo a calcular con `privado/fuentes/CONTABILIDAD.xls` y `NOMINA__enero__2025.xlsx` (ver §4.10).
 
 ---
 
@@ -64,7 +64,7 @@ sistema-contable-fanant/
 │  ├─ tests/                ← 111 pruebas (todas contra SQLite temporal)
 │  ├─ sembrar.py · comprobar.py · mantener_vivo.py
 ├─ data/                    ← puc.json (catálogo) · alias.json · parametros_legales.json · empresa_fanant.json (empresa por defecto)
-├─ docs/fuentes/            ← archivos reales de FANANT: CONTABILIDAD.xls, NOMINA__enero__2025.xlsx, ESTADOS_FINANCIEROS.xlsx + Word
+├─ privado/fuentes/            ← archivos reales de FANANT: CONTABILIDAD.xls, NOMINA__enero__2025.xlsx, ESTADOS_FINANCIEROS.xlsx + Word
 ├─ docs/diseno/             ← especificación, informes de las 9 fases del rediseño, capturas, CONTRASTES, MARCA, PROPUESTAS
 ├─ supabase/migraciones/    ← 001_esquema.sql · 002_seguridad.sql (RLS)
 ├─ empaquetar/              ← lanzador.py + carloscruz.spec (PyInstaller) → salida/CarlosCruz/CarlosCruz.exe
@@ -366,7 +366,7 @@ Crear (DV calculado) ✅ · editar honorarios ✅ · archivar ✅ · restaurar p
 
 ## 4.7 Matriz de cumplimiento de requisitos
 
-Cifras de control con `docs/fuentes/CONTABILIDAD.xls`, calculado en memoria con el mapeo propuesto por el sistema.
+Cifras de control con `privado/fuentes/CONTABILIDAD.xls`, calculado en memoria con el mapeo propuesto por el sistema.
 
 | Entregable | ¿Existe? | Backend (archivo · función) | Endpoint | Pantalla | Excel | PDF | Verificado con | Cifras de control | Estado |
 |---|---|---|---|---|---|---|---|---|---|
@@ -465,7 +465,7 @@ Cifras de control con `docs/fuentes/CONTABILIDAD.xls`, calculado en memoria con 
 3. A las 18:12, recálculo con todas las hojas desmarcadas: todo en $ 0.
 
 **Para recuperarlo:**
-- **Archivos necesarios:** `docs/fuentes/CONTABILIDAD.xls` y `docs/fuentes/NOMINA__enero__2025.xlsx`, ambos en el repositorio.
+- **Archivos necesarios:** `privado/fuentes/CONTABILIDAD.xls` y `privado/fuentes/NOMINA__enero__2025.xlsx`, ambos en el repositorio.
 - **Pasos:**
   1. Copiar primero el cierre de arriba (reabrir lo borra).
   2. Reabrir enero.
@@ -486,7 +486,7 @@ Cifras de control con `docs/fuentes/CONTABILIDAD.xls`, calculado en memoria con 
 | H02 | Datos | FANANT enero 2025 en $ 0; el cierre con 13 saldos sobrevive | **Bloqueante** | §4.10 | Recuperar con los archivos de `docs/fuentes` siguiendo §4.10, **después** de H01 | — (operación) | 30 min | No (operación con datos) |
 | H03 | Flujo | Subir el Excel de un cliente que no existe obliga a crear la ficha a mano; sin cliente, el backend asume la identidad de FANANT | Alta | §4.6-2 | Permitir subir sin cliente: si el archivo trae NIT y razón social (plantilla EMPRESA), ofrecer «Crear el cliente con estos datos» con la ficha prellenada y seguir; si no, pedir solo NIT y razón social en el mismo paso. Quitar la empresa por defecto FANANT (usar una vacía) | `api/trabajo.py`, `modelos.py`, `paginas/Trabajo.tsx`, `paginas/Inicio.tsx` | 1–1,5 días | Sí (creación de cliente) |
 | H04 | Importación | PDF con texto: se lee pero el detector lo deja «desconocido» | Alta | §4.8 | Rama nueva en `detector.detectar_hoja` para la hoja «PDF» → importador de saldos (balance de prueba) que genere saldos o movimientos, siempre con revisión | `importadores/detector.py`, nuevo `importadores/balance_pdf.py`, pruebas | 1 día | Sí |
-| H05 | Entregable | Libro diario incompleto: sin informe, Excel ni PDF; la pantalla mezcla todos los periodos, no muestra el comprobante ni totales por comprobante; sin fecha si la fuente no la trae | Alta | §4.6-6, `docs/informe/libro-diario-ficha.png` | Informe `libro_diario` en el motor (orden cronológico, fecha, número y tipo de comprobante, cuenta, tercero, descripción, D/C, totales por comprobante y del periodo, verificación de partida doble); hoja en el Excel; sección en el PDF; selector de periodo y columna de comprobante en la ficha | `motor.py`, `contabilidad/` (nuevo reporte), `exportar/excel.py`, `exportar/pdf.py`, `api/analisis.py` (filtro por periodo), `ClienteFicha.tsx` | 1,5–2 días | Sí (nuevo informe) |
+| H05 | Entregable | Libro diario incompleto: sin informe, Excel ni PDF; la pantalla mezcla todos los periodos, no muestra el comprobante ni totales por comprobante; sin fecha si la fuente no la trae | Alta | §4.6-6, `privado/capturas/informe/informe/libro-diario-ficha.png` | Informe `libro_diario` en el motor (orden cronológico, fecha, número y tipo de comprobante, cuenta, tercero, descripción, D/C, totales por comprobante y del periodo, verificación de partida doble); hoja en el Excel; sección en el PDF; selector de periodo y columna de comprobante en la ficha | `motor.py`, `contabilidad/` (nuevo reporte), `exportar/excel.py`, `exportar/pdf.py`, `api/analisis.py` (filtro por periodo), `ClienteFicha.tsx` | 1,5–2 días | Sí (nuevo informe) |
 | H06 | Entregable | No existe el «Libro mayor y balances» oficial; el libro mayor no se agrupa por nivel PUC y no va en el PDF | Alta | §4.7 | Informe `mayor_y_balances`: por cuenta (con subtotales por grupo y clase) saldo anterior D/C, movimientos D/C y saldo final D/C; agregar libro mayor y este informe al PDF | `contabilidad/mayor.py`, `exportar/excel.py`, `exportar/pdf.py` | 1 día | Sí (nuevo informe) |
 | H07 | Importación | Por defecto se usa la hoja de trabajo en vez de la cuenta T: se pierde el detalle (29 → 6 movimientos) | Media | §4.7, verificar_caja | Tomar los **saldos iniciales** de la hoja de trabajo y los **movimientos** de la cuenta T cuando ambas coinciden en sumas | `importadores/detector.py · _marcar_duplicados`, `motor.preparar_paquete` | 0,5 día | Sí |
 | H08 | Trazabilidad | `importaciones`, `bitacora`, `empleados` y `sesiones` nunca se escriben | Media | §4.4 | Registrar subidas (archivo, sha256, hojas) y acciones (calcular, cerrar, reabrir, eliminar). `empleados` y `sesiones`: usar o eliminar | `repositorio/`, `api/` | 0,5 día | No |
@@ -497,7 +497,7 @@ Cifras de control con `docs/fuentes/CONTABILIDAD.xls`, calculado en memoria con 
 | H13 | Tablero | `/api/tablero` no trae Activo/Pasivo/Patrimonio agregados ni el estado de cada mes; la interfaz deduce el estado de los 8 clientes recientes | Media | `PROPUESTAS.md` punto 4 | Agregar al endpoint, por mes: periodos cerrados, abiertos, clientes sin contabilizar y totales del balance | `api/analisis.py`, `repositorio/periodos.py`, `Tablero.tsx` | 1 día | Sí (cambia endpoint) |
 | H14 | Exportación | El Excel usa colores del diseño viejo (índigo, y verde en la pestaña Notas), contra la regla «sin verde» | Baja | `exportar/excel.py` (`LIMA = 4338CA`, `VERDE = 059669`) | Pasar a tinta, azul y rojo del sistema | `exportar/excel.py` | 2 h | No |
 | H15 | Repositorio | Seis archivos temporales `frontend/vite.config.ts.timestamp-*.mjs` | Baja | `git status` | Borrarlos y añadir `*.timestamp-*.mjs` al `.gitignore` | `.gitignore` | 5 min | No |
-| H16 | Diseño | Dos azules sólidos en la ficha › Estados («Excel completo» + «Nuevo periodo») | Baja | `docs/informe/pestana-nomina.png` | «Excel completo» en botón de tinta | `ResultadoGuardado.tsx` | 15 min | No |
+| H16 | Diseño | Dos azules sólidos en la ficha › Estados («Excel completo» + «Nuevo periodo») | Baja | `privado/capturas/informe/informe/pestana-nomina.png` | «Excel completo» en botón de tinta | `ResultadoGuardado.tsx` | 15 min | No |
 | H17 | Código | Endpoints sin uso (`/clientes/resumen`, `/clientes/buscar`, `/clientes/{id}/alias`, `GET /periodos/{id}`) y funciones de `api.ts` sin uso (`restaurar`, `resumen`, `cartera`, `urlPlantilla`, `plantillaDemo`) | Baja | §4.3 | Usar (restaurar) o retirar | `api/*.py`, `api.ts` | 1 h | No |
 | H18 | Interfaz | «Guacarí, Valle del Cauca» fijo en el preloader | Baja | §4.5 | Tomarlo de la configuración del contador | `Preloader.tsx` | 15 min | No |
 | H19 | Importación | Un Excel vacío o un CSV sin contabilidad se pueden «calcular» y guardar | Media | §4.6-4 | Lo resuelve el punto 2 de H01 | (H01) | — | Sí |
@@ -567,7 +567,7 @@ Cifras de control con `docs/fuentes/CONTABILIDAD.xls`, calculado en memoria con 
 
 ## Anexo · Evidencia generada para este informe
 
-Capturas tomadas en la copia aislada (no en la base real), en `docs/informe/`:
+Capturas tomadas en la copia aislada (no en la base real), en `privado/capturas/informe/informe/`:
 
 | Archivo | Muestra |
 |---|---|
@@ -588,11 +588,11 @@ Se guardó `git status --short` antes de empezar y se comparó con el estado fin
 
 ```
 ?? docs/INFORME_ESTADO_ACTUAL.md
-?? docs/informe/libro-diario-ficha.png
-?? docs/informe/periodos-cerrado-en-cero.png
-?? docs/informe/pestana-inventario.png
-?? docs/informe/pestana-nomina.png
-?? docs/informe/trabajar-paso-01.png
+?? privado/capturas/informe/informe/libro-diario-ficha.png
+?? privado/capturas/informe/informe/periodos-cerrado-en-cero.png
+?? privado/capturas/informe/informe/pestana-inventario.png
+?? privado/capturas/informe/informe/pestana-nomina.png
+?? privado/capturas/informe/informe/trabajar-paso-01.png
 ```
 
 El resto de entradas de `git status` (155 líneas) ya estaban así antes del informe y no cambiaron:

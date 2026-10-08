@@ -1,7 +1,6 @@
 """Estructura genérica de reportes: la usan la API (pantalla), Excel y PDF."""
 from __future__ import annotations
 
-from decimal import Decimal
 
 
 def col(clave: str, titulo: str, tipo: str = "texto", ancho: int | None = None) -> dict:
@@ -39,10 +38,3 @@ class Constructor:
         return self.agregar("vacia", {})
 
 
-def suma_col(filas: list[dict], indices: list[int], clave: str) -> Decimal:
-    total = Decimal("0")
-    for i in indices:
-        v = filas[i]["valores"].get(clave)
-        if isinstance(v, Decimal):
-            total += v
-    return total

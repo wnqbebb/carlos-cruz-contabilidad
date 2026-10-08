@@ -30,7 +30,7 @@ HOJAS = {
 }
 
 INSTRUCCIONES = [
-    "PLANTILLA CONTABLE FANANT — INSTRUCCIONES",
+    "PLANTILLA CONTABLE — INSTRUCCIONES",
     "",
     "1. EMPRESA: revise los datos de la empresa y escriba el periodo (desde / hasta) en formato AAAA-MM-DD.",
     "2. SALDOS_INICIALES: saldos de las cuentas al inicio del periodo (clases 1, 2 y 3). Débitos = créditos. Si la deja vacía, la aplicación "

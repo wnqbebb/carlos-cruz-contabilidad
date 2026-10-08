@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from ..modelos import Alerta, AporteSocio, Paquete
-from ..utils.numeros import CERO, D, pesos
+from ..utils.numeros import CERO, D
 from .base import Deteccion
 from .lector import Hoja
 
@@ -48,5 +48,3 @@ def importar(h: Hoja, r_h: int, id_: str) -> Deteccion:
                      "Se usa para conciliar el capital (no genera movimientos contables).", resumen, paquete)
 
 
-def total_texto(v) -> str:
-    return pesos(v)

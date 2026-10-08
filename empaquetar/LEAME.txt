@@ -11,6 +11,16 @@ COMO ABRIR EL PROGRAMA
 
   Para cerrar todo: cierre la ventana negra.
 
+  La primera vez, la ventana negra pide crear un usuario y una
+  contrasena. Con ellos se entra al programa.
+
+
+CAMBIAR LA CONTRASENA
+
+  Abra una ventana de comandos en la carpeta del programa y escriba:
+
+      CarlosCruz.exe --cambiar-clave
+
 
 DONDE QUEDAN SUS DATOS
 

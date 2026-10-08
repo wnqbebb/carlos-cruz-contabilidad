@@ -131,7 +131,6 @@ def _capital_vs_estatutos(periodos: list[dict]) -> list[dict]:
     )]
 
 
-
 def _ficha_incompleta(cliente: dict) -> list[dict]:
     """Datos de la ficha que harán falta al momento de firmar los estados."""
     faltantes = [
@@ -403,59 +402,4 @@ def _informe_en_memoria(cliente: dict, historia: list[dict], cierres: int, hoy: 
             sev: sum(1 for x in salida if x["severidad"] == sev)
             for sev in ("critica", "alta", "media", "informativa")
         },
-    }
-
-
-def de_cartera(hoy: date | None = None, limite_clientes: int = 500) -> dict:
-    """Revisa los clientes activos y devuelve lo urgente primero.
-
-    RENDIMIENTO: esto se carga en TRES consultas (clientes, periodos, socios),
-    no en cuatro por cliente. La versión anterior tardaba ~6 s contra Supabase
-    con un solo cliente, y el tiempo crecía en línea recta con la cartera: con
-    cien clientes eran minutos. Ahora el costo es casi plano.
-    """
-    hoy = hoy or date.today()
-
-    pagina = repo_clientes.listar(
-        estado="activo", orden="actualizado", descendente=True,
-        pagina=1, por_pagina=min(limite_clientes, 500),
-    )
-    fichas = pagina["clientes"]
-    ids = [c["id"] for c in fichas]
-
-    historias = repo_periodos.series_de_varios(ids)
-    socios = repo_clientes.socios_de_varios(ids)
-    cierres = repo_periodos.cierres_de_varios(ids)
-
-    pendientes: list[dict] = []
-    for cliente in fichas:
-        datos = {**cliente, "socios": socios.get(cliente["id"], [])}
-        try:
-            informe = _informe_en_memoria(datos, historias.get(cliente["id"], []),
-                                          cierres.get(cliente["id"], 0), hoy)
-        except Exception:  # un cliente con datos raros no puede tumbar el tablero
-            continue
-        urgentes = [x for x in informe["sugerencias"] if x["severidad"] in ("critica", "alta")]
-        if not urgentes:
-            continue
-        pendientes.append({
-            "cliente_id": cliente["id"],
-            "razon_social": cliente["razon_social"],
-            "nit_formateado": cliente["nit_formateado"],
-            "municipio": cliente.get("municipio", ""),
-            "criticas": sum(1 for x in urgentes if x["severidad"] == "critica"),
-            "altas": sum(1 for x in urgentes if x["severidad"] == "alta"),
-            "principal": urgentes[0],
-        })
-
-    pendientes.sort(key=lambda c: (-c["criticas"], -c["altas"], c["razon_social"]))
-    return {
-        "generado": hoy.isoformat(),
-        "clientes_revisados": len(fichas),
-        "clientes_totales": pagina["total"],
-        "truncado": pagina["total"] > len(fichas),
-        "con_pendientes": len(pendientes),
-        "criticas": sum(c["criticas"] for c in pendientes),
-        "altas": sum(c["altas"] for c in pendientes),
-        "clientes": pendientes[:60],
     }

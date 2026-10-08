@@ -1,6 +1,6 @@
 # Fase 4 · Registros auxiliares, contabilidad en PDF y Word, libro diario suelto
 
-Capturas: `docs/v22/capturas/fase-4/`. Todo probado en la copia aislada (puerto 8001, SQLite desechable). La base real no se tocó.
+Capturas: `privado/capturas/v22/fase-4/`. Todo probado en la copia aislada (puerto 8001, SQLite desechable). La base real no se tocó.
 
 ## El problema que se cierra
 Un negocio pequeño no lleva partida doble: lleva **listas**. Ventas del mes, compras, gastos, lo que le deben, lo que debe, un conteo de la mercancía. Hasta ahora esas listas caían en «No reconocí lo que trae». Ahora se reconocen por su **contenido** y se convierten en asientos.

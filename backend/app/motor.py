@@ -5,7 +5,6 @@ import dataclasses
 from collections import defaultdict
 from dataclasses import dataclass, field
 from datetime import date
-from decimal import Decimal
 
 from .contabilidad import ajustes as aj
 from .contabilidad import cierre as ci
@@ -458,5 +457,3 @@ def _reporte_depreciacion(detalle: list[dict], periodo: str) -> dict:
     return reporte("depreciacion", "DEPRECIACIÓN DE PROPIEDADES, PLANTA Y EQUIPO", periodo, cols, k.filas)
 
 
-def decimal_o_cero(v) -> Decimal:
-    return v if isinstance(v, Decimal) else CERO

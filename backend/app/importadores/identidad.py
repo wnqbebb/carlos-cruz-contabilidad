@@ -133,14 +133,6 @@ def documento_en_texto(texto: str) -> tuple[str, str, str] | None:
     return None
 
 
-def nit_en_texto(texto: str) -> tuple[str, str] | None:
-    """Solo el NIT de una empresa (no la cédula de una persona)."""
-    hallado = documento_en_texto(texto)
-    if hallado and hallado[0] == "nit":
-        return hallado[1], hallado[2]
-    return None
-
-
 # Primeras palabras que delatan un TÍTULO de documento, no un nombre de empresa:
 # «ESTATUTOS DE SOCIEDAD POR ACCIONES SIMPLIFICADA S.A.S.» no es un cliente.
 _TITULOS = {

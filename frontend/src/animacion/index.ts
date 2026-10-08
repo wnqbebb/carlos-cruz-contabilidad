@@ -34,8 +34,6 @@ export { gsap, Flip, ScrollTrigger };
 export function sinMovimiento(): boolean {
   return typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 }
-/** Nombre anterior, conservado para el código que ya lo usaba. */
-export const menosMovimiento = sinMovimiento;
 
 /** Duraciones del spec (sección 8), en segundos. */
 export const DURACION = {
@@ -98,39 +96,6 @@ export function useAparicion(ref: RefObject<HTMLElement | null>, activo = true) 
     });
     return () => ctx.revert();
   }, [ref, activo]);
-}
-
-/* ── piezas sueltas que ya existían ──────────────────────────────────── */
-
-/** Entrada escalonada de una lista de tarjetas. */
-export function animarTarjetas(
-  nodos: Element[] | NodeListOf<Element> | null,
-  opciones: { retardo?: number; desplazamiento?: number } = {},
-): gsap.core.Tween | undefined {
-  const lista = nodos ? Array.from(nodos as ArrayLike<Element>) : [];
-  if (!lista.length) return;
-  if (sinMovimiento()) {
-    gsap.set(lista, { opacity: 1, y: 0 });
-    return;
-  }
-  return gsap.fromTo(
-    lista,
-    { opacity: 0, y: opciones.desplazamiento ?? 12 },
-    {
-      opacity: 1,
-      y: 0,
-      duration: DURACION.entrada,
-      ease: "power3.out",
-      stagger: { amount: Math.min(0.04 * lista.length, 0.35) },
-      delay: opciones.retardo ?? 0,
-    },
-  );
-}
-
-/** Resalta un bloque que acaba de cambiar, sin moverlo de sitio (≤ 0,2 s). */
-export function destacar(nodo: HTMLElement | null): void {
-  if (!nodo || sinMovimiento()) return;
-  gsap.fromTo(nodo, { opacity: 0.6 }, { opacity: 1, duration: DURACION.estado, ease: "power1.out" });
 }
 
 /* ── señal «el Tablero ya tiene datos» para el preloader ─────────────── */

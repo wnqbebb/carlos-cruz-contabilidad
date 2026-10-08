@@ -248,7 +248,7 @@ Fase 0 — Diagnóstico y lectura (sin código). Causa real de que no se vieran 
 Al final de cada fase: npm run build, pruebas (111 verdes), tsc, lint:diseno, capturas (sección 12) y un informe corto.
 
 12. VERIFICACIÓN VISUAL OBLIGATORIA
-Crea npm run capturas con Playwright: captura cada ruta a 1440×900 y 390×844 (y el preloader a mitad de animación) en docs/diseno/capturas/<fase>/.
+Crea npm run capturas con Playwright: captura cada ruta a 1440×900 y 390×844 (y el preloader a mitad de animación) en privado/capturas/diseno/capturas/<fase>/.
 Abre tú mismo cada captura y compárala con las referencias y con esta especificación. Corrige antes de reportar.
 En el informe de la fase incluye por pantalla una lista de verificación con ✅/❌:
 ¿Se lee primero lo más importante?

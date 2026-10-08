@@ -270,35 +270,6 @@ export interface InformeSugerencias {
   conteo: Record<Severidad, number>;
 }
 
-export interface ClientePendiente {
-  cliente_id: string;
-  razon_social: string;
-  nit_formateado: string;
-  municipio: string;
-  criticas: number;
-  altas: number;
-  principal: Sugerencia;
-}
-
-export interface Cartera {
-  generado: string;
-  clientes_revisados: number;
-  clientes_totales: number;
-  truncado: boolean;
-  con_pendientes: number;
-  criticas: number;
-  altas: number;
-  clientes: ClientePendiente[];
-}
-
-export interface MesCartera {
-  mes: string;
-  total_ingresos: Monto;
-  total_gastos: Monto;
-  utilidad: Monto;
-  periodos: number;
-}
-
 /** Una tarea sugerida del tablero (spec v2.2 · Fase 7). */
 export interface Tarea {
   /** codigo:cliente_id — estable, para posponerla. */

@@ -162,9 +162,3 @@ def leer_pdf(contenido: bytes, archivo: str) -> list[Hoja]:
     return [hoja]
 
 
-def resumen_legible(hoja: Hoja) -> str:
-    d = getattr(hoja, "diagnostico_pdf", None)
-    if not d:
-        return ""
-    return (f"{d['paginas']} página(s), {d['filas_reconocidas']} fila(s) reconocida(s), "
-            f"{d['lineas_descartadas']} línea(s) descartada(s) por no parecer datos")

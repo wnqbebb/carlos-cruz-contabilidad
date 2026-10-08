@@ -1,6 +1,6 @@
 # Fase 5 · Libro diario, libro mayor y balances, y todos los entregables desde cualquier archivo
 
-Capturas: `docs/v22/capturas/fase-5/`. Probado en la copia aislada (puerto 8001). La base real no se tocó.
+Capturas: `privado/capturas/v22/fase-5/`. Probado en la copia aislada (puerto 8001). La base real no se tocó.
 
 ## Qué se hizo
 

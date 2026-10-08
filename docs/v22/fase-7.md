@@ -1,6 +1,6 @@
 # Fase 7 · Tablero del contador (+ H13, H18)
 
-Capturas: `docs/v22/capturas/fase-7/`. Probado en la copia aislada. La base real no se tocó.
+Capturas: `privado/capturas/v22/fase-7/`. Probado en la copia aislada. La base real no se tocó.
 
 ## Qué se quitó
 El resultado del mes de la cartera, la ecuación contable, la tarjeta de nómina (SMMLV, auxilio y jornada siguen en Parámetros) y toda cifra financiera de un cliente individual (las carpetas recientes ya no muestran la utilidad).

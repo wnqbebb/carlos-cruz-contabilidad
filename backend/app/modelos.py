@@ -7,7 +7,6 @@ from dataclasses import dataclass, field
 from datetime import date
 from decimal import Decimal
 
-from .config import DATA
 from .utils.numeros import CERO, D, parse_fecha
 
 

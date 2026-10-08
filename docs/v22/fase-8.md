@@ -1,6 +1,6 @@
 # Fase 8 · Más definición, identidad por página, color por cliente, modo claro/oscuro/sistema
 
-Capturas: `docs/v22/capturas/fase-8/` — las 11 pantallas en **claro y oscuro, a 1440 y 390 px** (44 capturas, JPEG). Probado en la copia aislada.
+Capturas: `privado/capturas/v22/fase-8/` — las 11 pantallas en **claro y oscuro, a 1440 y 390 px** (44 capturas, JPEG). Probado en la copia aislada.
 
 ## 8.1 Tres planos que se distinguen
 - Tokens nuevos: `--lienzo`, `--barra`, `--hoja`, `--hoja-2`, `--campo`, `--linea` (10 %), `--linea-fuerte` (18 %), `--borde-campo` (24 %). `--papel` queda como alias del lienzo.

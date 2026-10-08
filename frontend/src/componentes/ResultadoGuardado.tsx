@@ -112,6 +112,7 @@ export function ResultadoGuardado({
               <button
                 key={p.id}
                 onClick={() => setPeriodoId(p.id)}
+                aria-pressed={p.id === periodoId}
                 className={clases(
                   "shrink-0 rounded-full px-4 py-2 text-xs sm:text-sm font-semibold transition-all duration-200",
                   p.id === periodoId

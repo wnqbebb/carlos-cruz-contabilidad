@@ -15,7 +15,7 @@ import logging
 from datetime import date, datetime
 from decimal import Decimal
 
-from sqlalchemy import delete, desc, insert, select, update
+from sqlalchemy import desc, insert, select, update
 
 from ..db import conexion, lectura
 from ..esquema import bitacora as T
@@ -112,7 +112,3 @@ def listar_acciones(acciones: tuple[str, ...], limite: int = 200) -> list[dict]:
              "detalle": f.detalle or {}, "creado": f.creado.isoformat()} for f in filas]
 
 
-def olvidar(cliente_id: str) -> int:
-    """Borra la bitácora de un cliente (solo al eliminarlo definitivamente)."""
-    with conexion() as cn:
-        return cn.execute(delete(T).where(T.c.cliente_id == cliente_id)).rowcount or 0
