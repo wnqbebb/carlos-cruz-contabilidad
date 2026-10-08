@@ -1,4 +1,4 @@
-import { LayoutGrid, Monitor, Moon, PenLine, Plus, Search, Settings2, Sun, Users } from "lucide-react";
+import { LayoutGrid, LogOut, Monitor, Moon, PenLine, Plus, Search, Settings2, Sun, Users } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -13,7 +13,7 @@ import {
 } from "react";
 import { createPortal } from "react-dom";
 import { Link, NavLink, useLocation } from "react-router-dom";
-import { sistema } from "../api";
+import { sesionApi, sistema } from "../api";
 import { clases } from "../formato";
 import type { Salud } from "../tipos";
 import { colorCliente } from "../colorCliente";
@@ -209,13 +209,7 @@ export function Marco({ children }: { children: ReactNode }) {
                   </BotonAcento>
                 </span>
                 <SelectorTema />
-                <span
-                  title={[MARCA, cargo, tp].filter(Boolean).join(" · ")}
-                  className="grid h-11 w-11 place-items-center rounded-full border border-linea bg-hoja text-[13px] font-semibold tracking-[-0.02em] text-tinta"
-                >
-                  <span aria-hidden>CC</span>
-                  <span className="sr-only">{MARCA}</span>
-                </span>
+                <MenuCuenta titulo={[MARCA, cargo, tp].filter(Boolean).join(" · ")} />
               </div>
             </header>
           </div>
@@ -468,5 +462,70 @@ function SelectorTema() {
       />
       </span>
     </>
+  );
+}
+
+
+/* ── cuenta: quién está dentro y «Cerrar sesión» (A2) ─────────────────── */
+function MenuCuenta({ titulo }: { titulo: string }) {
+  const [abierto, setAbierto] = useState(false);
+  const [usuario, setUsuario] = useState("");
+  const raiz = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!abierto) return;
+    sesionApi.estado().then((e) => setUsuario(e.usuario ?? "")).catch(() => undefined);
+    const fuera = (e: MouseEvent) => {
+      if (!raiz.current?.contains(e.target as Node)) setAbierto(false);
+    };
+    const tecla = (e: KeyboardEvent) => e.key === "Escape" && setAbierto(false);
+    document.addEventListener("mousedown", fuera);
+    document.addEventListener("keydown", tecla);
+    return () => {
+      document.removeEventListener("mousedown", fuera);
+      document.removeEventListener("keydown", tecla);
+    };
+  }, [abierto]);
+
+  const salir = async () => {
+    try {
+      await sesionApi.salir();
+    } finally {
+      window.location.assign("/");
+    }
+  };
+
+  return (
+    <div ref={raiz} className="relative">
+      <button
+        type="button"
+        title={titulo}
+        aria-label="Cuenta y cerrar sesión"
+        aria-expanded={abierto}
+        aria-haspopup="menu"
+        onClick={() => setAbierto((v) => !v)}
+        className="grid h-11 w-11 place-items-center rounded-full border border-linea bg-hoja text-[13px] font-semibold tracking-[-0.02em] text-tinta transition-colors hover:border-tinta/30"
+      >
+        <span aria-hidden>CC</span>
+      </button>
+      {abierto && (
+        <div
+          role="menu"
+          className="material-cristal absolute right-0 top-[calc(100%+8px)] z-50 w-60 rounded-hoja border border-linea p-2 shadow-expediente"
+        >
+          <p className="t-meta px-3 pb-2 pt-1 text-gris">
+            Sesión de <span className="normal-case text-tinta">{usuario || "…"}</span>
+          </p>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={salir}
+            className="t-body flex w-full items-center gap-2 rounded-[10px] px-3 py-2 text-left text-tinta transition-colors hover:bg-hoja-2"
+          >
+            <LogOut size={16} strokeWidth={1.5} aria-hidden /> Cerrar sesión
+          </button>
+        </div>
+      )}
+    </div>
   );
 }

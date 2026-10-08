@@ -15,7 +15,7 @@ Estados: 🟡 pendiente de confirmar · 🟢 confirmado · 🔵 decisión técni
 | S-06 | Auditar los EF existentes | `auditor_ef.habilitado` | Sí. Importador de "estado financiero existente" que solo **audita** (E1, E2, E3, E19–E21) y no alimenta el mayor | 🔵 |
 | S-07 | Capital de 30M efectivamente pagado | `empresa.capital_pagado` | 30.000.000 según estatutos. Las alertas E3, E5 y E18 quedan visibles hasta que se concilie | 🟡 Crítico: el libro de aportes dice pagado 0 |
 | S-13 | Domicilio | `empresa.direccion` | Calle 8 No. 9-86, B/ El Limonar, Guacarí (estatutos). "Guabitas" no se usa | 🟡 |
-| S-14 | "Luz Adriana Durán" (libro de aportes) = Adriana Durán Jaramillo, CC [CEDULA] | alias de tercero | Misma persona | 🟡 |
+| S-14 | "Luz Adriana Durán" (libro de aportes) = la representante legal (cédula en privado/) | alias de tercero | Misma persona | 🟡 |
 
 ## Contabilidad
 

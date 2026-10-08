@@ -34,9 +34,9 @@ def test_reconoce_una_fila_de_balance(linea):
 @pytest.mark.parametrize(
     "linea",
     [
-        "FARMACIA NATURISTA ANTARES S.A.S. - NIT [NIT]-9",  # el NIT no es plata
+        "EMPRESA EJEMPLO S.A.S. - NIT 900.123.456-8",  # el NIT no es plata
         "Pagina 1 de 9",
-        "Representante legal - C.C. [CEDULA]",
+        "Representante legal - C.C. 1000000003",
         "Contador publico - T.P. 103028-T",
         "TOTAL ACTIVO 37.144.505",            # sin código: es un total, no una cuenta
         "Generado el 06/10/2026",
@@ -85,7 +85,7 @@ def test_el_lector_general_acepta_pdf(empresa):
     tablas = [h for h in hojas if not es_hoja_de_texto(h)]
     assert len(texto) == 1, "falta la hoja de texto del PDF"
     assert tablas, "no se reconoció ninguna tabla del PDF"
-    assert "ANTARES" in texto[0].texto_plano.upper()
+    assert empresa.razon_social.split()[0].upper() in texto[0].texto_plano.upper()
 
     # Al menos una tabla tiene que traer cuentas con código PUC y nombre.
     def es_cuenta(fila):

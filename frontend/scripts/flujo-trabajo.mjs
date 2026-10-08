@@ -11,8 +11,10 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, cliente, salida] = process.argv.slice(2);
+await prepararSesion(base);
 if (!base || !cliente || !salida) {
   console.error("Uso: node scripts/flujo-trabajo.mjs <url-base> <cliente-id> <carpeta-salida>");
   process.exit(1);
@@ -24,6 +26,7 @@ if (/:8000\b/.test(base)) {
 mkdirSync(salida, { recursive: true });
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 const errores = [];
 for (const [sufijo, ancho, alto] of [["", 1440, 900], ["-movil", 390, 844]]) {
   const contexto = await navegador.newContext({ viewport: { width: ancho, height: alto }, reducedMotion: "reduce" });

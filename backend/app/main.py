@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from sqlalchemy.exc import DBAPIError
 
-from . import db
+from . import db, sesion
 from .api import ROUTERS
 from .config import CORS_ORIGENES, FRONTEND_DIST, LEMA, MARCA, VERSION
 from .repositorio import parametros as repo_parametros
@@ -61,6 +61,17 @@ async def _error_de_base(_req: Request, ex: DBAPIError):
     log.exception("Error de la base de datos")
     return JSONResponse(status_code=500, content={"detail": {"codigo": "error_base",
                                                              "mensaje": "La base de datos rechazó la operación. Nada se guardó a medias."}})
+
+@app.middleware("http")
+async def _exigir_sesion(request: Request, siguiente):
+    """Toda la API pide sesión, salvo el estado del servidor y el ingreso (A2)."""
+    ruta = request.url.path
+    if (request.method != "OPTIONS" and ruta.startswith("/api/") and ruta.rstrip("/") not in sesion.PUBLICAS
+            and not sesion.leer(request.cookies.get(sesion.COOKIE))):
+        return JSONResponse(status_code=401, content={"detail": {
+            "codigo": "sin_sesion", "mensaje": "La sesión no está iniciada o venció. Ingrese de nuevo."}})
+    return await siguiente(request)
+
 
 app.add_middleware(
     CORSMiddleware,

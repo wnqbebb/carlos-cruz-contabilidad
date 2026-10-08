@@ -12,8 +12,10 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, salida] = process.argv.slice(2);
+await prepararSesion(base);
 if (/:8000\b/.test(base ?? "") && !process.argv.includes("--solo-lectura")) {
   console.error("Se niega a correr contra :8000 (la base real) salvo con --solo-lectura.");
   process.exit(1);
@@ -61,6 +63,7 @@ const RUTAS = [
 ];
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 const errores = [];
 const desbordes = [];
 for (const modo of ["claro", "oscuro"]) {

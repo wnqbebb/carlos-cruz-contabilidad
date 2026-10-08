@@ -19,3 +19,7 @@ empaquetar/temporal/
 
 # Basura de compilacion que no pertenece al historial
 frontend/vite.config.ts.timestamp-*
+
+# Datos reales de clientes (archivos fuente, respaldos, capturas con NIT o cédulas).
+# Viven solo en este equipo; ver docs/PRIVADO.md.
+privado/

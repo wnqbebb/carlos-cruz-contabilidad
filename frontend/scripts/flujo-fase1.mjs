@@ -10,8 +10,10 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, salida] = process.argv.slice(2);
+await prepararSesion(base);
 if (/:8000\b/.test(base ?? "")) {
   console.error("Se niega a correr contra :8000 (la base real).");
   process.exit(1);
@@ -53,6 +55,7 @@ await api(`/api/cierre/${imp.sesion_id}`, { method: "POST" });
 console.log("periodo cerrado");
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 const contexto = await navegador.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
 await contexto.addInitScript(() => {
   try { sessionStorage.setItem("cc-preloader-visto", "1"); } catch {}

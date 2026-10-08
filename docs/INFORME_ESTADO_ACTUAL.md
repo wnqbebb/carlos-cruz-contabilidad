@@ -321,7 +321,7 @@ Leyenda: **[E]** verificado en ejecución en la copia aislada · **[C]** solo le
 
 ### 2. Subir un Excel de un cliente que **no** existe — [E] (API) + [C] (interfaz)
 - **Sigue pasando.** La pantalla Trabajar (`paginas/Trabajo.tsx · ElegirCliente`) **exige elegir un cliente antes de subir**. Si no existe, el único camino es «Crear el cliente» y llenar la ficha a mano. Nada lee los datos del Excel para crearla.
-- Por API, `POST /api/importar` sin cliente funciona, pero **asume la empresa por defecto: FARMACIA NATURISTA ANTARES S.A.S., NIT [NIT]-9** (`modelos.empresa_por_defecto`). El cálculo responde `guardado: false`, y `POST /api/cierre/{sid}` responde 400 «hay que trabajar sobre un cliente del directorio».
+- Por API, `POST /api/importar` sin cliente funciona, pero **asume la empresa por defecto: FARMACIA NATURISTA ANTARES S.A.S., NIT [del cliente]** (`modelos.empresa_por_defecto`). El cálculo responde `guardado: false`, y `POST /api/cierre/{sid}` responde 400 «hay que trabajar sobre un cliente del directorio».
 - **Punto exacto del fallo:** `api/trabajo.py · _empresa_base` (sin cliente → FANANT) y `calcular` (sin `cliente_id` → no guarda).
 - Solo la hoja EMPRESA de la plantilla oficial trae razón social, NIT y periodo; los demás formatos no traen identidad de empresa.
 
@@ -434,7 +434,7 @@ Cifras de control con `docs/fuentes/CONTABILIDAD.xls`, calculado en memoria con 
 
 ## 4.10 Estado de los datos reales (solo lectura)
 
-**Clientes:** 1 — FARMACIA NATURISTA ANTARES S.A.S. (FANANT), NIT [NIT]-9, activo, mensual, 4 socios, creado el 6-oct-2026.
+**Clientes:** 1 — FARMACIA NATURISTA ANTARES S.A.S. (FANANT), NIT [del cliente], activo, mensual, 4 socios, creado el 6-oct-2026.
 
 **Periodos:** 1 — enero 2025 (2025-01-01 a 2025-01-31), **cerrado**, 0 cuentas, activo, pasivo, patrimonio, ingresos y utilidad en $ 0, `calculado_en` 6-oct 18:12, `cerrado_en` 6-oct 15:57 (hora de Colombia).
 

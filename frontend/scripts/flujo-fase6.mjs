@@ -18,8 +18,10 @@ import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, salida, docs] = process.argv.slice(2);
+await prepararSesion(base);
 if (/:8000\b/.test(base ?? "")) {
   console.error("Se niega a correr contra :8000 (la base real).");
   process.exit(1);
@@ -28,6 +30,7 @@ mkdirSync(salida, { recursive: true });
 const BANCO = resolve(fileURLToPath(import.meta.url), "../../../backend/tests/archivos_variados");
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 const errores = [];
 const contexto = await navegador.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
 await contexto.addInitScript(() => {

@@ -75,7 +75,6 @@ def _preparar_entorno() -> tuple[Path, Path]:
         # dentro del ejecutable no sirve. Se le indican explícitamente.
         os.environ.setdefault("CC_DATA", str(recursos / "data"))
         os.environ.setdefault("CC_FRONTEND", str(recursos / "frontend" / "dist"))
-        os.environ.setdefault("CC_FUENTES", str(recursos / "docs" / "fuentes"))
         sys.path.insert(0, str(recursos))
     else:
         sys.path.insert(0, str(recursos / "backend"))

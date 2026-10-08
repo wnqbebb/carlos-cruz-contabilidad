@@ -52,7 +52,7 @@ const TIPOS: [string, string, string][] = [
 ];
 
 const NITS: [string, string][] = [
-  ["[NIT]", "Farmacia Naturista Antares S.A.S."],
+  ["900100158", "Droguería Ejemplo S.A.S."],
   ["900123456", "Distribuciones del Valle S.A.S."],
   ["805004321", "Ferretería La 14 Ltda."],
   ["1115066789", "María Gladys García"],
@@ -107,7 +107,7 @@ function Muestra({ nombre }: { nombre: string }) {
 }
 
 /** Ocho NIT distintos para ver el color de cliente (8.3). */
-const MUESTRAS_CLIENTE = ["[NIT]", "900123456", "805004321", "900555111", "811222333", "890300279", "900777111", "1112223334"];
+const MUESTRAS_CLIENTE = ["900100158", "900123456", "805004321", "900555111", "811222333", "890300279", "900777111", "1112223334"];
 
 export function Diseno() {
   const avisar = useAvisos();
@@ -174,7 +174,7 @@ export function Diseno() {
           <div className="material-hundido grid h-36 place-items-center t-small text-grafito">Hundido</div>
           <div className="relative grid h-36 place-items-center overflow-hidden rounded-hoja">
             <div aria-hidden className="absolute -left-10 -top-16">
-              <EsferaCliente nit="[NIT]" tamano={240} deriva={false} />
+              <EsferaCliente nit="900100158" tamano={240} deriva={false} />
             </div>
             <div className="material-cristal relative grid h-24 w-[80%] place-items-center rounded-hoja t-small text-tinta">Cristal</div>
           </div>
@@ -210,11 +210,11 @@ export function Diseno() {
             </div>
           </Expediente>
           <div className="grid gap-8 escritorio:col-span-5">
-            <Expediente variante="papel" etiqueta="FANANT — 001" titulo="Farmacia Naturista Antares S.A.S." a="/diseno">
+            <Expediente variante="papel" etiqueta="FANANT — 001" titulo="Droguería Ejemplo S.A.S." a="/diseno">
               <div className="flex items-center gap-3">
-                <EsferaCliente nit="[NIT]" tamano={56} nombre="Farmacia Naturista Antares S.A.S." />
+                <EsferaCliente nit="900100158" tamano={56} nombre="Droguería Ejemplo S.A.S." />
                 <div className="min-w-0">
-                  <p className="codigo text-[13px] text-tinta">NIT [NIT]-9</p>
+                  <p className="codigo text-[13px] text-tinta">NIT 900.100.158-9</p>
                   <p className="t-small text-gris">Guacarí, Valle del Cauca · Mensual</p>
                 </div>
               </div>
@@ -228,7 +228,7 @@ export function Diseno() {
 
       <Bloque indice={5} titulo="EsferaCliente" nota="Generada del NIT: el mismo NIT da siempre la misma esfera. A 240 px deriva lentamente.">
         <div className="flex flex-wrap items-end gap-10">
-          <EsferaCliente nit="[NIT]" tamano={240} nombre="Farmacia Naturista Antares S.A.S." />
+          <EsferaCliente nit="900100158" tamano={240} nombre="Droguería Ejemplo S.A.S." />
           <div className="grid grid-cols-3 gap-6">
             {NITS.map(([nit, nombre]) => (
               <div key={nit} className="flex flex-col items-center gap-2 text-center">

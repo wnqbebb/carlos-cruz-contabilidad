@@ -16,8 +16,10 @@
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, salida, opcion] = process.argv.slice(2);
+await prepararSesion(base);
 if (/:8000\b/.test(base ?? "")) {
   console.error("Se niega a correr contra :8000 (la base real).");
   process.exit(1);
@@ -52,6 +54,7 @@ for (const ruta of ["excel", "pdf", "libro-diario/excel", "libro-diario/pdf", "m
 }
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 for (const modo of ["claro", "oscuro"]) {
   for (const ancho of [1440, 390]) {
     const contexto = await navegador.newContext({

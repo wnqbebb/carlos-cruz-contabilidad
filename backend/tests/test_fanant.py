@@ -15,6 +15,7 @@ from app.importadores.detector import detectar_archivos
 from app.inventario import kardex
 from app.modelos import Empleado, MovInventario
 from app.nomina.calculo import liquidar
+from tests.conftest import requiere_privados
 
 D = Decimal
 
@@ -105,7 +106,7 @@ def test_4_auditoria_ef(detectar, empresa):
 
 # 5 ─ nómina #002
 def test_5_nomina_002(detectar):
-    e = Empleado("ADRIANA DURAN JARAMILLO", salario_basico=D("1423500"), aux_transporte="si", mes=1, año=2025)
+    e = Empleado("LAURA PATRICIA GOMEZ RUIZ", salario_basico=D("1423500"), aux_transporte="si", mes=1, año=2025)
     l = liquidar(e, 2025)
     assert (l.salud_emp, l.pension_emp) == (D("56940"), D("56940"))
     assert l.neto == D("1509620")
@@ -264,15 +265,19 @@ def test_excel_desde_un_periodo_guardado(empresa):
     assert numeros_base, "la hoja guardada no trae ningún importe"
 
 
+@requiere_privados
 def test_api(tmp_path):
     from fastapi.testclient import TestClient
     from app.main import app
     import json
 
-    from app.config import DATA
+    from app.config import EMPRESA_PRIVADA
+
+    from tests.conftest import entrar
 
     c = TestClient(app)
-    ficha = json.loads((DATA / "empresa_fanant.json").read_text(encoding="utf-8"))
+    entrar(c)
+    ficha = json.loads(EMPRESA_PRIVADA.read_text(encoding="utf-8"))
     otro = c.post("/api/clientes", json={"nit": "900123458", "razon_social": "OTRO CLIENTE S.A.S."}).json()
     # Los archivos de muestra solo se ofrecen en la ficha de su dueño (H10).
     assert c.get(f"/api/clientes/{otro['id']}").json()["archivos_de_muestra"] is False

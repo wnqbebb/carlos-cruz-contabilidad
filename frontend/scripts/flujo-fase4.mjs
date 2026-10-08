@@ -18,8 +18,10 @@ import { mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, salida] = process.argv.slice(2);
+await prepararSesion(base);
 if (/:8000\b/.test(base ?? "")) {
   console.error("Se niega a correr contra :8000 (la base real).");
   process.exit(1);
@@ -30,6 +32,7 @@ const archivo = (n) => join(BANCO, n);
 let nit = 900400100;
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 const errores = [];
 
 async function pagina(ancho = 1440, alto = 900) {

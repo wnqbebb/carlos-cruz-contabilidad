@@ -13,6 +13,7 @@ from app.config import FUENTES
 from app.exportar import plantilla
 from app.importadores import clasificador as clas
 from app.importadores import identidad as ident
+from tests.conftest import requiere_privados
 
 
 # ── utilidades ──────────────────────────────────────────────────────────────
@@ -30,7 +31,7 @@ def _xlsx(filas: list[list], hoja: str = "Hoja1") -> bytes:
 def _directorio() -> bytes:
     return _xlsx([
         ["NIT", "RAZON SOCIAL", "MUNICIPIO"],
-        ["[NIT]", "FARMACIA NATURISTA ANTARES S.A.S.", "Guacarí"],
+        ["900100158", "DROGUERIA EJEMPLO S.A.S.", "Guacarí"],
         ["900123456", "DISTRIBUCIONES DEL VALLE S.A.S.", "Cali"],
         ["805004321", "FERRETERIA LA 14 LTDA", "Buga"],
     ], "CLIENTES")
@@ -52,7 +53,7 @@ def test_un_directorio_de_clientes_se_reconoce_como_tal(base_limpia, cliente_api
 
 def test_una_sola_fila_con_nit_no_es_un_directorio(base_limpia, cliente_api):
     """La cabecera de una contabilidad también trae NIT y nombre: no basta."""
-    uno = _xlsx([["NIT", "RAZON SOCIAL"], ["[NIT]", "ANTARES SAS"]])
+    uno = _xlsx([["NIT", "RAZON SOCIAL"], ["900100158", "EJEMPLO SAS"]])
     assert _subir(cliente_api, [("x.xlsx", uno)]).json()["clase"] != clas.DIRECTORIO
 
 
@@ -64,12 +65,14 @@ def test_la_plantilla_oficial_es_contabilidad_y_no_pregunta_nada(base_limpia, cl
     assert r["identidad"]["campos"]["razon_social"]["confianza"] == ident.SEGURO
 
 
+@requiere_privados
 def test_la_contabilidad_real_se_reconoce_aunque_no_traiga_identidad(base_limpia, cliente_api):
     r = _subir(cliente_api, [("CONTABILIDAD.xls", (FUENTES / "CONTABILIDAD.xls").read_bytes())]).json()
     assert r["clase"] == clas.CONTABILIDAD
     assert any("hoja de trabajo" in (h["razon"] or "").lower() for h in r["hojas"])
 
 
+@requiere_privados
 def test_un_documento_de_word_identifica_al_cliente(base_limpia, cliente_api):
     r = _subir(cliente_api, [
         ("estatutos.docx", (FUENTES / "CORREGIDO_acta_y_estatutos_FANANT.docx").read_bytes()),
@@ -78,6 +81,7 @@ def test_un_documento_de_word_identifica_al_cliente(base_limpia, cliente_api):
     assert "ANTARES" in r["identidad"]["campos"]["razon_social"]["valor"].upper()
 
 
+@requiere_privados
 def test_word_mas_excel_juntos_identidad_del_word_cifras_del_excel(base_limpia, cliente_api):
     """El caso del spec: estatutos + contabilidad en la misma subida."""
     r = _subir(cliente_api, [
@@ -141,14 +145,14 @@ def test_confirmar_sin_identidad_pide_solo_lo_que_falta(base_limpia, cliente_api
 
     # Con el NIT puesto, sigue sin volver a subir el archivo.
     r2 = cliente_api.post(f"/api/subir/{subida['subida_id']}/confirmar",
-                          json={"crear": {"nit": "[NIT]", "razon_social": "TIENDA DE PRUEBA"}})
+                          json={"crear": {"nit": "900100158", "razon_social": "TIENDA DE PRUEBA"}})
     assert r2.status_code == 200
     assert r2.json()["sesion_id"]
 
 
 def test_si_el_nit_ya_existe_se_trabaja_sobre_ese_cliente(base_limpia, cliente_api):
     existente = cliente_api.post("/api/clientes", json={
-        "nit": "[NIT]", "razon_social": "FARMACIA NATURISTA ANTARES S.A.S."}).json()
+        "nit": "900100158", "razon_social": "DROGUERIA EJEMPLO S.A.S."}).json()
     subida = _subir(cliente_api, [("ejemplo.xlsx", plantilla.construir(caso="completo"))]).json()
     # La plantilla de ejemplo trae otro NIT, así que se fuerza el del cliente.
     r = cliente_api.post(f"/api/subir/{subida['subida_id']}/confirmar",
@@ -172,13 +176,19 @@ def test_la_subida_caducada_lo_dice_sin_romperse(base_limpia, cliente_api):
 
 
 # ── identidad suelta para el formulario de cliente nuevo ───────────────────
+@requiere_privados
 def test_la_ficha_se_puede_llenar_desde_documentos(base_limpia, cliente_api):
     r = cliente_api.post("/api/identidad", files=[
         ("archivos", ("cuentas.docx", (FUENTES / "cuentas_de_cobro_Word.docx").read_bytes())),
     ]).json()
     campos = r["identidad"]["campos"]
-    assert campos["nit"]["valor"] == "[NIT]"
-    assert "ANTARES" in campos["razon_social"]["valor"].upper()
+    import json
+
+    from app.config import EMPRESA_PRIVADA
+
+    ref = json.loads(EMPRESA_PRIVADA.read_text(encoding="utf-8"))
+    assert campos["nit"]["valor"] == ref["nit"].split("-")[0]
+    assert ref["razon_social"].split()[-2].upper() in campos["razon_social"]["valor"].upper()
 
 
 # ── ya no se asume FANANT ───────────────────────────────────────────────────
@@ -195,4 +205,4 @@ def test_la_plantilla_en_blanco_no_trae_datos_de_nadie():
     valores = [str(c.value or "") for fila in wb["EMPRESA"].iter_rows() for c in fila]
     texto = " ".join(valores).upper()
     assert "ANTARES" not in texto
-    assert "[NIT]" not in texto
+    assert "900100158" not in texto

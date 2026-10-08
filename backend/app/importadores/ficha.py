@@ -114,7 +114,7 @@ def _cedula(t: str) -> str:
 
 
 def _titulo(nombre: str) -> str:
-    """«ADRIANA DURAN JARAMILLO» → «Adriana Duran Jaramillo» (como se escribe una ficha)."""
+    """«LUZ MARINA OSPINA RENDON» → «Luz Marina Ospina Rendon» (como se escribe una ficha)."""
     pequeñas = {"DE", "DEL", "LA", "LAS", "LOS", "Y"}
     return " ".join(p.capitalize() if p.upper() not in pequeñas else p.lower() for p in nombre.split())
 
@@ -263,12 +263,12 @@ def _representantes(f: Ficha, texto: str, origen, cedulas: dict[str, str]) -> No
 
 def _limpiar_nombre(n: str) -> str:
     n = re.sub(r"\s+", " ", n).strip()
-    # «ADRIANA DURAN JARAMILLO Y SU SUPLENTE»: se corta en las palabras de redacción.
+    # «LUZ MARINA OSPINA RENDON Y SU SUPLENTE»: se corta en las palabras de redacción.
     return re.split(r"\s+(?:Y|COMO|IDENTIFICAD[OA]|CON|TITULAR|DE LA|DEL)\b", n, maxsplit=1)[0].strip()
 
 
 def _cedulas_en_texto(texto: str) -> dict[str, str]:
-    """Nombre → cédula, de frases como «ADRIANA DURAN JARAMILLO, titular de la cedula [CEDULA]»."""
+    """Nombre → cédula, de frases como «LUZ MARINA OSPINA RENDON, titular de la cedula 31.456.789»."""
     salida = {}
     for m in re.finditer(rf"{_NOMBRE}[,;]?\s+(?:titular de la|identificad[oa] con la|con)\s+c[eé]dula(?: de ciudadan[ií]a)?"
                          rf"(?: No\.?)?\s*{_CC}", texto, re.IGNORECASE):

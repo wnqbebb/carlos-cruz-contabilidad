@@ -13,13 +13,13 @@ from decimal import Decimal
 
 import pytest
 
-from app.config import DATA, FUENTES
+from app.config import EMPRESA_PRIVADA, FUENTES
 from app.importadores.ficha import extraer, tipo_documento
 from app.importadores.lector import leer_archivo
 from app.utils.numeros import normalizar
 
 DOCS_FANANT = ["CORREGIDO_acta_y_estatutos_FANANT.docx", "CARTAS_VARIAS.docx"]
-REFERENCIA = DATA / "empresa_fanant.json"
+REFERENCIA = EMPRESA_PRIVADA
 
 
 def _hay_fuentes() -> bool:
@@ -53,7 +53,8 @@ def test_los_estatutos_y_las_cartas_llenan_la_ficha_de_fanant():
     assert normalizar(v["rep_legal"]) == normalizar(ref["rep_legal"])
     assert v["rep_legal_cc"] == ref["rep_legal_cc"].replace(".", "")
     assert normalizar(v["rep_legal_suplente"]) == normalizar(ref["rep_legal_suplente"])
-    assert v["rep_legal_suplente_cc"] == "[CEDULA]"
+    cc_suplente = next(a["cc"] for a in ref["accionistas"] if normalizar(a["nombre"]) == normalizar(ref["rep_legal_suplente"]))
+    assert v["rep_legal_suplente_cc"] == cc_suplente.replace(".", "")
     # Contador con su tarjeta profesional (de las cartas).
     assert normalizar(v["contador"]) == normalizar(ref["contador"])
     assert v["contador_tp"] == ref["contador_tp"]

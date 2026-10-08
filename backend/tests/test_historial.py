@@ -12,10 +12,11 @@ from app.repositorio import bitacora as repo_bitacora
 from app.repositorio import clientes as repo_clientes
 from app.repositorio import importaciones as repo_importaciones
 from app.repositorio import periodos as repo
+from tests.conftest import requiere_privados
 
 
 def _cliente(**extra) -> dict:
-    return repo_clientes.crear({"nit": "[NIT]", "razon_social": "ANTARES SAS", **extra})
+    return repo_clientes.crear({"nit": "900100158", "razon_social": "EJEMPLO SAS", **extra})
 
 
 def _resultado(desde="2025-01-01", hasta="2025-01-31", *, activo="0", utilidad="0",
@@ -153,7 +154,7 @@ def test_un_periodo_nuevo_no_genera_version_vacia(base_limpia):
 
 # ── Bitácora e importaciones (H08) ──────────────────────────────────────────
 def test_cada_accion_deja_su_linea_en_la_bitacora(base_limpia, cliente_api):
-    c = cliente_api.post("/api/clientes", json={"nit": "[NIT]", "razon_social": "ANTARES SAS"}).json()
+    c = cliente_api.post("/api/clientes", json={"nit": "900100158", "razon_social": "EJEMPLO SAS"}).json()
     cliente_api.patch(f"/api/clientes/{c['id']}", json={"honorarios_mes": "300000"})
     cliente_api.delete(f"/api/clientes/{c['id']}")
     cliente_api.post(f"/api/clientes/{c['id']}/restaurar")
@@ -172,7 +173,7 @@ def test_la_bitacora_nunca_tumba_la_operacion(base_limpia, monkeypatch):
 
 
 def test_subir_un_archivo_queda_registrado(base_limpia, cliente_api):
-    c = cliente_api.post("/api/clientes", json={"nit": "[NIT]", "razon_social": "ANTARES SAS"}).json()
+    c = cliente_api.post("/api/clientes", json={"nit": "900100158", "razon_social": "EJEMPLO SAS"}).json()
     r = cliente_api.post(f"/api/importar/demo?cliente_id={c['id']}&caso=basico")
     assert r.status_code == 200
 
@@ -184,11 +185,12 @@ def test_subir_un_archivo_queda_registrado(base_limpia, cliente_api):
     assert "archivos_subidos" in [x["accion"] for x in repo_bitacora.listar(c["id"])]
 
 
+@requiere_privados
 def test_el_mismo_archivo_dos_veces_se_avisa(base_limpia, cliente_api):
     """La huella es del contenido: el mismo archivo subido otra vez se reconoce."""
     from app.config import FUENTES
 
-    c = cliente_api.post("/api/clientes", json={"nit": "[NIT]", "razon_social": "ANTARES SAS"}).json()
+    c = cliente_api.post("/api/clientes", json={"nit": "900100158", "razon_social": "EJEMPLO SAS"}).json()
     contenido = (FUENTES / "CONTABILIDAD.xls").read_bytes()
     subir = lambda: cliente_api.post(
         f"/api/importar?cliente_id={c['id']}",
@@ -202,7 +204,7 @@ def test_el_mismo_archivo_dos_veces_se_avisa(base_limpia, cliente_api):
 
 # ── La API traduce las guardas a códigos que la pantalla entiende ───────────
 def test_la_api_responde_409_con_el_periodo_cerrado(base_limpia, cliente_api):
-    c = cliente_api.post("/api/clientes", json={"nit": "[NIT]", "razon_social": "ANTARES SAS"}).json()
+    c = cliente_api.post("/api/clientes", json={"nit": "900100158", "razon_social": "EJEMPLO SAS"}).json()
     imp = cliente_api.post(f"/api/importar/demo?cliente_id={c['id']}&caso=completo").json()
     peticion = {"sesion_id": imp["sesion_id"], "cliente_id": c["id"],
                 "mapeo": {i["normalizado"]: i["codigo"] for i in imp["mapeo"] if i.get("codigo")},
@@ -219,7 +221,7 @@ def test_la_api_responde_409_con_el_periodo_cerrado(base_limpia, cliente_api):
 
 
 def test_la_api_responde_422_con_un_calculo_vacio(base_limpia, cliente_api):
-    c = cliente_api.post("/api/clientes", json={"nit": "[NIT]", "razon_social": "ANTARES SAS"}).json()
+    c = cliente_api.post("/api/clientes", json={"nit": "900100158", "razon_social": "EJEMPLO SAS"}).json()
     imp = cliente_api.post(f"/api/importar/demo?cliente_id={c['id']}&caso=completo").json()
     r = cliente_api.post("/api/calcular", json={
         "sesion_id": imp["sesion_id"], "cliente_id": c["id"], "mapeo": {},

@@ -156,8 +156,12 @@ class Empresa:
 
 
 def empresa_por_defecto() -> Empresa:
-    datos = json.loads((DATA / "empresa_fanant.json").read_text(encoding="utf-8"))
-    return Empresa.desde_dict(datos)
+    """La empresa de los archivos de muestra (privado/), o una vacía si no están en este equipo."""
+    from .config import EMPRESA_PRIVADA
+
+    if not EMPRESA_PRIVADA.exists():
+        return Empresa()
+    return Empresa.desde_dict(json.loads(EMPRESA_PRIVADA.read_text(encoding="utf-8")))
 
 
 @dataclass

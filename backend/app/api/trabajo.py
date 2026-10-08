@@ -37,16 +37,16 @@ ARCHIVOS_EJEMPLO = ["CONTABILIDAD.xls", "ESTADOS_FINANCIEROS.xlsx", "NOMINA__ene
 def tiene_archivos_de_muestra(nit: str) -> bool:
     """¿Hay en este equipo archivos de muestra de ESTE cliente? (H10)
 
-    Los archivos de muestra son de una sola empresa (la de `data/empresa_fanant.json`)
+    Los archivos de muestra son de una sola empresa (la de `privado/empresa_fanant.json`)
     y viven fuera del repositorio. Solo se ofrecen en su ficha y solo si están.
     """
     import json
 
-    from ..config import DATA
+    from ..config import EMPRESA_PRIVADA
     from ..utils.nit import limpiar
 
     try:
-        dueño = json.loads((DATA / "empresa_fanant.json").read_text(encoding="utf-8")).get("nit", "")
+        dueño = json.loads(EMPRESA_PRIVADA.read_text(encoding="utf-8")).get("nit", "")
     except (OSError, ValueError):
         return False
     return bool(nit) and limpiar(nit) == limpiar(dueño) and all((FUENTES / n).exists() for n in ARCHIVOS_EJEMPLO)

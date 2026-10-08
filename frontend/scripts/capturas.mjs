@@ -13,9 +13,11 @@ import { mkdirSync } from "node:fs";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const fase = process.argv[2] ?? "borrador";
 const base = (process.argv[3] ?? "http://127.0.0.1:8000").replace(/\/$/, "");
+await prepararSesion(base);
 const RAIZ = fileURLToPath(new URL("../..", import.meta.url));
 const destino = join(RAIZ, "docs", "diseno", "capturas", fase);
 mkdirSync(destino, { recursive: true });
@@ -47,6 +49,7 @@ const PANTALLAS = [
 ];
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 for (const t of TAMANOS) {
   const contexto = await navegador.newContext({
     viewport: { width: t.ancho, height: t.alto },

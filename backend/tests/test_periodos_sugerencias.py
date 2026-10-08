@@ -20,7 +20,7 @@ D = Decimal
 
 # ── utilidades de montaje ───────────────────────────────────────────────────
 def _cliente(**extra) -> dict:
-    return repo_clientes.crear({"nit": "[NIT]", "razon_social": "ANTARES SAS", **extra})
+    return repo_clientes.crear({"nit": "900100158", "razon_social": "EJEMPLO SAS", **extra})
 
 
 def _resultado(desde: str, hasta: str, *, activo="0", pasivo="0", patrimonio="0",
@@ -303,7 +303,7 @@ def test_endeudamiento_alto(base_limpia):
 def test_capital_de_socios_por_pagar(base_limpia):
     c = _cliente()
     repo_clientes.guardar_socios(c["id"], [
-        {"nombre": "ADRIANA DURAN", "comprometido": "7500000", "pagado": "7500000"},
+        {"nombre": "LAURA GOMEZ", "comprometido": "7500000", "pagado": "7500000"},
         {"nombre": "JULIO MONTOYA", "comprometido": "7500000", "pagado": "0"},
     ])
     s = _buscar(sug.de_cliente(c["id"]), "CAPITAL_POR_PAGAR")
@@ -317,7 +317,7 @@ def test_ficha_incompleta_enumera_lo_que_falta(base_limpia):
     assert "municipio" in s["detalle"]
     repo_clientes.actualizar(c["id"], {
         "direccion": "Calle 8 No 9-86", "municipio": "Guacarí", "ciiu": "4773",
-        "rep_legal": "ADRIANA DURAN", "email": "fanant2024@gmail.com",
+        "rep_legal": "LAURA GOMEZ", "email": "contacto@ejemplo.com",
     })
     assert "FICHA_INCOMPLETA" not in _codigos(sug.de_cliente(c["id"]))
 

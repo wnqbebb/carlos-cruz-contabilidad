@@ -10,16 +10,16 @@ from app.importadores import clientes_excel
 from app.repositorio import clientes as repo
 
 
-def _nuevo(nit="[NIT]", razon="FARMACIA NATURISTA ANTARES SAS", **extra) -> dict:
+def _nuevo(nit="900100158", razon="DROGUERIA EJEMPLO SAS", **extra) -> dict:
     return {"nit": nit, "razon_social": razon, **extra}
 
 
 # ── validación de la ficha ──────────────────────────────────────────────────
 def test_crear_calcula_el_digito_de_verificacion(base_limpia):
     c = repo.crear(_nuevo())
-    assert c["nit"] == "[NIT]"
+    assert c["nit"] == "900100158"
     assert c["dv"] == "9"
-    assert c["nit_formateado"] == "[NIT]-9"
+    assert c["nit_formateado"] == "900.100.158-9"
 
 
 def test_nit_duplicado_se_rechaza_con_el_nombre_del_otro(base_limpia):
@@ -39,7 +39,7 @@ def test_nit_y_razon_social_son_obligatorios(base_limpia):
     with pytest.raises(repo.ErrorCliente):
         repo.crear({"razon_social": "SIN NIT SAS"})
     with pytest.raises(repo.ErrorCliente):
-        repo.crear({"nit": "[NIT]"})
+        repo.crear({"nit": "900100158"})
 
 
 def test_importes_se_devuelven_como_texto_exacto(base_limpia):
@@ -58,8 +58,8 @@ def test_busqueda_ignora_tildes_y_mayusculas(base_limpia):
 
 def test_busqueda_por_nit_parcial(base_limpia):
     repo.crear(_nuevo())
-    assert repo.listar(q="901897")["total"] == 1
-    assert repo.listar(q="[NIT]")["total"] == 1
+    assert repo.listar(q="900100")["total"] == 1
+    assert repo.listar(q="900.100.158")["total"] == 1
 
 
 def test_busqueda_exige_todas_las_palabras(base_limpia):
@@ -109,18 +109,18 @@ def _csv(filas: list[list[str]]) -> bytes:
 def test_importa_reconociendo_encabezados_en_otro_orden(base_limpia):
     datos = _csv([
         ["MUNICIPIO", "NOMBRE", "NIT", "HONORARIOS"],
-        ["Guacarí", "FARMACIA ANTARES SAS", "[NIT]", "300000"],
+        ["Guacarí", "DROGUERIA EJEMPLO SAS", "900100158", "300000"],
         ["Buga", "DROGUERIA BUGA SAS", "800197268", "250000"],
     ])
     informe = clientes_excel.importar(datos, "clientes.csv")
     assert informe["insertados"] == 2
     assert informe["rechazados"] == 0
     assert repo.listar()["total"] == 2
-    assert repo.por_nit("[NIT]")["municipio"] == "Guacarí"
+    assert repo.por_nit("900100158")["municipio"] == "Guacarí"
 
 
 def test_simulacro_no_escribe_nada(base_limpia):
-    datos = _csv([["NIT", "RAZON SOCIAL"], ["[NIT]", "FARMACIA ANTARES SAS"]])
+    datos = _csv([["NIT", "RAZON SOCIAL"], ["900100158", "DROGUERIA EJEMPLO SAS"]])
     informe = clientes_excel.importar(datos, "c.csv", solo_revisar=True)
     assert informe["insertados"] == 1
     assert informe["solo_revisar"] is True
@@ -130,8 +130,8 @@ def test_simulacro_no_escribe_nada(base_limpia):
 def test_nit_repetido_dentro_del_archivo_se_rechaza_una_vez(base_limpia):
     datos = _csv([
         ["NIT", "RAZON SOCIAL"],
-        ["[NIT]", "PRIMERA VEZ SAS"],
-        ["[NIT]-9", "SEGUNDA VEZ SAS"],
+        ["900100158", "PRIMERA VEZ SAS"],
+        ["900.100.158-9", "SEGUNDA VEZ SAS"],
     ])
     informe = clientes_excel.importar(datos, "c.csv")
     assert informe["insertados"] == 1
@@ -143,7 +143,7 @@ def test_nit_repetido_dentro_del_archivo_se_rechaza_una_vez(base_limpia):
 def test_fila_invalida_no_tumba_el_resto(base_limpia):
     datos = _csv([
         ["NIT", "RAZON SOCIAL"],
-        ["[NIT]", "BUENA SAS"],
+        ["900100158", "BUENA SAS"],
         ["12", "NIT MUY CORTO SAS"],
         ["", "SIN NIT SAS"],
         ["800197268", "OTRA BUENA SAS"],
@@ -157,19 +157,19 @@ def test_fila_invalida_no_tumba_el_resto(base_limpia):
 
 def test_actualiza_los_existentes_cuando_se_pide(base_limpia):
     repo.crear(_nuevo(razon="NOMBRE VIEJO SAS", municipio="Palmira"))
-    datos = _csv([["NIT", "RAZON SOCIAL", "MUNICIPIO"], ["[NIT]", "NOMBRE NUEVO SAS", "Guacarí"]])
+    datos = _csv([["NIT", "RAZON SOCIAL", "MUNICIPIO"], ["900100158", "NOMBRE NUEVO SAS", "Guacarí"]])
     informe = clientes_excel.importar(datos, "c.csv", actualizar_existentes=True)
     assert informe["actualizados"] == 1 and informe["insertados"] == 0
-    c = repo.por_nit("[NIT]")
+    c = repo.por_nit("900100158")
     assert c["razon_social"] == "NOMBRE NUEVO SAS" and c["municipio"] == "Guacarí"
 
 
 def test_no_actualiza_si_no_se_pide(base_limpia):
     repo.crear(_nuevo(razon="NOMBRE VIEJO SAS"))
-    datos = _csv([["NIT", "RAZON SOCIAL"], ["[NIT]", "NOMBRE NUEVO SAS"]])
+    datos = _csv([["NIT", "RAZON SOCIAL"], ["900100158", "NOMBRE NUEVO SAS"]])
     informe = clientes_excel.importar(datos, "c.csv", actualizar_existentes=False)
     assert informe["actualizados"] == 0 and informe["rechazados"] == 1
-    assert repo.por_nit("[NIT]")["razon_social"] == "NOMBRE VIEJO SAS"
+    assert repo.por_nit("900100158")["razon_social"] == "NOMBRE VIEJO SAS"
 
 
 def test_sin_columnas_obligatorias_explica_que_falta(base_limpia):
@@ -182,16 +182,16 @@ def test_sin_columnas_obligatorias_explica_que_falta(base_limpia):
 def test_traduce_valores_escritos_a_mano(base_limpia):
     datos = _csv([
         ["NIT", "RAZON SOCIAL", "TIPO PERSONA", "REGIMEN", "PERIODICIDAD", "ESTADO", "ETIQUETAS"],
-        ["[NIT]", "ANTARES SAS", "Jurídica", "Responsable de IVA", "Mensual", "Activo", "Farmacia;Valle"],
-        ["[CEDULA]", "CRUZ CARLOS", "Natural", "No responsable", "Anual", "Inactivo", "Persona natural"],
+        ["900100158", "EJEMPLO SAS", "Jurídica", "Responsable de IVA", "Mensual", "Activo", "Farmacia;Valle"],
+        ["1000000004", "PERSONA EJEMPLO", "Natural", "No responsable", "Anual", "Inactivo", "Persona natural"],
     ])
     informe = clientes_excel.importar(datos, "c.csv")
     assert informe["insertados"] == 2
-    a = repo.por_nit("[NIT]")
+    a = repo.por_nit("900100158")
     assert a["tipo_persona"] == "juridica" and a["regimen"] == "responsable_iva"
     assert a["periodicidad"] == "mensual" and a["estado"] == "activo"
     assert set(a["etiquetas"]) == {"Farmacia", "Valle"}
-    b = repo.por_nit("[CEDULA]")
+    b = repo.por_nit("1000000004")
     assert b["tipo_persona"] == "natural" and b["estado"] == "inactivo"
 
 

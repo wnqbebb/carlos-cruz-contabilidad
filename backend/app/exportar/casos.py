@@ -60,9 +60,9 @@ COMPLETO = {
         ("2025-01-31", "RC-002", "Venta", "110505", "Caja general", "", "Clientes varios", "Ventas de contado 16 al 31", 6902000, None, None),
         ("2025-01-31", "RC-002", "Venta", "4135", "Comercio al por mayor y al por menor", "", "Clientes varios", "Ventas 16 al 31", None, 5800000, None),
         ("2025-01-31", "RC-002", "Venta", "240805", "IVA generado", "", "Clientes varios", "IVA 19 % ventas", None, 1102000, None),
-        ("2025-01-31", "CE-004", "Egreso", "5110", "Honorarios", "[CEDULA]-1", "CARLOS ARTURO CRUZ CAICEDO", "Asesoría contable enero", 300000, None, 300000),
-        ("2025-01-31", "CE-004", "Egreso", "236515", "Retención honorarios", "[CEDULA]-1", "CARLOS ARTURO CRUZ CAICEDO", "Retención en la fuente 10 %", None, 30000, 300000),
-        ("2025-01-31", "CE-004", "Egreso", "111005", "Bancos", "[CEDULA]-1", "CARLOS ARTURO CRUZ CAICEDO", "Pago honorarios", None, 270000, None),
+        ("2025-01-31", "CE-004", "Egreso", "5110", "Honorarios", "900000001-2", "ASESORÍA CONTABLE EJEMPLO (demo)", "Asesoría contable enero", 300000, None, 300000),
+        ("2025-01-31", "CE-004", "Egreso", "236515", "Retención honorarios", "900000001-2", "ASESORÍA CONTABLE EJEMPLO (demo)", "Retención en la fuente 10 %", None, 30000, 300000),
+        ("2025-01-31", "CE-004", "Egreso", "111005", "Bancos", "900000001-2", "ASESORÍA CONTABLE EJEMPLO (demo)", "Pago honorarios", None, 270000, None),
         ("2025-01-31", "NC-001", "Nota", "111005", "Bancos", "", "", "Consignación del efectivo", 5000000, None, None),
         ("2025-01-31", "NC-001", "Nota", "110505", "Caja general", "", "", "Consignación del efectivo", None, 5000000, None),
         ("2025-01-31", "NC-002", "Nota", "530505", "Gastos bancarios", "", "Banco", "Comisiones bancarias", 15000, None, None),
@@ -96,7 +96,7 @@ COMPLETO = {
         ("Muebles y estantería de exhibición", "152405", "2024-12-20", 2000000, 120, 0, "Línea recta"),
     ],
     "NOMINA": [
-        ("2025-01-01", "ADRIANA DURAN JARAMILLO", "[CEDULA]", "Administradora", 1423500, None, None, 30, "SI", 0, 0, 1),
+        ("2025-01-01", "LAURA PATRICIA GOMEZ RUIZ (demo)", "1000000003", "Administradora", 1423500, None, None, 30, "SI", 0, 0, 1),
     ],
 }
 

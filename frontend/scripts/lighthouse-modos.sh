@@ -8,6 +8,9 @@ BASE="$1"; SALIDA="$2"; shift 2
 mkdir -p "$SALIDA"
 EDGE="/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe"
 export CHROME_PATH="$EDGE"
+# Sesión (A2): Lighthouse manda la cookie como encabezado extra.
+COOKIE=$(curl -s -i -X POST "$BASE/api/sesion" -H 'Content-Type: application/json'   -d "{\"usuario\":\"${CC_PRUEBA_USUARIO:-prueba}\",\"clave\":\"${CC_PRUEBA_CLAVE:-prueba-aislada-2026}\"}"   | grep -i '^set-cookie' | sed 's/^[Ss]et-[Cc]ookie: //; s/;.*//')
+[ -n "$COOKIE" ] || { echo "No se pudo iniciar sesión en $BASE"; exit 1; }
 for ruta in "$@"; do
   for modo in claro oscuro; do
     for forma in mobile desktop; do
@@ -17,7 +20,7 @@ for ruta in "$@"; do
       extra=""
       [ "$forma" = desktop ] && extra="--preset=desktop"
       npx -y lighthouse@12 "$BASE$ruta" $extra --only-categories=accessibility,best-practices \
-        --chrome-flags="$bandera" --output=json --output-path="$SALIDA/$nombre.json" --quiet >/dev/null 2>&1
+        --chrome-flags="$bandera" --extra-headers="{\"Cookie\":\"$COOKIE\"}" --output=json --output-path="$SALIDA/$nombre.json" --quiet >/dev/null 2>&1
       node -e "const r=require(process.argv[1]);const c=r.categories;const malos=Object.values(r.audits).filter(a=>a.score!==null&&a.score<1&&r.categories.accessibility.auditRefs.some(x=>x.id===a.id)).map(a=>a.id);console.log(process.argv[2].padEnd(48),'a11y',Math.round(c.accessibility.score*100),'bp',Math.round(c['best-practices'].score*100),malos.join(' '))" "$SALIDA/$nombre.json" "$nombre"
     done
   done

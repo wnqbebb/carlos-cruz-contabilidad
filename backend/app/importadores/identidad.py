@@ -25,7 +25,7 @@ from ..utils import nit as unit
 from ..utils.numeros import es_numero
 
 # ── confianza ───────────────────────────────────────────────────────────────
-SEGURO = "seguro"        # venía rotulado como tal («NIT: [NIT]»)
+SEGURO = "seguro"        # venía rotulado como tal («NIT: 900100158»)
 PROBABLE = "probable"    # la forma del dato lo delata (una razón social con S.A.S.)
 SUGERIDO = "sugerido"    # deducido del nombre del archivo; hay que confirmarlo
 
@@ -186,7 +186,7 @@ def parece_razon_social(texto: str) -> bool:
       · que la línea no empiece como el título de un documento ni como una
         cláusula de unos estatutos.
     """
-    # «FARMACIA X S.A.S.   RUT. [NIT]-9»: el nombre es lo que va antes del NIT.
+    # «DROGUERIA X S.A.S.   RUT. 900100158-9»: el nombre es lo que va antes del NIT.
     t = _normalizar(_limpiar_nombre(texto))
     if not (4 <= len(t) <= 120):
         return False

@@ -17,7 +17,7 @@ def limpiar(nit: str | int | None) -> str:
     if nit is None:
         return ""
     texto = str(nit).strip()
-    # Si viene como [NIT]-9 o [NIT]-9, el guion separa el DV.
+    # Si viene como 900100158-9 o 900.100.158-9, el guion separa el DV.
     base = texto.split("-")[0] if "-" in texto else texto
     return re.sub(r"\D", "", base)
 
@@ -43,7 +43,7 @@ def valido(nit: str | int | None, dv: str | int | None = None) -> bool:
 
 
 def formatear(nit: str | int | None, dv: str | int | None = None) -> str:
-    """'[NIT]' → '[NIT]-9' (calcula el DV si no se entrega)."""
+    """'900100158' → '900.100.158-9' (calcula el DV si no se entrega)."""
     base = limpiar(nit)
     if not base:
         return ""

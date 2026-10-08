@@ -15,6 +15,16 @@ import pytest
 
 from app.exactitud import a_json, cuadra, dec_a_texto, suma
 from app.utils import nit as unit
+from tests.conftest import requiere_privados
+
+
+def _nit_privado() -> str:
+    """Los archivos de muestra solo se cargan en la ficha de su dueño (H10)."""
+    import json
+
+    from app.config import EMPRESA_PRIVADA
+
+    return json.loads(EMPRESA_PRIVADA.read_text(encoding="utf-8"))["nit"].split("-")[0]
 
 D = Decimal
 
@@ -85,7 +95,7 @@ def test_cuadra_no_tolera_un_peso():
 @pytest.mark.parametrize(
     "base,dv_esperado",
     [
-        ("[NIT]", "9"),   # FANANT (NIT real del cliente)
+        ("900100158", "9"),   # NIT ficticio con DV 9 y turno 8
         ("800197268", "4"),
         ("860002964", "4"),
         ("899999061", "9"),
@@ -96,23 +106,23 @@ def test_digito_verificacion_contra_nits_reales(base, dv_esperado):
 
 
 def test_nit_se_limpia_de_puntos_y_guiones():
-    for entrada in ("[NIT]-9", "[NIT]-9", " [NIT] ", "[NIT]"):
-        assert unit.limpiar(entrada) == "[NIT]"
+    for entrada in ("900.100.158-9", "900100158-9", " 900100158 ", "900.100.158"):
+        assert unit.limpiar(entrada) == "900100158"
 
 
 def test_nit_formateado():
-    assert unit.formatear("[NIT]") == "[NIT]-9"
-    assert unit.formatear("[NIT]", "9") == "[NIT]-9"
+    assert unit.formatear("900100158") == "900.100.158-9"
+    assert unit.formatear("900100158", "9") == "900.100.158-9"
 
 
 def test_nit_invalido_se_rechaza():
     assert not unit.valido("123")             # demasiado corto
-    assert not unit.valido("[NIT]", "3")  # el DV no corresponde
-    assert unit.valido("[NIT]", "9")
+    assert not unit.valido("900100158", "3")  # el DV no corresponde
+    assert unit.valido("900100158", "9")
 
 
 def test_turno_dian_por_ultimo_digito():
-    assert unit.turno_dian("[NIT]") == 8
+    assert unit.turno_dian("900100158") == 8
     assert unit.turno_dian("901897820") == 10  # el 0 es el último turno
     assert unit.turno_dian("901897821") == 1
 
@@ -132,6 +142,7 @@ def _recorrer(obj, ruta="raíz"):
     return hallados
 
 
+@requiere_privados
 def test_la_respuesta_del_calculo_no_contiene_ni_un_float(cliente_api):
     """Prueba de extremo a extremo con los archivos reales del cliente.
 
@@ -141,7 +152,7 @@ def test_la_respuesta_del_calculo_no_contiene_ni_un_float(cliente_api):
     camino del dinero.
     """
     cliente = cliente_api.post("/api/clientes", json={
-        "nit": "[NIT]", "razon_social": "FARMACIA NATURISTA ANTARES SAS",
+        "nit": _nit_privado(), "razon_social": "CLIENTE DE LOS ARCHIVOS DE MUESTRA",
     }).json()
 
     importacion = cliente_api.post(f"/api/importar/ejemplo?cliente_id={cliente['id']}").json()
@@ -167,10 +178,11 @@ def test_la_respuesta_del_calculo_no_contiene_ni_un_float(cliente_api):
     assert datos["guardado"] is True
 
 
+@requiere_privados
 def test_el_periodo_guardado_se_relee_identico(cliente_api):
     """Lo que se guarda en la base y se vuelve a leer debe ser idéntico al peso."""
     cliente = cliente_api.post("/api/clientes", json={
-        "nit": "[NIT]", "razon_social": "FARMACIA NATURISTA ANTARES SAS",
+        "nit": _nit_privado(), "razon_social": "CLIENTE DE LOS ARCHIVOS DE MUESTRA",
     }).json()
     imp = cliente_api.post(f"/api/importar/ejemplo?cliente_id={cliente['id']}").json()
     mapeo = {m["normalizado"]: m["codigo"] for m in imp["mapeo"] if m["codigo"]}

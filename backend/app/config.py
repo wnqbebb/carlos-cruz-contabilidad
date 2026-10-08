@@ -20,7 +20,12 @@ def _ruta(variable: str, por_defecto: Path) -> Path:
 
 
 DATA = _ruta("CC_DATA", RAIZ / "data")
-FUENTES = _ruta("CC_FUENTES", RAIZ / "docs" / "fuentes")
+# Datos reales de clientes: NO se versionan (sección 4.3). Viven en `privado/`,
+# que está en .gitignore; si la carpeta no está, lo que depende de ella se oculta
+# (y las pruebas que la necesitan se saltan con aviso). Ver docs/PRIVADO.md.
+PRIVADO = _ruta("CC_PRIVADO", RAIZ / "privado")
+FUENTES = _ruta("CC_FUENTES", PRIVADO / "fuentes")
+EMPRESA_PRIVADA = PRIVADO / "empresa_fanant.json"
 FRONTEND_DIST = _ruta("CC_FRONTEND", RAIZ / "frontend" / "dist")
 DATOS_APP = _ruta("CC_DATOS_APP", RAIZ / "datos_app")
 try:

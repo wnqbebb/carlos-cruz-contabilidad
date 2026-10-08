@@ -15,8 +15,10 @@ import { mkdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { conSesion, prepararSesion } from "./sesion.mjs";
 
 const [base, salida] = process.argv.slice(2);
+await prepararSesion(base);
 if (/:8000\b/.test(base ?? "")) {
   console.error("Se niega a correr contra :8000 (la base real).");
   process.exit(1);
@@ -43,6 +45,7 @@ await subir("11_libro_diario.csv", "900700002", "COMERCIAL CON PERIODO S.A.S.");
 await subir("03_fechas_copiadas_y_futuras.xlsx", "900700003", "SERVICIOS CON PREGUNTAS S.A.S.", false);
 
 const navegador = await chromium.launch({ channel: "msedge" });
+await conSesion(navegador, base);
 const errores = [];
 const contexto = await navegador.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: "reduce" });
 await contexto.addInitScript(() => {

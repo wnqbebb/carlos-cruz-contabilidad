@@ -47,7 +47,7 @@ Verificado contra los tres documentos reales de FANANT que ya estaban en el repo
 |---|---|
 | `CORREGIDO_acta_y_estatutos_FANANT.docx` | razón social, *probable* |
 | `CARTAS_VARIAS.docx` | razón social, *probable* (con la errata que trae el original) |
-| `cuentas_de_cobro_Word.docx` | razón social **y** NIT [NIT]-9, *seguro* |
+| `cuentas_de_cobro_Word.docx` | razón social **y** NIT [del cliente], *seguro* |
 
 ### 3. Word y PDF entran de verdad (H04 parcial)
 `backend/app/importadores/documentos.py` + `lector.leer_archivo`:

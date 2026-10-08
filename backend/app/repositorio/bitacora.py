@@ -29,6 +29,7 @@ ACCIONES = {
     "cliente_archivado": "Cliente archivado",
     "cliente_restaurado": "Cliente restaurado",
     "cliente_eliminado": "Cliente eliminado",
+    "ingreso_fallido": "Intento de ingreso fallido",
     "clientes_demo_eliminados": "Clientes de demostración eliminados",
     "clientes_importados": "Directorio importado",
     "archivos_subidos": "Archivos subidos",

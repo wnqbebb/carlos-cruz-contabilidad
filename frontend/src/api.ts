@@ -90,6 +90,8 @@ async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
     } catch {
       /* la respuesta no era JSON */
     }
+    // Sin sesión (venció o se cerró en otra pestaña): la aplicación vuelve a la pantalla de ingreso.
+    if (r.status === 401 && codigo === "sin_sesion") window.dispatchEvent(new Event("cc:sesion-vencida"));
     throw new ErrorApi(detalle, r.status, codigo, datos);
   }
   if (r.status === 204) return undefined as T;
@@ -120,6 +122,19 @@ export const sistema = {
   parametros: () => pedir<Record<string, any>>("/api/parametros"),
   guardarParametros: (anio: number, valores: Record<string, unknown>) =>
     pedir<Record<string, any>>(`/api/parametros/${anio}`, { method: "PUT", ...json(valores) }),
+};
+
+/* ── sesión del contador (A2) ──────────────────────────────────────────── */
+export interface EstadoSesion {
+  activa: boolean;
+  usuario: string | null;
+  configurado: boolean;
+}
+export const sesionApi = {
+  estado: () => pedir<EstadoSesion>("/api/sesion"),
+  entrar: (usuario: string, clave: string) =>
+    pedir<EstadoSesion>("/api/sesion", { method: "POST", ...json({ usuario, clave }) }),
+  salir: () => pedir<EstadoSesion>("/api/sesion/salir", { method: "POST" }),
 };
 
 /* ── directorio de clientes ────────────────────────────────────────────── */

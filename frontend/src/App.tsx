@@ -11,9 +11,32 @@ import { Diseno } from "./paginas/Diseno";
 import { Parametros } from "./paginas/Parametros";
 import { Tablero } from "./paginas/Tablero";
 import { Trabajo } from "./paginas/Trabajo";
+import { Ingreso } from "./paginas/Ingreso";
+import { sesionApi } from "./api";
 import { BotonFantasma, BotonPrimario, ProveedorAvisos } from "./ui";
 
+/** Sin sesión solo se ve la pantalla de ingreso (A2); el resto de la API responde 401. */
 export default function App() {
+  const [estado, setEstado] = useState<"consultando" | "fuera" | "dentro">("consultando");
+  const [configurado, setConfigurado] = useState(true);
+  useEffect(() => {
+    sesionApi
+      .estado()
+      .then((e) => {
+        setConfigurado(e.configurado);
+        setEstado(e.activa ? "dentro" : "fuera");
+      })
+      .catch(() => setEstado("fuera"));
+    const vencida = () => setEstado("fuera");
+    window.addEventListener("cc:sesion-vencida", vencida);
+    return () => window.removeEventListener("cc:sesion-vencida", vencida);
+  }, []);
+  if (estado === "consultando") return null;
+  if (estado === "fuera") return <Ingreso configurado={configurado} />;
+  return <Aplicacion />;
+}
+
+function Aplicacion() {
   return (
     <BrowserRouter>
       <ProveedorAvisos>

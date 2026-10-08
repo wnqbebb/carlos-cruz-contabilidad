@@ -11,17 +11,14 @@ from pathlib import Path
 RAIZ = Path(SPECPATH).parent
 
 datos = [
-    # Catálogo PUC, parámetros legales y ficha de empresa por defecto.
+    # Catálogo PUC, parámetros legales y datos del contador.
     (str(RAIZ / "data"), "data"),
     # Interfaz compilada: la sirve el propio backend.
     (str(RAIZ / "frontend" / "dist"), "frontend/dist"),
 ]
 
-# Los archivos de ejemplo del cliente son opcionales: si están, se incluyen
-# para que los botones de demostración funcionen sin internet.
-fuentes = RAIZ / "docs" / "fuentes"
-if fuentes.is_dir():
-    datos.append((str(fuentes), "docs/fuentes"))
+# Los archivos reales de clientes (privado/) NUNCA van dentro del ejecutable:
+# el .exe se puede copiar a otro computador (sección 4.3).
 
 analisis = Analysis(
     [str(RAIZ / "empaquetar" / "lanzador.py")],
