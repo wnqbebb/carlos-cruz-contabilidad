@@ -19,7 +19,16 @@ Rutas: `CC_PRIVADO` cambia la carpeta (por defecto `privado/` en la raíz); `CC_
 - Las pruebas que necesitan esos archivos **se saltan con un aviso** («Faltan los archivos reales de FANANT en privado/…»). El resto pasa: `pytest -rs` muestra cuáles se saltaron y por qué.
 - Ni el ejecutable (`empaquetar/`) ni la imagen de Docker incluyen `privado/`.
 
-## Lo que sigue en el historial de git
-Mover los archivos no los borra del historial: los commits anteriores a la
-v2.2.0 todavía los contienen. Ver la recomendación en `docs/v22/ENTREGA.md`
-(hacer el repositorio privado y, si se decide, reescribir el historial).
+## El historial de git (limpiado en la v2.3)
+En la v2.3 se reescribió el historial con `git filter-repo`:
+- se quitaron de todos los commits `docs/fuentes/`, `docs/diseno/capturas/`, `docs/informe/`,
+  `docs/v22/capturas/fase-*`, `docs/v22/respaldo-fanant-enero-2025.json`, `data/empresa_fanant.json`,
+  `PROMPT.md` y `docs/ANALISIS_FUENTES.md`;
+- en el resto se reemplazaron las cédulas y el NIT reales por `[CEDULA]` y `[NIT]`, y la cadena de conexión
+  de la guía de credenciales por marcadores.
+
+`gitleaks` sobre todo el historial queda sin hallazgos. La copia completa de antes de limpiar está en
+`privado/respaldo-repo/` (fuera de git). Las capturas de `docs/v22/capturas/final/` se conservan porque solo
+muestran clientes de demostración.
+
+Quien tenga otra copia del repositorio debe clonarlo de nuevo: los identificadores de los commits cambiaron.

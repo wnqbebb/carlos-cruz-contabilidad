@@ -28,9 +28,13 @@ echo [3/6] bandit...
 "%PY%" -m bandit -q -r backend\app -c backend\bandit.yaml || set "FALLA=1"
 
 echo [4/6] semgrep...
-"%PY%" -m semgrep --version >nul 2>nul && (
-  "%PY%" -m semgrep scan --config p/python --config p/secrets --error --quiet backend\app || set "FALLA=1"
-) || echo   semgrep no está disponible en Windows: lo corre GitHub Actions en cada push.
+rem semgrep se instala en el entorno con: .venv\Scripts\python -m pip install semgrep
+if exist ".venv\Scripts\semgrep.exe" (
+  set "PYTHONUTF8=1"
+  ".venv\Scripts\semgrep.exe" scan --config p/python --config p/secrets --metrics=off --error --quiet backend\app || set "FALLA=1"
+) else (
+  echo   semgrep no está instalado en este equipo: lo corre GitHub Actions en cada push.
+)
 
 echo [5/6] gitleaks...
 if not exist "herramientas\gitleaks\gitleaks.exe" (
