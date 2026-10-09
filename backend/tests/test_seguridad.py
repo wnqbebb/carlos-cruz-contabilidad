@@ -152,13 +152,14 @@ def test_hash_bcrypt_anterior_se_migra_a_argon2id(cliente_sin_sesion):
 
 
 # ── C4: verificación en dos pasos ──────────────────────────────────────
-def test_totp_activar_ingresar_y_desactivar(cliente_api):
+def test_totp_activar_ingresar_y_desactivar(cliente_api, monkeypatch):
     r = cliente_api.post("/api/acceso/totp/iniciar")
     assert r.status_code == 200 and r.json()["qr"].startswith("data:image/svg+xml")
     secreto = r.json()["secreto"]
     assert cliente_api.post("/api/acceso/totp/confirmar", json={"codigo": "000000"}).status_code == 422
     r = cliente_api.post("/api/acceso/totp/confirmar", json={"codigo": pyotp.TOTP(secreto).now()})
     assert r.status_code == 200 and len(r.json()["codigos"]) == 10
+    codigos = r.json()["codigos"]
     with lectura() as cn:
         assert secreto not in (cn.execute(select(usuarios.c.totp_secreto)).scalar() or "")    # cifrado
     with TestClient(app) as otro:
@@ -167,6 +168,16 @@ def test_totp_activar_ingresar_y_desactivar(cliente_api):
         assert r.status_code == 401 and r.json()["detail"]["codigo"] == "requiere_totp"
         r = otro.post("/api/sesion", json={"usuario": USUARIO_PRUEBA, "clave": CLAVE_PRUEBA,
                                            "codigo": pyotp.TOTP(secreto).now()})
+        assert r.status_code == 200
+    # La base copiada a otro equipo (otra clave de datos): el código TOTP ya no se puede comprobar,
+    # pero no hay error 500 y un código de recuperación sigue sirviendo.
+    with monkeypatch.context() as m, TestClient(app) as otro:
+        m.setenv("CC_CLAVE_DATOS", "ab" * 32)
+        sesion.olvidar_fallos()
+        r = otro.post("/api/sesion", json={"usuario": USUARIO_PRUEBA, "clave": CLAVE_PRUEBA,
+                                           "codigo": pyotp.TOTP(secreto).now()})
+        assert r.status_code == 401
+        r = otro.post("/api/sesion", json={"usuario": USUARIO_PRUEBA, "clave": CLAVE_PRUEBA, "codigo": codigos[0]})
         assert r.status_code == 200
     _vencer_reautenticacion(cliente_api)
     assert cliente_api.post("/api/acceso/totp/desactivar").status_code == 403
@@ -368,10 +379,29 @@ def test_secretos_salen_del_archivo_de_texto(tmp_path, monkeypatch):
     secretos.borrar("CLAVE_SESION")
 
 
-def test_cada_instalacion_tiene_su_propio_espacio_de_secretos(monkeypatch):
+def test_cada_instalacion_tiene_su_propio_espacio_de_secretos(tmp_path, monkeypatch):
     a = secretos.servicio()
-    monkeypatch.setenv("CC_SQLITE", "/otra/ruta/base.db")
+    otro = tmp_path / "otra.env"
+    otro.write_text("ALMACENAMIENTO=local\n", encoding="utf-8")
+    monkeypatch.setenv("CC_ENV", str(otro))
     assert secretos.servicio() != a
+
+
+def test_el_espacio_de_secretos_va_con_el_archivo_de_configuracion(tmp_path, monkeypatch):
+    """Una instancia con otra base pero el mismo archivo de configuración es la misma instalación:
+    nunca se lleva los secretos de ese archivo a otro espacio del almacén."""
+    a = secretos.servicio()
+    monkeypatch.setenv("CC_SQLITE", str(tmp_path / "otra-base.db"))
+    assert secretos.servicio() == a
+
+
+def test_con_cc_env_solo_se_lee_ese_archivo(tmp_path, monkeypatch):
+    from app import config
+
+    propio = tmp_path / "propio.env"
+    propio.write_text("X=1\n", encoding="utf-8")
+    monkeypatch.setenv("CC_ENV", str(propio))
+    assert config._candidatos_env() == [propio] and config.archivo_env() == propio
 
 
 def test_copia_de_seguridad_cifrada_que_se_restaura(cliente_api, tmp_path, monkeypatch):
@@ -426,3 +456,39 @@ def test_recortes_de_fotos_sin_metadatos():
     png = ocr.recorte_png(ocr.LecturaImagen(tabla=foto), (10, 10, 200, 40))
     assert png.startswith(b"\x89PNG")
     assert not any(m in png for m in (b"Exif", b"eXIf", b"GPS", b"tEXt", b"iTXt", b"Telefono"))
+
+
+def test_ninguna_ruta_frena_al_servidor():
+    """Las rutas son `def`: FastAPI las corre en hilos y un OCR o un Excel grande no congelan a las demás."""
+    import inspect
+
+    asincronas = [r.path for r in app.routes
+                  if getattr(r, "endpoint", None) and inspect.iscoroutinefunction(r.endpoint)]
+    assert asincronas == []
+
+
+def test_escribir_un_registro_nunca_frena_al_servidor(monkeypatch):
+    """Una consola o un disco lentos (ventana con texto seleccionado, antivirus) no congelan el servidor."""
+    import threading
+
+    monkeypatch.delenv("CC_REGISTRO_DIRECTO", raising=False)
+    escrito = threading.Event()
+
+    class Lento(logging.Handler):
+        def emit(self, record):
+            time.sleep(1.0)
+            escrito.set()
+
+    lg = logging.getLogger("carloscruz.prueba-lento")
+    lg.addHandler(Lento())
+    lg.setLevel(logging.INFO)
+    try:
+        incidentes.desacoplar(("carloscruz.prueba-lento",))
+        t = time.perf_counter()
+        lg.info("acceso de prueba")
+        assert time.perf_counter() - t < 0.2       # quien registra no espera
+        assert escrito.wait(5)                     # y el registro sí se escribe
+    finally:
+        incidentes.detener_escritores()
+        for h in list(lg.handlers):
+            lg.removeHandler(h)

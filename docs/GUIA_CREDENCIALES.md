@@ -104,17 +104,17 @@ uno.
 5. Copie el texto completo. Se ve parecido a esto:
 
 ```
-postgresql://postgres.abcdefghijklmnop:[YOUR-PASSWORD]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
+postgresql://postgres.[REF-DEL-PROYECTO]:[YOUR-PASSWORD]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
 ```
 
 6. **Reemplace `[YOUR-PASSWORD]`** (incluidos los corchetes) por la contraseña
    que copió en el paso 2.
-7. **Agregue al final** `?sslmode=require`.
+7. No agregue nada al final: la aplicación verifica sola el certificado del servidor (`verify-full`).
 
 Debe quedar así de completo:
 
 ```
-DATABASE_URL=postgresql://postgres.abcdefghijklmnop:MiClaveReal123@aws-0-sa-east-1.pooler.supabase.com:6543/postgres?sslmode=require
+DATABASE_URL=postgresql://postgres.[REF-DEL-PROYECTO]:[SU-CONTRASENA]@aws-0-sa-east-1.pooler.supabase.com:6543/postgres
 ```
 
 ### 4.2 — Las otras tres
@@ -130,6 +130,11 @@ En **Project Settings → API** encontrará:
 > La clave **service_role** es la llave maestra de la base. Nunca la pegue en un
 > chat, ni en un correo, ni en una captura de pantalla. Solo va en ese archivo
 > `.env`, que está configurado para no subirse nunca a internet.
+>
+> **Desde la v2.3**, al abrir la aplicación, `DATABASE_URL` y `SUPABASE_SERVICE_KEY` se
+> mueven solas al Administrador de credenciales de Windows y se borran del `.env`. Si
+> algún día cambia la contraseña de la base, vuelva a escribir la línea `DATABASE_URL=`
+> en el `.env` y abra la aplicación: la nueva reemplaza a la anterior.
 
 ### 4.3 — Cambiar el modo
 

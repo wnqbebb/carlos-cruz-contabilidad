@@ -262,7 +262,17 @@ def listar(cliente_id: str, limite: int = 120) -> list[dict]:
             .order_by(TP.c.hasta.desc(), TP.c.desde.desc())
             .limit(max(1, min(int(limite or 120), 1000)))
         ).all()
-    return [_a_dict(f) for f in filas]
+        # Cuántas versiones guardadas tiene cada periodo, en una sola consulta.
+        ids = [f.id for f in filas]
+        conteo = dict(cn.execute(
+            select(TH.c.periodo_id, func.count()).where(TH.c.periodo_id.in_(ids)).group_by(TH.c.periodo_id)
+        ).all()) if ids else {}
+    salida = []
+    for f in filas:
+        d = _a_dict(f)
+        d["versiones_n"] = int(conteo.get(f.id, 0))
+        salida.append(d)
+    return salida
 
 
 def obtener(periodo_id: str) -> dict:

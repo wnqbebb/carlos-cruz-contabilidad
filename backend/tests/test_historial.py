@@ -150,6 +150,17 @@ def test_un_periodo_nuevo_no_genera_version_vacia(base_limpia):
     c = _cliente()
     p = repo.guardar_resultado(c["id"], _resultado(activo="1"))
     assert repo.versiones(p["id"]) == []
+    assert repo.listar(c["id"])[0]["versiones_n"] == 0
+
+
+def test_el_listado_trae_cuantas_versiones_tiene_cada_periodo(base_limpia):
+    """Una consulta para todo el listado: la pantalla ya no pide las versiones periodo por periodo."""
+    c = _cliente()
+    p = repo.guardar_resultado(c["id"], _resultado(activo="100"))
+    repo.guardar_resultado(c["id"], _resultado(activo="200"))
+    repo.guardar_resultado(c["id"], _resultado(activo="300"))
+    fila = next(x for x in repo.listar(c["id"]) if x["id"] == p["id"])
+    assert fila["versiones_n"] == len(repo.versiones(p["id"])) == 2
 
 
 # ── Bitácora e importaciones (H08) ──────────────────────────────────────────

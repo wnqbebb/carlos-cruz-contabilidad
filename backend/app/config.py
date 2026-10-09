@@ -34,19 +34,20 @@ except OSError:  # carpeta de solo lectura: la base se ubica con CC_SQLITE
     pass
 
 
+def _candidatos_env() -> list[Path]:
+    propio = (os.getenv("CC_ENV") or "").strip()
+    return [Path(propio)] if propio else [RAIZ / "backend" / ".env", RAIZ / ".env"]
+
+
 def _cargar_env() -> None:
     """Lee el archivo de configuración sin dependencias externas.
 
-    No sobreescribe variables ya definidas en el entorno. `CC_ENV` permite
-    apuntar a otro archivo, que es lo que hace la versión instalada: guarda la
-    configuración en «Documentos › Carlos Cruz», no junto al programa.
+    No sobreescribe variables ya definidas en el entorno. `CC_ENV` apunta a otro
+    archivo y entonces es el ÚNICO que se lee: así lo hace la versión instalada
+    (configuración en «Documentos › Carlos Cruz») y así la copia aislada de pruebas
+    nunca hereda la configuración ni los secretos de la aplicación real.
     """
-    candidatos = []
-    propio = (os.getenv("CC_ENV") or "").strip()
-    if propio:
-        candidatos.append(Path(propio))
-    candidatos += [RAIZ / "backend" / ".env", RAIZ / ".env"]
-    for ruta in candidatos:
+    for ruta in _candidatos_env():
         if not ruta.exists():
             continue
         for linea in ruta.read_text(encoding="utf-8-sig").splitlines():
@@ -64,8 +65,7 @@ _cargar_env()
 
 def archivo_env() -> Path | None:
     """El archivo de configuración en uso (para mover sus secretos al almacén de Windows)."""
-    propio = (os.getenv("CC_ENV") or "").strip()
-    for ruta in ([Path(propio)] if propio else []) + [RAIZ / "backend" / ".env", RAIZ / ".env"]:
+    for ruta in _candidatos_env():
         if ruta.exists():
             return ruta
     return None
@@ -83,7 +83,7 @@ def _desde_almacen(nombre: str) -> str:
 MARCA = "Carlos Cruz"
 LEMA = "Contabilidad que cuadra."
 LEMA_LARGO = "Cuadramos sus cuentas; usted atiende su negocio."
-VERSION = "2.2.0"
+VERSION = "2.3.0"
 
 # Ruta del archivo SQLite local. `CC_SQLITE` permite apuntarla a otro sitio,
 # que es como las pruebas trabajan contra una base desechable.

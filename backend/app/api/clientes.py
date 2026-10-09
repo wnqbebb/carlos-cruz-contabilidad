@@ -66,12 +66,12 @@ def plantilla():
 
 
 @router.post("/importar")
-async def importar(
+def importar(
     archivo: UploadFile = File(...),
     actualizar_existentes: bool = Query(True),
     solo_revisar: bool = Query(False, description="True = simulacro, no escribe nada"),
 ):
-    contenido = await archivo.read()
+    contenido = archivo.file.read()
     if len(contenido) > MAX_ARCHIVO:
         raise HTTPException(413, f"El archivo pesa más de {MAX_ARCHIVO // (1024 * 1024)} MB. Divídalo en partes.")
     if not contenido:

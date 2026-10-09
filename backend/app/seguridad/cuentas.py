@@ -6,6 +6,7 @@ queda solo su hash (Argon2id). El secreto TOTP se guarda cifrado con la clave de
 from __future__ import annotations
 
 import base64
+import logging
 import os
 import secrets
 from datetime import datetime, timezone
@@ -18,6 +19,8 @@ from ..db import conexion, lectura
 from ..esquema import codigos_recuperacion as TC
 from ..esquema import usuarios as TU
 from . import cifrado, claves
+
+log = logging.getLogger("carloscruz.acceso")
 
 CANTIDAD_CODIGOS = 10
 EMISOR = "Carlos Cruz"
@@ -154,7 +157,11 @@ def codigos_restantes(usuario_id: int) -> int:
 def _abrir(cifrado_b64: str | None) -> str | None:
     if not cifrado_b64:
         return None
-    return cifrado.descifrar(base64.b64decode(cifrado_b64), contexto=b"totp").decode("ascii")
+    try:
+        return cifrado.descifrar(base64.b64decode(cifrado_b64), contexto=b"totp").decode("ascii")
+    except Exception as ex:  # la base se copió a otro equipo (otra clave): queda el código de recuperación
+        log.warning("La verificación en dos pasos guardada no se pudo abrir en este equipo: %s", type(ex).__name__)
+        return None
 
 
 def _sellar(secreto: str) -> str:

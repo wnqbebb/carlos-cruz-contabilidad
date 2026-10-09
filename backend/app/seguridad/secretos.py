@@ -5,8 +5,9 @@ cifran los archivos subidos y las copias de seguridad (`CLAVE_DATOS`). Ninguno q
 archivo de texto: si el archivo de configuración trae alguno, se mueve al almacén y se borra
 del archivo (`migrar_archivo`).
 
-Cada instalación usa su propio «servicio» en el almacén (según dónde guarda sus datos), para
-que la copia aislada de pruebas nunca lea ni pise los secretos de la aplicación real.
+Cada instalación usa su propio «servicio» en el almacén (según su archivo de configuración),
+para que la copia aislada de pruebas, que tiene el suyo, nunca lea ni pise los secretos de la
+aplicación real.
 
 Sin almacén disponible (pruebas, un servidor Linux) se usa un archivo con permisos
 restringidos dentro de la carpeta de datos de la aplicación.
@@ -27,8 +28,18 @@ SECRETOS = ("DATABASE_URL", "CLAVE_SESION", "SUPABASE_SERVICE_KEY", "SUPABASE_SE
 
 
 def _ubicacion() -> str:
-    """Lo que distingue a esta instalación: la base local o el archivo de configuración."""
-    return os.getenv("CC_SQLITE") or os.getenv("CC_ENV") or str(Path(__file__).resolve().parents[3])
+    """Lo que distingue a esta instalación: su archivo de configuración.
+
+    Los secretos se migran desde ese archivo, así que el espacio del almacén va atado a él: una
+    instancia que lee el mismo archivo es la misma instalación y nunca se lleva sus secretos a
+    otro espacio. Sin archivo, la base local (o la carpeta del programa).
+    """
+    from ..config import archivo_env
+
+    ruta = archivo_env()
+    if ruta:
+        return str(ruta.resolve())
+    return os.getenv("CC_SQLITE") or str(Path(__file__).resolve().parents[3])
 
 
 def servicio() -> str:

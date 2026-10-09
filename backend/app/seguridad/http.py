@@ -17,6 +17,7 @@ from urllib.parse import urlsplit
 
 from fastapi import Request
 from fastapi.responses import JSONResponse
+from starlette.concurrency import run_in_threadpool
 
 from .. import sesion
 from ..config import CORS_ORIGENES
@@ -125,7 +126,8 @@ async def proteger(request: Request, siguiente):
             r.headers["Retry-After"] = str(espera)
             return _con_encabezados(r, request)
         publica = ruta.rstrip("/") in sesion.PUBLICAS
-        info = sesion.leer(request.cookies.get(sesion.COOKIE))
+        # La sesión se lee de la base: en un hilo, para no frenar las demás solicitudes.
+        info = await run_in_threadpool(sesion.leer, request.cookies.get(sesion.COOKIE))
         request.state.sesion = info
         if not publica and not info:
             return _con_encabezados(_rechazo(401, "sin_sesion",
@@ -146,5 +148,6 @@ async def proteger(request: Request, siguiente):
             and not ruta.startswith("/api/renta/")):
         from ..repositorio import bitacora
 
-        bitacora.registrar("descarga", None, ruta=ruta[:200], ip=request.client.host if request.client else "?")
+        await run_in_threadpool(bitacora.registrar, "descarga", None, ruta=ruta[:200],
+                                ip=request.client.host if request.client else "?")
     return _con_encabezados(respuesta, request)

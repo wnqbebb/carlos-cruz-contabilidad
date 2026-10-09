@@ -9,7 +9,9 @@ useDefault = true
 [[rules]]
 id = "cadena-conexion-con-clave"
 description = "Cadena de conexión con usuario y contraseña"
-regex = '''(?i)\b(postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis)://[^\s:/@]+:[^\s@/]{4,}@[^\s'"]+'''
+regex = '''(?i)\b(?:postgres(?:ql)?|mysql|mongodb(?:\+srv)?|redis)://[^\s:/@]+:([^\s@/]{4,})@[^\s'"]+'''
+# El secreto es la contraseña (así la lista de permitidos reconoce los marcadores de la documentación).
+secretGroup = 1
 keywords = ["postgres", "mysql", "mongodb", "redis"]
 
 [[rules]]
@@ -54,7 +56,7 @@ regexes = [
   '''(?i)usuario:clave@|u:p@|\*\*\*''',
   # Ejemplos de documentación: referencia de proyecto inventada y contraseña de ejemplo
   '''abcdefghijklmnop''',
-  '''\[YOUR-PASSWORD\]|MiClaveReal123''',
+  '''\[YOUR-PASSWORD\]|\[SU-CONTRASENA\]|MiClaveReal123''',
   # Cédula de la representante legal del cliente de demostración
   '''31\.?456\.?789''',
 ]

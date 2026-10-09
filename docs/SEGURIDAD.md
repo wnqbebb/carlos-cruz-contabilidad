@@ -54,14 +54,14 @@ cada puerta. Cada control lleva una prueba automática (`backend/tests/test_segu
 | **Errores y registros** | | | |
 | C16 | Errores: mensaje humano + **código de incidente** (`INC-7F3A`); el detalle solo en el registro local | `seguridad/incidentes.py` | V7.4.1 |
 | C17 | `/api/salud` sin sesión responde solo `{ok, version}` | `api/sistema.py` | V14.3.2 |
-| C18 | **Registros sin datos sensibles**: se quitan contraseñas, cookies, tokens y cadenas de conexión; cédulas y NIT enmascarados (`****8740`) | `seguridad/incidentes.py` | V7.1.1, V7.1.2 |
+| C18 | **Registros sin datos sensibles**: se quitan contraseñas, cookies, tokens y cadenas de conexión; cédulas y NIT enmascarados (`****8740`). Se escriben desde un hilo aparte: una consola o un disco lentos nunca congelan el servidor | `seguridad/incidentes.py` | V7.1.1, V7.1.2 |
 | C19 | **Bitácora de seguridad**: ingresos, fallos, contraseña, TOTP, descargas, eliminaciones y restauraciones, con fecha e IP; aviso en Sistema si hubo intentos fallidos recientes | `repositorio/bitacora.py` | V7.2.1, V7.2.2 |
 | **Archivos subidos** | | | |
 | C20 | Tipo por **contenido** (firma de bytes), no por extensión | `seguridad/archivos.py` | V12.2.1 |
 | C21 | Bombas de compresión: límites de tamaño descomprimido, entradas y proporción antes de abrir `.xlsx`/`.docx` | `seguridad/archivos.py` | V12.1.2 |
 | C22 | XML seguro (`defusedxml`, sin entidades externas) | `seguridad/archivos.py` | V5.5.2 |
 | C23 | Imágenes: límite de píxeles y de proporción; PDF: límite de páginas y tamaño | `seguridad/archivos.py` | V12.1.1 |
-| C24 | Análisis **aislado**: cada lote se lee en un proceso aparte con tiempo y memoria limitados | `seguridad/aislado.py` | V12.1.3 |
+| C24 | Análisis **aislado**: cada lote se lee en un proceso aparte con tiempo y memoria limitados. Ninguna ruta corre trabajo síncrono en el bucle del servidor (rutas `def` y sesión leída en un hilo): una subida pesada no congela a los demás | `seguridad/aislado.py`, `seguridad/http.py` | V12.1.3, V11.1.4 |
 | C25 | Nombres aleatorios en disco, **cifrado AES-256-GCM**, borrado a las 8 horas; nunca se usa el nombre original como ruta | `repositorio/subidas.py`, `seguridad/cifrado.py` | V12.3.1, V6.2.2 |
 | C26 | `.xlsm`: las macros nunca se ejecutan y se avisa | `seguridad/archivos.py` | V12.2.1 |
 | C27 | Fotos: nunca se guardan completas (solo recortes de filas de la tabla, sin metadatos); notas a mano y credenciales nunca se guardan | `renta/ocr.py` | V8.3.4 |
@@ -69,7 +69,7 @@ cada puerta. Cada control lleva una prueba automática (`backend/tests/test_segu
 | C28 | Excel/CSV sin **inyección de fórmulas** (textos que empiezan por `= + - @`, tab o retorno van como texto) | `seguridad/archivos.py` (`texto_seguro`) | V5.3.10 |
 | C29 | PDF sin metadatos internos (rutas, usuario del equipo); las descargas quedan en la bitácora | `exportar/` | V8.3.4 |
 | **Datos y secretos** | | | |
-| C30 | Secretos en el **Administrador de credenciales de Windows** (DPAPI, `keyring`): conexión a la base y clave de cifrado; se migran solos desde el archivo de texto y se borran de él; `.env` solo en desarrollo, nunca empaquetado | `seguridad/secretos.py` | V6.4.1, V2.10.4 |
+| C30 | Secretos en el **Administrador de credenciales de Windows** (DPAPI, `keyring`): conexión a la base y clave de cifrado; se migran solos desde el archivo de texto y se borran de él; el espacio del almacén va atado a ese archivo (`CC_ENV` es el único que se lee), así que una copia de prueba nunca toca los secretos reales; `.env` solo en desarrollo, nunca empaquetado | `seguridad/secretos.py` | V6.4.1, V2.10.4 |
 | C31 | Base en la nube: rol de **mínimo privilegio** para la aplicación (`supabase/migraciones/007_rol_app.sql`) y SSL `verify-full` | `config.py` | V9.2.1, V1.4.4 |
 | C32 | **Copias de seguridad cifradas** diarias (AES-256-GCM), 30 días de retención y prueba de restauración automática | `seguridad/respaldo.py` | V8.1.6 |
 | C33 | Ley 1581: cédulas enmascaradas en listas y registros; eliminar un cliente borra sus periodos, archivos, recortes, declaraciones e historial | varios | V8.3.1, V8.3.2 |

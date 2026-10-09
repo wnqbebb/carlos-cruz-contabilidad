@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Revisión final (sección 4.1): toda la aplicación, en claro y oscuro, a 1440 y 390 px.
+ * Revisión final (v2.3 · Fase 7): toda la aplicación, en claro y oscuro, a 1440 y 390 px.
  *
  *   node scripts/revision-final.mjs http://127.0.0.1:8001 <carpeta-salida> [--sin-capturas] [--sin-botones]
  *
@@ -37,16 +37,39 @@ const todos = (await json("/api/clientes?estado=&por_pagina=500")).clientes;
 const DEL_BANCO = /01_VENTAS|09_VENTAS_EN_WORD|11_LIBRO_DIARIO/;
 const clientes = todos.filter((c) => c.demo || !c.razon_social.startsWith("PRUEBA ") || DEL_BANCO.test(c.razon_social));
 console.log(`clientes en la copia: ${clientes.length}`);
-const VISTAS = ["resumen", "periodos", "estados", "inventario", "nomina", "socios", "movimientos", "actividad", "ficha"];
-const rutas = ["/", "/clientes", "/clientes?estado=archivado", "/clientes/nuevo", "/trabajo", "/parametros", "/diseno", "/no-existe"];
+// v2.3: el expediente tiene cinco secciones; la contabilidad, una vista por informe y periodo.
+const SECCIONES = ["resumen", "contabilidad", "renta", "archivos", "datos"];
+const VISTAS_CONTABLES = ["situacion", "resultados", "patrimonio", "flujo", "prueba", "ajustes", "hoja", "definitivo",
+  "diario", "mayor", "cuentas_t", "inventario", "nomina", "alertas"];
+// /trabajo y /parametros quedan como redirecciones de enlaces viejos.
+const rutas = ["/", "/clientes", "/clientes?estado=archivado", "/clientes/nuevo", "/renta", "/trabajo", "/parametros",
+  "/diseno", "/no-existe"];
+const extraDescargas = new Set(["/api/plantilla", "/api/clientes/plantilla"]);
+let conTodasLasVistas = 0;
 for (const c of clientes) {
-  for (const v of VISTAS) rutas.push(`/clientes/${c.id}?vista=${v}`);
+  for (const s of SECCIONES) rutas.push(`/clientes/${c.id}?seccion=${s}`);
   rutas.push(`/clientes/${c.id}/editar`);
+  const { periodos = [] } = await json(`/api/clientes/${c.id}/periodos`).catch(() => ({}));
+  const guardados = periodos.filter((x) => x.estado !== "borrador");
+  // Todas las vistas en el primer periodo de dos clientes (FANANT y una demostración); en el resto, la principal.
+  for (const per of guardados.slice(0, 1)) {
+    const mes = per.desde.slice(0, 7);
+    const vistas = conTodasLasVistas < 2 ? VISTAS_CONTABLES : ["situacion"];
+    if (vistas.length > 1) conTodasLasVistas++;
+    for (const v of vistas) rutas.push(`/clientes/${c.id}?seccion=contabilidad&periodo=${mes}&vista=${v}`);
+    for (const d of ["excel", "pdf", "saldos", "libro-diario/excel", "libro-diario/pdf", "mayor-balances/excel", "mayor-balances/pdf"]) {
+      extraDescargas.add(`/api/periodos/${per.id}/${d}`);
+    }
+  }
+}
+for (const fila of (await json("/api/renta/cartera?anio=2025").catch(() => ({ declaraciones: [] }))).declaraciones ?? []) {
+  if (fila.estado === "sin_informacion" || fila.neto == null) continue; // sin borrador: la interfaz no ofrece descarga
+  for (const d of ["pdf", "excel", "resumen"]) extraDescargas.add(`/api/renta/${fila.cliente_id}/${fila.anio}/descargar/${d}`);
 }
 
 const navegador = await chromium.launch({ channel: "msedge" });
 await conSesion(navegador, base);
-const descargas = new Set();
+const descargas = new Set(extraDescargas);
 
 async function pagina(modo, ancho) {
   const contexto = await navegador.newContext({
@@ -70,11 +93,21 @@ async function pagina(modo, ancho) {
 
 // ── 1 · todas las pantallas ──────────────────────────────────────────────
 let vistas = 0;
+const lentas = [];
+const tiempos = [];
 for (const modo of conPantallas ? ["claro", "oscuro"] : []) {
   for (const ancho of [1440, 390]) {
     const { contexto, p } = await pagina(modo, ancho);
     for (const ruta of rutas) {
-      await p.goto(base + ruta, { waitUntil: "networkidle" });
+      const t0 = Date.now();
+      try {
+        await p.goto(base + ruta, { waitUntil: "networkidle", timeout: 20000 });
+      } catch {
+        lentas.push(`${modo} ${ancho} ${ruta}`);
+        await p.goto(base + ruta, { waitUntil: "load", timeout: 30000 });
+        await p.waitForTimeout(1500);
+      }
+      tiempos.push([Date.now() - t0, ruta]);
       await p.waitForTimeout(200);
       vistas++;
       const w = await p.evaluate(() => document.documentElement.scrollWidth);
@@ -83,9 +116,9 @@ for (const modo of conPantallas ? ["claro", "oscuro"] : []) {
       for (const h of await p.locator('a[href*="/api/"]').evaluateAll((as) => as.map((a) => a.getAttribute("href")))) {
         if (h) descargas.add(h);
       }
-      const conVista = ruta.includes("vista=");
+      const conVista = ruta.includes("seccion=");
       const capturar = conCapturas && (ancho === 1440
-        ? !conVista || /vista=(resumen|estados)$/.test(ruta)
+        ? !conVista || /seccion=(resumen|renta)$|vista=(situacion|resultados)$/.test(ruta)
         : !conVista && !ruta.includes("/editar"));
       if (capturar) {
         const nombre = ruta.replace(/[/?=&]+/g, "_").replace(/^_/, "") || "tablero";
@@ -97,13 +130,18 @@ for (const modo of conPantallas ? ["claro", "oscuro"] : []) {
   }
 }
 
+if (tiempos.length) {
+  tiempos.sort((x, y) => y[0] - x[0]);
+  console.log(`   carga más lenta: ${tiempos.slice(0, 5).map(([ms, r]) => `${ms} ms ${r}`).join(" · ")}`);
+  if (lentas.length) console.log(`   sin calma de red en 20 s (${lentas.length}): ${lentas.slice(0, 5).join(" · ")}`);
+}
 if (errores.length) {
   console.log(`   errores en las pantallas: ${errores.length}`);
   for (const e of errores.slice(0, 20)) console.log("     ·", e);
 }
 
 // ── 2 · cada botón hace algo ────────────────────────────────────────────
-const PELIGROSOS = /eliminar|borrar|archivar|restaurar|reabrir|cerrar (el )?periodo|cerrar de todos modos|cerrar sesi|importar de verdad|guardar|crear cliente|confirmar|aplicar|usar estos datos|posponer|calcular|subir archivo|registrar/i;
+const PELIGROSOS = /eliminar|borrar|archivar|restaurar|reabrir|cerrar (el )?periodo|cerrar de todos modos|cerrar sesi|cerrar las dem|importar de verdad|guardar|crear cliente|confirmar|aplicar|usar estos datos|posponer|calcular|subir archivo|registrar|presentada|desactivar|generar c/i;
 const omitidos = new Set();
 const muertos = [];
 let pulsados = 0;
@@ -114,9 +152,9 @@ if (conBotones) {
   // Una ficha de cada tipo basta para los botones (todas comparten componentes).
   const fichas = new Set();
   const lista = paraBotones.filter((r) => {
-    const m = r.match(/\/clientes\/([^/?]+)\?vista=(\w+)/);
+    const m = r.match(/\/clientes\/([^/?]+)\?seccion=(\w+)(?:.*vista=(\w+))?/);
     if (!m) return true;
-    const clave = m[2];
+    const clave = `${m[2]}:${m[3] ?? ""}`;
     if (fichas.has(clave) && !/ESPIGA|TORNILLO/.test(clientes.find((c) => c.id === m[1])?.razon_social ?? "")) return false;
     fichas.add(clave);
     return true;
@@ -149,7 +187,9 @@ if (conBotones) {
       if (await el.isDisabled().catch(() => false)) continue;
       // Lo que ya está elegido (pestaña actual, mes seleccionado, opción marcada) no tiene que cambiar nada.
       const activo = await el.evaluate((n) => ["aria-selected", "aria-pressed", "aria-checked"].some((a) => n.getAttribute(a) === "true")
-        || n.hasAttribute("aria-current"));
+        || n.hasAttribute("aria-current")
+        // La columna por la que ya está ordenada una tabla (aria-sort en su encabezado).
+        || ["ascending", "descending"].includes(n.closest("th")?.getAttribute("aria-sort") ?? ""));
       if (activo) continue;
       const href = await el.getAttribute("href");
       if (href && href.includes("/api/")) continue; // descargas: se prueban en el paso 3

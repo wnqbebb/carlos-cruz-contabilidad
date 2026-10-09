@@ -217,7 +217,7 @@ def ver_importacion(sid: str):
 
 # ── 1. subir archivos ───────────────────────────────────────────────────────
 @router.post("/importar")
-async def importar(archivos: list[UploadFile] = File(...), cliente_id: str = Query("")):
+def importar(archivos: list[UploadFile] = File(...), cliente_id: str = Query("")):
     datos = []
     for a in archivos:
         nombre = a.filename or "archivo.xlsx"
@@ -227,7 +227,7 @@ async def importar(archivos: list[UploadFile] = File(...), cliente_id: str = Que
                 f"«{nombre}»: formato no admitido. Se aceptan "
                 + ", ".join(EXTENSIONES) + ".",
             )
-        contenido = await a.read()
+        contenido = a.file.read()
         if len(contenido) > MAX_ARCHIVO:
             raise HTTPException(413, f"{nombre}: el archivo pesa más de {MAX_ARCHIVO // (1024*1024)} MB.")
         datos.append((nombre, contenido))

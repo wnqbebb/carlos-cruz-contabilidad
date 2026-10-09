@@ -38,3 +38,17 @@ Cada año gravable tiene dos archivos en `data/renta/`; la aplicación no invent
 **Lector de fotos (Tesseract).** `iniciar.bat` lo deja listo la primera vez con `scripts/preparar_ocr.ps1`
 (copia el programa a `datos_app/tesseract` y descarga los idiomas a `datos_app/tessdata`); `empaquetar/construir.bat`
 lo mete dentro del `.exe`. Si falta, la renta sigue funcionando con PDF y Excel.
+
+## Seguridad (detalle en `docs/SEGURIDAD.md`)
+
+- **Una vez al mes**, `scripts\seguridad.bat`, o revise el resultado de GitHub Actions. Corre pip-audit, npm audit,
+  bandit, semgrep, gitleaks y las pruebas de seguridad. Dependabot propone las actualizaciones.
+- **Si cambia la contraseña de la base en Supabase**: escriba de nuevo la línea `DATABASE_URL=` en `backend/.env`
+  y abra la aplicación. La nueva pasa sola al Administrador de credenciales y reemplaza a la anterior.
+- **Si la base se pasa a otro computador**:
+  - las copias cifradas de `respaldos/` solo se abren en el equipo que las hizo, así que lleve también el
+    `carloscruz.db`;
+  - si la verificación en dos pasos estaba activa, el primer ingreso pide un código de recuperación en lugar del
+    código del teléfono. Después se puede activar de nuevo desde Sistema.
+- **Copias aisladas de prueba**: siempre con su propio `CC_ENV`, como lo hace `scripts/copia_aislada.sh`. Una
+  instancia sin `CC_ENV` lee `backend/.env` y es, para todo efecto, la instalación real.

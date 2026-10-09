@@ -74,13 +74,13 @@ def ver(cliente_id: str, anio: int):
 
 
 @router.post("/{cliente_id}/{anio}/documentos")
-async def documentos(cliente_id: str, anio: int, archivos: list[UploadFile] = File(...)):
+def documentos(cliente_id: str, anio: int, archivos: list[UploadFile] = File(...)):
     _anio(anio)
     if len(archivos) > MAXIMO_ARCHIVOS:
         raise HTTPException(413, {"codigo": "demasiados", "mensaje": f"Suba hasta {MAXIMO_ARCHIVOS} archivos a la vez."})
     leidos = []
     for a in archivos:
-        contenido = await a.read(TAMANO_MAXIMO + 1)
+        contenido = a.file.read(TAMANO_MAXIMO + 1)
         if len(contenido) > TAMANO_MAXIMO:
             raise HTTPException(413, {"codigo": "muy_grande", "mensaje": f"«{a.filename}» pasa de 25 MB."})
         leidos.append((a.filename or "archivo", contenido))

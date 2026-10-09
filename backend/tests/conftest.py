@@ -14,6 +14,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 _TEMPORAL = Path(tempfile.mkdtemp(prefix="carloscruz-pruebas-"))
 os.environ["CC_SQLITE"] = str(_TEMPORAL / "pruebas.db")
 os.environ["CC_DATOS_APP"] = str(_TEMPORAL / "datos")
+# Configuración propia y vacía: las pruebas nunca leen backend/.env ni sus secretos.
+os.environ["CC_ENV"] = str(_TEMPORAL / "pruebas.env")
+(_TEMPORAL / "pruebas.env").write_text("# configuración de las pruebas\n", encoding="utf-8")
 os.environ["CC_TMP_SUBIDAS"] = str(_TEMPORAL / "subidas")
 os.environ["ALMACENAMIENTO"] = "local"
 os.environ.pop("DATABASE_URL", None)
@@ -24,6 +27,7 @@ os.environ["CC_MIGRAR_SECRETOS"] = "0"
 os.environ["CC_SIN_RESPALDO"] = "1"
 os.environ["CC_SIN_REGISTRO_LOCAL"] = "1"
 os.environ["CC_ARGON_RAPIDO"] = "1"
+os.environ["CC_REGISTRO_DIRECTO"] = "1"     # los registros de pytest no pasan a otro hilo
 os.environ["CC_HOSTS"] = "testserver"
 os.environ["CC_HOSTS_LOCALES"] = "testclient"
 os.environ["CC_LIMITE_GENERAL"] = "1000000"

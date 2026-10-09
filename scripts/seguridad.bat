@@ -17,7 +17,7 @@ set "PY=.venv\Scripts\python.exe"
 
 echo [1/6] pip-audit...
 "%PY%" -m pip install -q pip-audit bandit >nul 2>nul
-"%PY%" -m pip_audit -r backend\requirements.txt --progress-spinner off || set "FALLA=1"
+"%PY%" -m pip_audit -r backend\requirements.lock --require-hashes --progress-spinner off || set "FALLA=1"
 
 echo [2/6] npm audit...
 pushd frontend
@@ -40,7 +40,9 @@ if not exist "herramientas\gitleaks\gitleaks.exe" (
 herramientas\gitleaks\gitleaks.exe git . --config .gitleaks.toml --redact --no-banner || set "FALLA=1"
 
 echo [6/6] pruebas de seguridad...
-"%PY%" -m pytest backend\tests\test_seguridad.py backend\tests\test_sesion.py -q || set "FALLA=1"
+pushd backend
+"..\%PY%" -m pytest tests\test_seguridad.py tests\test_sesion.py -q -p no:cacheprovider || set "FALLA=1"
+popd
 
 echo.
 if "%FALLA%"=="0" (

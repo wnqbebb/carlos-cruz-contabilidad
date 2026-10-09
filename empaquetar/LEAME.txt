@@ -6,20 +6,32 @@ COMO ABRIR EL PROGRAMA
 
   Doble clic en  CarlosCruz.exe
 
-  Se abre una ventana negra (es el motor, no la cierre) y
-  enseguida el navegador con el programa.
-
-  Para cerrar todo: cierre la ventana negra.
-
-  La primera vez, la ventana negra pide crear un usuario y una
-  contrasena. Con ellos se entra al programa.
+  Se abre el navegador con el programa y aparece un icono
+  "CC" junto al reloj de Windows. Desde ese icono:
+    - Abrir: vuelve a mostrar el programa en el navegador.
+    - Cerrar: apaga el programa.
 
 
-CAMBIAR LA CONTRASENA
+LA PRIMERA VEZ
 
-  Abra una ventana de comandos en la carpeta del programa y escriba:
+  El navegador muestra "Crear su acceso": escriba un usuario y
+  una contrasena (minimo 12 caracteres).
 
-      CarlosCruz.exe --cambiar-clave
+  Despues aparecen 10 CODIGOS DE RECUPERACION. Se muestran una
+  sola vez: descarguelos o imprimalos y guardelos en un lugar
+  seguro. Sirven si olvida la contrasena.
+
+
+SI OLVIDA LA CONTRASENA
+
+  En la pantalla de ingreso pulse "Olvido la contrasena?",
+  escriba uno de sus codigos de recuperacion y cree una nueva.
+  Cada codigo sirve una sola vez.
+
+
+CAMBIAR LA CONTRASENA O ACTIVAR LA VERIFICACION EN DOS PASOS
+
+  Dentro del programa: Sistema > Acceso seguro.
 
 
 DONDE QUEDAN SUS DATOS
@@ -29,11 +41,16 @@ DONDE QUEDAN SUS DATOS
   Ese archivo tiene TODOS sus clientes y toda su contabilidad.
 
 
-COPIA DE SEGURIDAD (importante)
+COPIAS DE SEGURIDAD
 
-  Una vez al mes, copie el archivo carloscruz.db a una USB o a
-  una carpeta en la nube. Con eso basta: si se daña el
-  computador, se copia ese archivo de vuelta y no se pierde nada.
+  El programa hace solo una copia cifrada cada dia en
+  Documentos\Carlos Cruz\respaldos y guarda las de 30 dias.
+  Esas copias solo se pueden abrir en ESTE computador.
+
+  Por eso, ademas, una vez al mes copie el archivo
+  carloscruz.db a una USB o a una carpeta en la nube. Si se
+  dana el computador, se copia ese archivo de vuelta y no se
+  pierde nada.
 
 
 SI WINDOWS MUESTRA UNA ADVERTENCIA AL ABRIRLO

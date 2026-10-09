@@ -521,7 +521,7 @@ function ListaPeriodos({
                 <Td derecha><Dinero valor={p.total_activo} /></Td>
                 <Td derecha className="font-semibold"><Dinero valor={p.utilidad} /></Td>
                 <Td derecha>
-                  <Versiones periodoId={p.id} onCambio={onCambio} />
+                  <Versiones periodoId={p.id} cantidad={p.versiones_n ?? 0} onCambio={onCambio} />
                 </Td>
               </tr>
             ))}
@@ -702,7 +702,7 @@ const MOTIVO: Record<string, string> = {
   cierre: "Antes de cerrar de nuevo",
 };
 
-function Versiones({ periodoId, onCambio }: { periodoId: string; onCambio: () => void }) {
+function Versiones({ periodoId, cantidad, onCambio }: { periodoId: string; cantidad: number; onCambio: () => void }) {
   const avisar = useAvisos();
   const [lista, setLista] = useState<VersionPeriodo[] | null>(null);
   const [abierto, setAbierto] = useState(false);
@@ -713,18 +713,18 @@ function Versiones({ periodoId, onCambio }: { periodoId: string; onCambio: () =>
     analisis.versiones(periodoId).then((r) => setLista(r.versiones)).catch(() => setLista([]));
   }, [periodoId]);
 
+  // La lista se pide al abrir el historial, no al pintar la tabla (una petición por periodo).
   useEffect(() => {
-    cargar();
-  }, [cargar]);
+    if (abierto) cargar();
+  }, [abierto, cargar]);
 
-  if (!lista) return <span className="t-small text-gris">…</span>;
-  if (!lista.length) return <span className="t-small text-gris">—</span>;
+  if (!cantidad) return <span className="t-small text-gris">—</span>;
 
   return (
     <>
       <Boton variante="fantasma" tamano="sm" onClick={() => setAbierto(true)}>
         <History size={14} strokeWidth={1.5} aria-hidden />
-        {lista.length} {lista.length === 1 ? "versión" : "versiones"}
+        {cantidad} {cantidad === 1 ? "versión" : "versiones"}
       </Boton>
 
       {abierto && (
@@ -738,8 +738,9 @@ function Versiones({ periodoId, onCambio }: { periodoId: string; onCambio: () =>
             Cada vez que este periodo se recalcula, se cierra de nuevo o se reabre, lo anterior queda
             guardado aquí. Restaurar una versión no borra la actual: también la guarda.
           </p>
+          {!lista && <p className="t-small mt-6 text-gris">Cargando…</p>}
           <ul className="mt-6 divide-y divide-linea">
-            {lista.map((v) => (
+            {(lista ?? []).map((v) => (
               <li key={v.id} className="flex flex-wrap items-center justify-between gap-4 py-4">
                 <div className="min-w-0">
                   <p className="t-body font-medium text-tinta">{MOTIVO[v.motivo] ?? v.motivo}</p>

@@ -43,7 +43,7 @@ MAX_TOTAL = 60 * 1024 * 1024
 
 
 # ── 1. subir ────────────────────────────────────────────────────────────────
-async def _leer_subida(archivos: list[UploadFile]) -> list[tuple[str, bytes]]:
+def _leer_subida(archivos: list[UploadFile]) -> list[tuple[str, bytes]]:
     datos: list[tuple[str, bytes]] = []
     total = 0
     for a in archivos:
@@ -55,7 +55,7 @@ async def _leer_subida(archivos: list[UploadFile]) -> list[tuple[str, bytes]]:
                             + ", ".join(EXTENSIONES) + "."),
                 "archivo": nombre,
             })
-        contenido = await a.read()
+        contenido = a.file.read()
         total += len(contenido)
         if len(contenido) > MAX_ARCHIVO:
             raise HTTPException(413, {
@@ -177,9 +177,9 @@ def _texto_periodo(desde, hasta) -> str:
 
 
 @router.post("/subir")
-async def subir(archivos: list[UploadFile] = File(...), cliente_id: str = Query("")):
+def subir(archivos: list[UploadFile] = File(...), cliente_id: str = Query("")):
     """Lee los archivos, dice qué son y de quién, y guarda los bytes para seguir."""
-    datos = await _leer_subida(archivos)
+    datos = _leer_subida(archivos)
 
     empresa, _ = (Empresa(), None)
     mapeador = Mapeador()
@@ -316,12 +316,12 @@ def confirmar(subida_id: str, cuerpo: dict = Body(default={})):
 
 # ── identidad suelta, para la pantalla de crear cliente ────────────────────
 @router.post("/identidad")
-async def solo_identidad(archivos: list[UploadFile] = File(...)):
+def solo_identidad(archivos: list[UploadFile] = File(...)):
     """Lee documentos y devuelve la ficha que se puede deducir de ellos.
 
     No guarda nada: la usa el formulario de cliente nuevo para llenarse solo.
     """
-    datos = await _leer_subida(archivos)
+    datos = _leer_subida(archivos)
     lectura = leer_aislado("app.importadores.clasificador.leer", datos)
     return a_json({
         "identidad": lectura.identidad.a_json(),
@@ -332,13 +332,13 @@ async def solo_identidad(archivos: list[UploadFile] = File(...)):
 
 
 @router.post("/clientes/{cliente_id}/ficha/comparar")
-async def comparar_ficha(cliente_id: str, archivos: list[UploadFile] = File(...)):
+def comparar_ficha(cliente_id: str, archivos: list[UploadFile] = File(...)):
     """Qué campos de la ficha cambiarían con estos documentos. No guarda nada."""
     try:
         actual = repo_clientes.obtener(cliente_id)
     except repo_clientes.ErrorCliente as ex:
         raise HTTPException(404, str(ex)) from ex
-    datos = await _leer_subida(archivos)
+    datos = _leer_subida(archivos)
     ficha = leer_aislado("app.importadores.clasificador.leer", datos).ficha()
     j = ficha.a_json()
     cambios = []

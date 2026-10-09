@@ -183,6 +183,8 @@ export type EstadoPeriodo = "borrador" | "calculado" | "cerrado";
 
 export interface Periodo {
   id: string;
+  /** Cuántas versiones anteriores guardadas tiene (viene con el listado del cliente). */
+  versiones_n?: number;
   cliente_id: string;
   desde: string;
   hasta: string;

@@ -84,7 +84,7 @@ def exportar() -> dict:
 def crear() -> Path:
     contenido = json.dumps(exportar(), ensure_ascii=False, default=str).encode("utf-8")
     sellado = cifrado.cifrar(gzip.compress(contenido), contexto=b"respaldo")
-    ruta = carpeta() / f"respaldo-{datetime.now().strftime('%Y%m%d-%H%M%S')}{EXTENSION}"
+    ruta = carpeta() / f"respaldo-{datetime.now().strftime('%Y-%m-%d_%Hh%Mm%Ss')}{EXTENSION}"
     ruta.write_bytes(sellado)
     limpiar()
     return ruta

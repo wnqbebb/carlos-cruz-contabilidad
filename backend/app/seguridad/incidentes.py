@@ -7,10 +7,13 @@
 """
 from __future__ import annotations
 
+import atexit
 import logging
+import os
+import queue
 import re
 import secrets
-from logging.handlers import TimedRotatingFileHandler
+from logging.handlers import QueueHandler, QueueListener, TimedRotatingFileHandler
 from pathlib import Path
 
 from fastapi import Request
@@ -79,6 +82,51 @@ def instalar_filtro(carpeta: Path | None = None) -> None:
                 h.addFilter(filtro)
         if not any(isinstance(f, FiltroSensible) for f in lg.filters):
             lg.addFilter(filtro)
+    desacoplar()
+
+
+class _Encolar(QueueHandler):
+    """Pasa el registro tal cual al hilo escritor. No se formatea aquí: el formateador de accesos de
+    uvicorn necesita los argumentos originales. Los datos sensibles ya los quitó el filtro del registrador."""
+
+    def prepare(self, record: logging.LogRecord) -> logging.LogRecord:
+        return record
+
+
+_escritores: list[QueueListener] = []
+
+
+def desacoplar(nombres: tuple[str, ...] = ("", "uvicorn", "uvicorn.error", "uvicorn.access")) -> None:
+    """Escribir un registro nunca frena al servidor.
+
+    En Windows, escribir en la consola se detiene mientras alguien tiene texto seleccionado en la ventana
+    de `iniciar.bat` (modo de edición rápida), y escribir en un archivo puede esperar al antivirus. Si eso
+    pasa dentro del bucle del servidor, la aplicación entera se congela (se midieron esperas de ~30 s).
+    Aquí los manejadores de cada registrador pasan a un hilo propio y el bucle solo deja el registro en
+    una cola. `CC_REGISTRO_DIRECTO=1` lo desactiva (pruebas).
+    """
+    if os.getenv("CC_REGISTRO_DIRECTO") == "1":
+        return
+    for nombre in nombres:
+        lg = logging.getLogger(nombre)
+        propios = [h for h in lg.handlers if not isinstance(h, QueueHandler)]
+        if not propios:
+            continue
+        cola: queue.SimpleQueue = queue.SimpleQueue()
+        for h in propios:
+            lg.removeHandler(h)
+        lg.addHandler(_Encolar(cola))
+        escritor = QueueListener(cola, *propios, respect_handler_level=True)
+        escritor.start()
+        _escritores.append(escritor)
+    if _escritores:
+        atexit.register(detener_escritores)
+
+
+def detener_escritores() -> None:
+    """Vacía las colas antes de salir (lo que quedaba por escribir se escribe)."""
+    while _escritores:
+        _escritores.pop().stop()
 
 
 def nuevo_codigo() -> str:
