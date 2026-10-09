@@ -1,0 +1,44 @@
+{
+  "_nota": "Caso A (imágenes 4 y 5 del contador), ANONIMIZADO: la persona y su cédula son ficticias; las entidades se generalizan. Cifras transcritas de la imagen y verificadas con zoom.",
+  "documento": {"tipo": "C.C.", "numero": "10000001", "nombre": "CONTRIBUYENTE A"},
+  "anio": 2025,
+  "topes": {"1": "117144", "2": "4600014", "3": "14536332", "4": "93121224", "5": "7763109"},
+  "lineas": [
+    {"entidad": "BANCO A S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Saldo cuentas bancarias (Titular Principal)", "valor": "1335423", "uso": "Tope 2: Patrimonio | R29"},
+    {"entidad": "ASEGURADORA", "titular": "CONTRIBUYENTE A", "detalle": "Cuentas por pagar de clientes (Concepto: 1315)", "valor": "22900", "uso": "R30 Deudas"},
+    {"entidad": "BANCO B", "titular": "NO REGISTRA NO", "detalle": "Valor total de los movimientos en cuentas", "valor": "920233", "uso": "Tope 4: Consignaciones e inversiones"},
+    {"entidad": "COMPAÑIA DE FINANCIAMIENTO", "titular": "CONTRIBUYENTE A", "detalle": "Cuentas por pagar de clientes (Concepto: 1315)", "valor": "1707993", "uso": "R30 Deudas"},
+    {"entidad": "FIDUCIARIA", "titular": "CONTRIBUYENTE A", "detalle": "Cartera Colectiva Rendimientos Pagados (Titular Principal)", "valor": "117144", "uso": "Tope 1: Ingresos brutos | R58"},
+    {"entidad": "FIDUCIARIA", "titular": "CONTRIBUYENTE A", "detalle": "Retención practicada rendimientos o utilidades", "valor": "4920", "uso": "R132 Retenciones año gravable a declarar"},
+    {"entidad": "BANCO B", "titular": "CONTRIBUYENTE A", "detalle": "Cuentas por pagar de clientes (Concepto: 1315)", "valor": "40736588", "uso": "R30 Deudas"},
+    {"entidad": "BANCO A S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Total consumos o gastos con tarjeta Crédito o Débito", "valor": "1170568", "uso": "Tope 3: Consumos TC"},
+    {"entidad": "FIDUCIARIA", "titular": "CONTRIBUYENTE A", "detalle": "Saldo Inversión en fondos de inversión colectiva", "valor": "460767", "uso": "Tope 2: Patrimonio | R29"},
+    {"entidad": "BANCO A S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Cuentas por pagar de clientes (Concepto: 1315)", "valor": "6466291", "uso": "R30 Deudas"},
+    {"entidad": "U.A.E. DIRECCION DE IMPUESTOS", "titular": "CONTRIBUYENTE A", "detalle": "Monto total de facturación electrónica", "valor": "4786677", "uso": ""},
+    {"entidad": "BANCO B", "titular": "CONTRIBUYENTE A", "detalle": "Valor total de los movimientos en cuentas", "valor": "7612546", "uso": "Tope 4: Consignaciones e inversiones"},
+    {"entidad": "BANCO B", "titular": "NO REGISTRA NO", "detalle": "Saldo cuentas bancarias (Titular Principal)", "valor": "1378557", "uso": "Tope 2: Patrimonio | R29"},
+    {"entidad": "COMPAÑIA DE FINANCIAMIENTO", "titular": "CONTRIBUYENTE A", "detalle": "Total consumos o gastos con tarjeta Crédito o Débito", "valor": "4932351", "uso": "Tope 3: Consumos TC"},
+    {"entidad": "BANCO A S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Valor total de los movimientos en cuentas", "valor": "84588448", "uso": "Tope 4: Consignaciones e inversiones"},
+    {"entidad": "BANCO A S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Total consumos o gastos con tarjeta Crédito o Débito", "valor": "8413792", "uso": "Tope 3: Consumos TC"},
+    {"entidad": "FIDUCIARIA", "titular": "CONTRIBUYENTE A", "detalle": "Inversiones en fondos de inversión colectiva", "valor": "750000", "uso": "Tope 4: Consignaciones e inversiones"},
+    {"entidad": "BANCO A S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Total consumos o gastos con tarjeta Crédito o Débito", "valor": "19621", "uso": "Tope 3: Consumos TC"},
+    {"entidad": "FIDUCIARIA", "titular": "CONTRIBUYENTE A", "detalle": "Inversiones en fondos de inversión colectiva", "valor": "5350000", "uso": "Tope 4: Consignaciones e inversiones"},
+    {"entidad": "U.A.E. DIRECCION DE IMPUESTOS", "titular": "CONTRIBUYENTE A", "detalle": "Suma valor total facturas tras ajustes por notas", "valor": "7763109", "uso": "Tope 5: Compras registradas en facturación electrónica"},
+    {"entidad": "FIDUCIARIA", "titular": "CONTRIBUYENTE A", "detalle": "Saldo Inversión en fondos de inversión colectiva", "valor": "1425267", "uso": "Tope 2: Patrimonio | R29"},
+    {"entidad": "BANCO C", "titular": "CONTRIBUYENTE A", "detalle": "Cuentas por pagar de clientes (Concepto: 1315)", "valor": "601431", "uso": "R30 Deudas"},
+    {"entidad": "BANCO D S.A.", "titular": "CONTRIBUYENTE A", "detalle": "Cuentas por pagar de clientes (Concepto: 1315)", "valor": "2666284", "uso": "R30 Deudas"}
+  ],
+  "contador": {
+    "_nota": "Lo que agregó el contador por conocer el negocio (no está en la exógena).",
+    "no_laborales_ingresos": "65400000",
+    "no_laborales_costos": "32800000",
+    "compras_fe_1pct_declarado": "48000"
+  },
+  "esperado_210": {
+    "28": "48000", "29": "4600000", "30": "52201000", "31": "0",
+    "58": "117000", "59": "65000", "61": "52000", "73": "52000",
+    "74": "65400000", "77": "32800000", "78": "32600000", "90": "32600000",
+    "91": "32652000", "92": "48000", "93": "32604000", "97": "32604000", "111": "32604000",
+    "116": "0", "126": "0", "129": "0", "132": "5000", "136": "0", "137": "5000"
+  }
+}

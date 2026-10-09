@@ -16,6 +16,11 @@ datos = [
     # Interfaz compilada: la sirve el propio backend.
     (str(RAIZ / "frontend" / "dist"), "frontend/dist"),
 ]
+# Lector de fotos para la renta (v2.3): Tesseract y sus idiomas, si se prepararon
+# con scripts\preparar_ocr.ps1 (lo corre construir.bat).
+for carpeta in ("tesseract", "tessdata"):
+    if (RAIZ / "datos_app" / carpeta).exists():
+        datos.append((str(RAIZ / "datos_app" / carpeta), f"ocr/{carpeta}"))
 
 # Los archivos reales de clientes (privado/) NUNCA van dentro del ejecutable:
 # el .exe se puede copiar a otro computador (sección 4.3).
@@ -49,6 +54,11 @@ analisis = Analysis(
         "reportlab.graphics.barcode",
         # Inicio de sesión (A2): el hash de la contraseña y el asistente que la crea.
         "bcrypt",
+        # Declaración de renta (v2.3): lectura de fotos.
+        "pytesseract",
+        "cv2",
+        "numpy",
+        "rapidfuzz",
         "crear_usuario",
         "app",
     ],

@@ -185,6 +185,9 @@ def armar(hoy: date | None = None) -> dict:
                        "oficiales. No se inventa ninguno.",
             "accion": {"tipo": "informar"},
         })
+    # v2.3 · Fase 5: declaraciones de renta que vencen en 15 días o menos, o ya vencieron.
+    from ..renta import servicio as renta
+    tareas += [t for t in renta.tareas(hoy) if t["clave"] not in pospuestas]
     tareas.sort(key=lambda t: (ORDEN[t["prioridad"]], t["razon_social"], t["codigo"]))
 
     # H13 · cómo va cada mes de la cartera, contado en el servidor.

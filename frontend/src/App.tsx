@@ -8,6 +8,7 @@ import { ClienteEditor } from "./paginas/ClienteEditor";
 import { Clientes } from "./paginas/Clientes";
 import { Diseno } from "./paginas/Diseno";
 import { Expediente } from "./paginas/Expediente";
+import { Renta } from "./paginas/Renta";
 import { Tablero } from "./paginas/Tablero";
 import { Ingreso } from "./paginas/Ingreso";
 import { sesionApi } from "./api";
@@ -103,6 +104,7 @@ function Contenido() {
         <Route path="/clientes/:id/editar" element={<ClienteEditor />} />
         {/* v2.3: Trabajar vive dentro del expediente del cliente */}
         <Route path="/trabajo" element={<RedirigirTrabajo />} />
+        <Route path="/renta" element={<Renta />} />
         <Route path="/parametros" element={<Navigate to="/" replace />} />
         {/* Catálogo vivo del sistema de diseño: uso interno, fuera del menú */}
         <Route path="/diseno" element={<Diseno />} />

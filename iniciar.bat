@@ -25,6 +25,11 @@ if errorlevel 1 (
   exit /b 1
 )
 
+if not exist "datos_app\tesseract\tesseract.exe" (
+  echo Preparando el lector de fotos para la declaracion de renta...
+  powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\preparar_ocr.ps1"
+)
+
 if not exist "backend\.env" (
   echo Creando backend\.env a partir del ejemplo...
   copy /y "backend\.env.example" "backend\.env" >nul

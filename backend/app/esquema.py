@@ -23,6 +23,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    LargeBinary,
     MetaData,
     Numeric,
     SmallInteger,
@@ -373,4 +374,47 @@ historial_periodos = Table(
     Column("cuentas", Integer, nullable=False, default=0),
     Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
     Index("historial_periodo_idx", "periodo_id", "creado"),
+)
+
+# ── 14. DECLARACIÓN DE RENTA (v2.3 · Fase 5) ────────────────────────────────
+# Una declaración por cliente y año gravable. `datos` guarda lo leído y lo que
+# decidió el contador (líneas, respuestas, beneficios, datos agregados);
+# `resultado`, el último cálculo. Cada cambio deja una versión.
+renta_declaraciones = Table(
+    "renta_declaraciones",
+    metadatos,
+    Column("id", Id, primary_key=True),
+    Column("cliente_id", Id, ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False),
+    Column("anio", SmallInteger, nullable=False),
+    # sin_informacion · borrador · revisada · presentada
+    Column("estado", Text, nullable=False, default="sin_informacion"),
+    Column("datos", Json, nullable=False, default=dict),
+    Column("resultado", Json),
+    Column("presentada", Json),
+    Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Column("actualizado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Index("renta_cliente_anio_idx", "cliente_id", "anio", unique=True),
+)
+
+renta_versiones = Table(
+    "renta_versiones",
+    metadatos,
+    Column("id", Serial, primary_key=True, autoincrement=True),
+    Column("declaracion_id", Id, ForeignKey("renta_declaraciones.id", ondelete="CASCADE"), nullable=False),
+    Column("motivo", Text, nullable=False, default=""),
+    Column("datos", Json, nullable=False, default=dict),
+    Column("resultado", Json),
+    Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Index("renta_versiones_idx", "declaracion_id", "creado"),
+)
+
+# Recortes de la tabla leída (una fila por imagen), para la pantalla de verificación.
+# Nunca la foto completa: así no se guardan notas a mano ni datos ajenos al reporte.
+renta_recortes = Table(
+    "renta_recortes",
+    metadatos,
+    Column("id", Text, primary_key=True),
+    Column("declaracion_id", Id, ForeignKey("renta_declaraciones.id", ondelete="CASCADE"), nullable=False),
+    Column("png", LargeBinary, nullable=False),
+    Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
 )

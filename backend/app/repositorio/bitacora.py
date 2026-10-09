@@ -44,6 +44,8 @@ ACCIONES = {
     "nota_periodo": "Nota de revisión",
     "parametros_guardados": "Parámetros legales guardados",
     "demo_eliminada": "Clientes de demostración eliminados",
+    "renta_documentos": "Documentos de renta leídos",
+    "renta_presentada": "Declaración de renta presentada",
 }
 
 

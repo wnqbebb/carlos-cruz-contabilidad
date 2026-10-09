@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { analisis, clientes as api, trabajo as apiTrabajo } from "../api";
 import { Contabilidad } from "../componentes/Contabilidad";
+import { RentaCliente } from "../componentes/RentaCliente";
 import { Cabecera, useColorCliente, useMetaPagina } from "../componentes/Marco";
 import { clases, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
 import type {
@@ -44,14 +45,14 @@ import {
  * Expediente del cliente (v2.3 · Fases 3 y 4). Clientes y Trabajar son ahora un
  * solo lugar con cinco secciones como máximo:
  *
- *   Resumen · Contabilidad · Archivos y actividad · Datos
+ *   Resumen · Contabilidad · Renta · Archivos y actividad · Datos
  *
  * Contabilidad es la sección por defecto: con periodos abre el último; sin
  * periodos, la zona de subida. `?seccion=` lleva directo a una de ellas.
  */
 
-type Seccion = "resumen" | "contabilidad" | "archivos" | "datos";
-const SECCIONES: Seccion[] = ["resumen", "contabilidad", "archivos", "datos"];
+type Seccion = "resumen" | "contabilidad" | "renta" | "archivos" | "datos";
+const SECCIONES: Seccion[] = ["resumen", "contabilidad", "renta", "archivos", "datos"];
 
 /** Enlaces viejos (`?vista=` de la ficha anterior) → sección y vista nuevas. */
 const SECCION_ANTIGUA: Record<string, [Seccion, string | null]> = {
@@ -177,6 +178,7 @@ export function Expediente() {
             opciones={[
               { id: "resumen", texto: "Resumen", cuenta: criticas + altas },
               { id: "contabilidad", texto: "Contabilidad" },
+              { id: "renta", texto: "Renta" },
               { id: "archivos", texto: "Archivos y actividad" },
               { id: "datos", texto: "Datos" },
             ]}
@@ -268,6 +270,8 @@ export function Expediente() {
       )}
 
       {seccion === "contabilidad" && <Contabilidad cliente={cliente} periodos={periodos} onCambio={cargar} />}
+
+      {seccion === "renta" && <RentaCliente cliente={cliente} />}
 
       {seccion === "archivos" && (
         <div className="space-y-10">

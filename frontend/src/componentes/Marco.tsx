@@ -1,4 +1,4 @@
-import { LayoutGrid, LogOut, Monitor, Moon, Search, Settings2, Sun, Users } from "lucide-react";
+import { Landmark, LayoutGrid, LogOut, Monitor, Moon, Search, Settings2, Sun, Users } from "lucide-react";
 import {
   createContext,
   useCallback,
@@ -27,7 +27,7 @@ import { Logotipo, MARCA, Monograma, useFirmaContador } from "./Marca";
  * Estructura de la aplicación (spec 6.1).
  *
  * Escritorio (≥ 900 px): barra lateral de 248 px sobre el papel, con borde
- * derecho --linea; navegación con índices (Tablero⁰¹ Clientes⁰²) y una
+ * derecho --linea; navegación con índices (Tablero⁰¹ Clientes⁰² Renta⁰³) y una
  * píldora de tinta que se desliza con Flip hasta la sección activa. Abajo,
  * el estado de sincronización en lenguaje humano.
  *
@@ -40,6 +40,7 @@ import { Logotipo, MARCA, Monograma, useFirmaContador } from "./Marca";
 const SECCIONES = [
   { ruta: "/", texto: "Tablero", indice: "01", icono: LayoutGrid, exacto: true },
   { ruta: "/clientes", texto: "Clientes", indice: "02", icono: Users },
+  { ruta: "/renta", texto: "Renta", indice: "03", icono: Landmark },
 ] as const;
 
 function seccionDe(ruta: string): { indice: string; nombre: string } {
@@ -48,12 +49,14 @@ function seccionDe(ruta: string): { indice: string; nombre: string } {
   if (ruta === "/clientes/nuevo") return { indice: "02", nombre: "Clientes › Nuevo" };
   if (ruta.endsWith("/editar")) return { indice: "02", nombre: "Clientes › Editar ficha" };
   if (ruta.startsWith("/clientes/")) return { indice: "02", nombre: "Clientes › Expediente" };
+  if (ruta.startsWith("/renta")) return { indice: "03", nombre: "Renta" };
   if (ruta.startsWith("/diseno")) return { indice: "00", nombre: "Catálogo" };
   return { indice: "—", nombre: "Página no encontrada" };
 }
 
 /** Identidad de la página (8.2): la clave que leen los tokens en `data-seccion`. */
-function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" {
+function claveSeccion(ruta: string): "tablero" | "clientes" | "ficha" | "renta" {
+  if (ruta.startsWith("/renta")) return "renta";
   if (/^\/clientes\/[0-9a-f-]{8,}$/i.test(ruta)) return "ficha";
   if (ruta.startsWith("/clientes")) return "clientes";
   return "tablero";

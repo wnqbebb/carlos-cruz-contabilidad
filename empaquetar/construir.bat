@@ -42,7 +42,8 @@ if not exist "frontend\dist\index.html" (
   exit /b 1
 )
 
-echo [3/4] Empaquetando...
+echo [3/4] Preparando el lector de fotos y empaquetando...
+powershell -NoProfile -ExecutionPolicy Bypass -File "scripts\preparar_ocr.ps1"
 ".venv\Scripts\python.exe" -m PyInstaller --noconfirm --clean ^
   --distpath "empaquetar\salida" --workpath "empaquetar\temporal" ^
   "empaquetar\carloscruz.spec"

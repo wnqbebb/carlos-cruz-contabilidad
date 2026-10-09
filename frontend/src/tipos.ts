@@ -589,3 +589,120 @@ export interface Propuesta {
 export type Confirmacion =
   | ({ clase: "directorio"; informe: InformeImportacionClientes })
   | ({ clase: "contabilidad"; cliente_id: string } & Importacion);
+
+/* ── declaración de renta, formulario 210 (v2.3 · Fase 5) ──────────────── */
+export type EstadoRenta = "sin_informacion" | "borrador" | "revisada" | "presentada";
+
+export interface LineaRenta {
+  id: string;
+  entidad: string;
+  titular: string;
+  detalle: string;
+  valor: Monto;
+  uso: string;
+  renglon: number | null;
+  tope: number | null;
+  no_titular: boolean;
+  confianza: number;
+  resaltada: boolean;
+  encimada: boolean;
+  alternativas: Monto[];
+  corregida: boolean;
+  validada: boolean;
+  confirmada: boolean;
+  documento: string;
+  pagina: number;
+  fila: number;
+  recorte: string;
+  categoria: string;
+  categoria_texto: string;
+  motivo: string;
+  conflicto: boolean;
+  incluida: boolean;
+}
+
+export interface PreguntaRenta {
+  id: string;
+  texto: string;
+  opciones: { id: string; texto: string }[];
+  defecto: string;
+  respuesta: string | null;
+  detalle: string;
+  lineas: string[];
+}
+
+export interface BeneficioRenta {
+  id: string;
+  texto: string;
+  soporte: string;
+  ahorro_hasta: Monto;
+  maximo: Monto;
+  valor: string | number | boolean | null;
+}
+
+export interface CasillaRenta {
+  casilla: number;
+  nombre: string;
+  seccion: string;
+  columna: string;
+  formula: string;
+  dian: Monto;
+  optimizada: Monto;
+  explicacion: string;
+}
+
+export interface ResultadoRenta {
+  anio: number;
+  obligacion: {
+    obligado: boolean;
+    veredicto: string;
+    motivos: { tope: string; nombre: string; valor: Monto | null; umbral: Monto | null; supera: boolean }[];
+    norma: string;
+  } | null;
+  cifras: { neto: Monto; a_pagar: Monto; a_favor: Monto; ahorro: Monto; dian_neto: Monto };
+  vencimiento: { fecha: string | null; dias: number | null; texto: string; vencida?: boolean };
+  sancion: { meses: number; valor: Monto; texto: string } | null;
+  casillas: CasillaRenta[];
+  diferencias: { casilla: number; dian: Monto; optimizada: Monto; motivo: string }[];
+  preguntas: PreguntaRenta[];
+  beneficios: BeneficioRenta[];
+  marcas: { tipo: string; texto: string; linea?: string; lineas?: string[] }[];
+  lineas: LineaRenta[];
+  manuales: { id: string; categoria: string; descripcion: string; valor: Monto }[];
+  avisos: string[];
+  validacion: { tope: number; nombre: string; estado: string; texto: string; suma: Monto; encabezado: Monto }[];
+  anotaciones_a_mano: boolean;
+  confianza_alta: number | null;
+  documentos_faltantes: string[];
+  maximo_1pct: Monto;
+}
+
+export interface DeclaracionRenta {
+  id: string;
+  cliente_id: string;
+  anio: number;
+  estado: EstadoRenta;
+  presentada: { numero: string; fecha: string } | null;
+  resultado: ResultadoRenta | null;
+  categorias: Record<string, string>;
+  manuales_categorias: string[];
+  actualizado: string | null;
+  versiones: { id: number; motivo: string; creado: string }[];
+  contribuyente: { nombre: string; nit: string };
+}
+
+export interface FilaCarteraRenta {
+  cliente_id: string;
+  razon_social: string;
+  nit: string;
+  anio: number;
+  estado: EstadoRenta;
+  obligado: boolean | null;
+  veredicto: string;
+  motivos: string[];
+  vencimiento: string | null;
+  dias: number | null;
+  vencimiento_texto: string;
+  neto: Monto | null;
+  ahorro: Monto | null;
+}

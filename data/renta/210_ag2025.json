@@ -1,0 +1,664 @@
+{
+ "_nota": "Diseño del formulario 210 (declaración de renta personas naturales residentes) para el año gravable 2025. Numeración y fórmulas del formulario oficial y su instructivo; contrastadas con un 210 AG 2025 presentado (imagen 5).",
+ "formulario": "210",
+ "anio_gravable": 2025,
+ "fuente": "Resolución DIAN 000044 del 14 de marzo de 2024 (formulario para AG 2023 y siguientes), instructivo compilado en la Resolución Única 000227 de 2025; archivo oficial dian.gov.co/atencionciudadano/formulariosinstructivos/Formularios/2025/Formulario_210_2025.pdf",
+ "casillas": [
+  {
+   "casilla": 28,
+   "nombre": "Uno por ciento (1%) de compras con factura electrónica",
+   "seccion": "Datos del declarante",
+   "formula": "min(1% compras FE con requisitos; 240 UVT); sin generar pérdida"
+  },
+  {
+   "casilla": 29,
+   "nombre": "Total patrimonio bruto",
+   "seccion": "Patrimonio"
+  },
+  {
+   "casilla": 30,
+   "nombre": "Deudas",
+   "seccion": "Patrimonio"
+  },
+  {
+   "casilla": 31,
+   "nombre": "Total patrimonio líquido",
+   "seccion": "Patrimonio",
+   "formula": "max(29 - 30; 0)"
+  },
+  {
+   "casilla": 32,
+   "nombre": "Ingresos brutos",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 33,
+   "nombre": "Ingresos no constitutivos de renta",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 34,
+   "nombre": "Renta líquida",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 35,
+   "nombre": "Aportes voluntarios AFC, FVP y AVC",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 36,
+   "nombre": "Otras rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 37,
+   "nombre": "Total rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 38,
+   "nombre": "Intereses de vivienda",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 39,
+   "nombre": "Otras deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 40,
+   "nombre": "Total deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 41,
+   "nombre": "Rentas exentas y/o deducciones imputables (limitadas)",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 42,
+   "nombre": "Renta líquida ordinaria",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo"
+  },
+  {
+   "casilla": 43,
+   "nombre": "Ingresos brutos",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 44,
+   "nombre": "Ingresos no constitutivos de renta",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 45,
+   "nombre": "Costos y deducciones procedentes",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 46,
+   "nombre": "Renta líquida",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 47,
+   "nombre": "Aportes voluntarios AFC, FVP y AVC",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 48,
+   "nombre": "Otras rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 49,
+   "nombre": "Total rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 50,
+   "nombre": "Intereses de vivienda",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 51,
+   "nombre": "Otras deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 52,
+   "nombre": "Total deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 53,
+   "nombre": "Rentas exentas y/o deducciones imputables (limitadas)",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 54,
+   "nombre": "Renta líquida ordinaria del ejercicio",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 55,
+   "nombre": "Pérdida líquida del ejercicio",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 56,
+   "nombre": "Compensaciones por pérdidas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 57,
+   "nombre": "Renta líquida ordinaria",
+   "seccion": "Cédula general",
+   "columna": "Rentas de trabajo que no provengan de una relación laboral"
+  },
+  {
+   "casilla": 58,
+   "nombre": "Ingresos brutos",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 59,
+   "nombre": "Ingresos no constitutivos de renta",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 60,
+   "nombre": "Costos y deducciones procedentes",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 61,
+   "nombre": "Renta líquida",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 62,
+   "nombre": "Rentas líquidas pasivas - ECE",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 63,
+   "nombre": "Aportes voluntarios AFC, FVP y AVC",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 64,
+   "nombre": "Otras rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 65,
+   "nombre": "Total rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 66,
+   "nombre": "Intereses de vivienda",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 67,
+   "nombre": "Otras deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 68,
+   "nombre": "Total deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 69,
+   "nombre": "Rentas exentas y/o deducciones imputables (limitadas)",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 70,
+   "nombre": "Renta líquida ordinaria del ejercicio",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 71,
+   "nombre": "Pérdida líquida del ejercicio",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 72,
+   "nombre": "Compensaciones por pérdidas",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 73,
+   "nombre": "Renta líquida ordinaria",
+   "seccion": "Cédula general",
+   "columna": "Rentas de capital"
+  },
+  {
+   "casilla": 74,
+   "nombre": "Ingresos brutos",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 75,
+   "nombre": "Devoluciones, rebajas y descuentos",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 76,
+   "nombre": "Ingresos no constitutivos de renta",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 77,
+   "nombre": "Costos y deducciones procedentes",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 78,
+   "nombre": "Renta líquida",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 79,
+   "nombre": "Rentas líquidas pasivas - ECE",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 80,
+   "nombre": "Aportes voluntarios AFC, FVP y AVC",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 81,
+   "nombre": "Otras rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 82,
+   "nombre": "Total rentas exentas",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 83,
+   "nombre": "Intereses de vivienda",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 84,
+   "nombre": "Otras deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 85,
+   "nombre": "Total deducciones imputables",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 86,
+   "nombre": "Rentas exentas y/o deducciones imputables (limitadas)",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 87,
+   "nombre": "Renta líquida ordinaria del ejercicio",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 88,
+   "nombre": "Pérdida líquida del ejercicio",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 89,
+   "nombre": "Compensaciones por pérdidas",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 90,
+   "nombre": "Renta líquida ordinaria",
+   "seccion": "Cédula general",
+   "columna": "Rentas no laborales"
+  },
+  {
+   "casilla": 91,
+   "nombre": "Renta líquida cédula general",
+   "seccion": "Cédula general",
+   "formula": "41 + 42 + 53 + 57 + 69 + 73 + 86 + 90"
+  },
+  {
+   "casilla": 92,
+   "nombre": "Rentas exentas y deducciones imputables limitadas",
+   "seccion": "Cédula general",
+   "formula": "28 + 41 + 53 + 69 + 86 + 139"
+  },
+  {
+   "casilla": 93,
+   "nombre": "Renta líquida ordinaria cédula general",
+   "seccion": "Cédula general",
+   "formula": "max(91 - 92; 0)"
+  },
+  {
+   "casilla": 94,
+   "nombre": "Compensaciones por pérdidas año gravable 2018 y anteriores",
+   "seccion": "Cédula general"
+  },
+  {
+   "casilla": 95,
+   "nombre": "Compensaciones por exceso de renta presuntiva",
+   "seccion": "Cédula general"
+  },
+  {
+   "casilla": 96,
+   "nombre": "Rentas gravables",
+   "seccion": "Cédula general"
+  },
+  {
+   "casilla": 97,
+   "nombre": "Renta líquida gravable cédula general",
+   "seccion": "Cédula general",
+   "formula": "max(93 + 96 - 94 - 95; 0)"
+  },
+  {
+   "casilla": 98,
+   "nombre": "Renta presuntiva",
+   "seccion": "Cédula general",
+   "formula": "0 % desde 2021 (art. 188 E.T.)"
+  },
+  {
+   "casilla": 99,
+   "nombre": "Ingresos brutos por rentas de pensiones del país y del exterior",
+   "seccion": "Cédula de pensiones"
+  },
+  {
+   "casilla": 100,
+   "nombre": "Ingresos no constitutivos de renta",
+   "seccion": "Cédula de pensiones"
+  },
+  {
+   "casilla": 101,
+   "nombre": "Renta líquida",
+   "seccion": "Cédula de pensiones",
+   "formula": "99 - 100"
+  },
+  {
+   "casilla": 102,
+   "nombre": "Rentas exentas de pensiones",
+   "seccion": "Cédula de pensiones"
+  },
+  {
+   "casilla": 103,
+   "nombre": "Renta líquida gravable cédula de pensiones",
+   "seccion": "Cédula de pensiones",
+   "formula": "101 - 102"
+  },
+  {
+   "casilla": 104,
+   "nombre": "Dividendos y participaciones 2016 y anteriores, y otros",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 105,
+   "nombre": "Ingresos no constitutivos de renta",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 106,
+   "nombre": "Renta líquida ordinaria año 2016 y anteriores",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 107,
+   "nombre": "1a. Subcédula años 2017 y siguientes numeral 3 art. 49 E.T.",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 108,
+   "nombre": "2a. Subcédula años 2017 y siguientes parágrafo 2 art. 49 E.T.",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 109,
+   "nombre": "Dividendos y participaciones recibidas del exterior",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 110,
+   "nombre": "Rentas exentas de la casilla 109",
+   "seccion": "Cédula de dividendos y participaciones"
+  },
+  {
+   "casilla": 111,
+   "nombre": "Renta líquida gravable (cédula general o renta presuntiva, de pensiones y de dividendos, art. 241 E.T.)",
+   "seccion": "Cédula de dividendos y participaciones",
+   "formula": "max(97; 98) + 103 + 107 + 108 - 118"
+  },
+  {
+   "casilla": 112,
+   "nombre": "Ingresos por ganancias ocasionales del país y del exterior",
+   "seccion": "Ganancias ocasionales"
+  },
+  {
+   "casilla": 113,
+   "nombre": "Costos por ganancias ocasionales",
+   "seccion": "Ganancias ocasionales"
+  },
+  {
+   "casilla": 114,
+   "nombre": "Ganancias ocasionales no gravadas y exentas",
+   "seccion": "Ganancias ocasionales"
+  },
+  {
+   "casilla": 115,
+   "nombre": "Ganancias ocasionales gravables",
+   "seccion": "Ganancias ocasionales",
+   "formula": "112 - 113 - 114"
+  },
+  {
+   "casilla": 116,
+   "nombre": "Impuesto sobre la renta líquida gravable: cédula general, de pensiones y de dividendos",
+   "seccion": "Liquidación privada",
+   "formula": "Tabla art. 241 sobre 111 (si 97 ≥ 98)"
+  },
+  {
+   "casilla": 117,
+   "nombre": "Impuesto: renta presuntiva, de pensiones y de dividendos",
+   "seccion": "Liquidación privada",
+   "formula": "Tabla art. 241 sobre 111 (si 98 > 97)"
+  },
+  {
+   "casilla": 118,
+   "nombre": "Por dividendos y participaciones año 2017 y siguientes, 2a subcédula",
+   "seccion": "Liquidación privada",
+   "formula": "Art. 240 E.T."
+  },
+  {
+   "casilla": 119,
+   "nombre": "Por dividendos y participaciones año 2016",
+   "seccion": "Liquidación privada",
+   "formula": "Art. 241 E.T."
+  },
+  {
+   "casilla": 120,
+   "nombre": "Por dividendos y participaciones recibidas del exterior",
+   "seccion": "Liquidación privada",
+   "formula": "Art. 241 E.T."
+  },
+  {
+   "casilla": 121,
+   "nombre": "Total impuesto sobre las rentas líquidas gravables",
+   "seccion": "Liquidación privada",
+   "formula": "116 + 117 + 118 + 119 + 120"
+  },
+  {
+   "casilla": 122,
+   "nombre": "Descuento: impuestos pagados en el exterior",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 123,
+   "nombre": "Descuento: donaciones",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 124,
+   "nombre": "Descuento: dividendos, participaciones y otros",
+   "seccion": "Liquidación privada",
+   "formula": "Art. 254-1 E.T."
+  },
+  {
+   "casilla": 125,
+   "nombre": "Total descuentos tributarios",
+   "seccion": "Liquidación privada",
+   "formula": "122 + 123 + 124"
+  },
+  {
+   "casilla": 126,
+   "nombre": "Impuesto neto de renta",
+   "seccion": "Liquidación privada",
+   "formula": "max(121 - 125; 0)"
+  },
+  {
+   "casilla": 127,
+   "nombre": "Impuesto de ganancias ocasionales",
+   "seccion": "Liquidación privada",
+   "formula": "115 × 15 %"
+  },
+  {
+   "casilla": 128,
+   "nombre": "Descuento por impuestos pagados en el exterior por ganancias ocasionales",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 129,
+   "nombre": "Total impuesto a cargo",
+   "seccion": "Liquidación privada",
+   "formula": "126 + 127 - 128"
+  },
+  {
+   "casilla": 130,
+   "nombre": "Anticipo renta liquidado año gravable anterior",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 131,
+   "nombre": "Saldo a favor del año gravable anterior sin solicitud de devolución y/o compensación",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 132,
+   "nombre": "Retenciones año gravable a declarar",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 133,
+   "nombre": "Anticipo renta para el año gravable siguiente",
+   "seccion": "Liquidación privada",
+   "formula": "Art. 807 E.T."
+  },
+  {
+   "casilla": 134,
+   "nombre": "Saldo a pagar por impuesto",
+   "seccion": "Liquidación privada",
+   "formula": "max(129 + 133 - 130 - 131 - 132; 0)"
+  },
+  {
+   "casilla": 135,
+   "nombre": "Sanciones",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 136,
+   "nombre": "Total saldo a pagar",
+   "seccion": "Liquidación privada",
+   "formula": "max(129 + 133 + 135 - 130 - 131 - 132; 0)"
+  },
+  {
+   "casilla": 137,
+   "nombre": "Total saldo a favor",
+   "seccion": "Liquidación privada",
+   "formula": "max(130 + 131 + 132 - 129 - 133 - 135; 0)"
+  },
+  {
+   "casilla": 138,
+   "nombre": "Número de dependientes económicos",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 139,
+   "nombre": "Adición por dependientes a la casilla 92",
+   "seccion": "Liquidación privada",
+   "formula": "72 UVT por dependiente, máximo 4; no supera 42 + 57"
+  },
+  {
+   "casilla": 140,
+   "nombre": "Ud. superó tope indicativo art. 336-1 E.T.",
+   "seccion": "Liquidación privada"
+  },
+  {
+   "casilla": 141,
+   "nombre": "Aporte voluntario",
+   "seccion": "Liquidación privada"
+  }
+ ]
+}

@@ -1,0 +1,94 @@
+{
+  "_nota": "Parámetros del impuesto de renta de personas naturales residentes, año gravable 2025. Cada valor con su norma y fuente. Montos en pesos o en UVT, como texto (Decimal). Revisado el 8 de octubre de 2026.",
+  "anio_gravable": 2025,
+  "uvt": {"valor": "49799", "norma": "Art. 868 E.T.", "fuente": "Resolución DIAN 000193 de 2024"},
+  "uvt_sanciones": {"valor": "52374", "anio": 2026, "norma": "Art. 868 y 639 E.T.: la sanción se liquida con la UVT del año en que se impone", "fuente": "Resolución DIAN 000238 de 2025"},
+  "topes_obligacion": {
+    "norma": "Arts. 592, 593, 594-1 y 594-3 E.T.; art. 1.6.1.13.2.7 DUR 1625 de 2016",
+    "patrimonio_bruto_uvt": "4500",
+    "ingresos_brutos_uvt": "1400",
+    "consumos_tarjeta_uvt": "1400",
+    "compras_consumos_uvt": "1400",
+    "consignaciones_uvt": "1400",
+    "responsable_iva": "Ser responsable de IVA a 31 de diciembre (Tope 6 del reporte)"
+  },
+  "tabla_241": {
+    "norma": "Art. 241 E.T. (tarifa para personas naturales residentes)",
+    "rangos": [
+      {"desde_uvt": "0", "hasta_uvt": "1090", "tarifa": "0", "base_uvt": "0", "fijo_uvt": "0"},
+      {"desde_uvt": "1090", "hasta_uvt": "1700", "tarifa": "0.19", "base_uvt": "1090", "fijo_uvt": "0"},
+      {"desde_uvt": "1700", "hasta_uvt": "4100", "tarifa": "0.28", "base_uvt": "1700", "fijo_uvt": "116"},
+      {"desde_uvt": "4100", "hasta_uvt": "8670", "tarifa": "0.33", "base_uvt": "4100", "fijo_uvt": "788"},
+      {"desde_uvt": "8670", "hasta_uvt": "18970", "tarifa": "0.35", "base_uvt": "8670", "fijo_uvt": "2296"},
+      {"desde_uvt": "18970", "hasta_uvt": "31000", "tarifa": "0.37", "base_uvt": "18970", "fijo_uvt": "5901"},
+      {"desde_uvt": "31000", "hasta_uvt": null, "tarifa": "0.39", "base_uvt": "31000", "fijo_uvt": "10352"}
+    ]
+  },
+  "limite_exentas_deducciones": {
+    "porcentaje": "0.40", "tope_uvt": "1340",
+    "norma": "Art. 336 num. 3 E.T. (Ley 2277 de 2022, art. 7)",
+    "fuente": "Instructivo formulario 210, casillas 41 y 92 (Resolución DIAN 000044 de 2024)"
+  },
+  "renta_exenta_laboral": {"porcentaje": "0.25", "tope_uvt_anual": "790", "norma": "Art. 206 num. 10 E.T. (Ley 2277 de 2022)"},
+  "dependientes": {
+    "porcentaje_ingreso": "0.10", "tope_uvt_mensual": "32", "norma": "Art. 387 E.T.",
+    "adicional_uvt_por_dependiente": "72", "maximo_dependientes_adicional": 4,
+    "norma_adicional": "Art. 336 num. 3 lit. b E.T. (Ley 2277 de 2022); fuera del límite del 40 %; casilla 139",
+    "condicion_adicional": "Solo con ingresos de rentas de trabajo; no supera las casillas 42 + 57"
+  },
+  "intereses_vivienda": {"tope_uvt_anual": "1200", "norma": "Art. 119 E.T."},
+  "medicina_prepagada": {"tope_uvt_mensual": "16", "norma": "Art. 387 E.T."},
+  "aportes_voluntarios": {"porcentaje_ingreso": "0.30", "tope_uvt_anual": "3800", "norma": "Arts. 126-1 y 126-4 E.T."},
+  "gmf": {"porcentaje": "0.50", "norma": "Art. 115 E.T.", "condicion": "Certificado por el agente retenedor"},
+  "compras_factura_electronica": {
+    "porcentaje": "0.01", "tope_uvt": "240",
+    "norma": "Art. 336 num. 5 E.T. (Ley 2277 de 2022); casilla 28",
+    "condiciones": [
+      "No solicitada como costo, deducción, impuesto descontable ni otro beneficio",
+      "Factura electrónica de venta con el nombre y documento del contribuyente",
+      "Pagada con tarjeta débito, crédito o medio electrónico de entidad vigilada por la Superfinanciera",
+      "Expedida por un sujeto obligado a facturar"
+    ],
+    "fuera_del_limite": true,
+    "no_genera_perdida": true
+  },
+  "componente_inflacionario": {
+    "rendimientos": "0.5543", "costos_financieros": "0.2835",
+    "norma": "Arts. 38, 40-1, 41 y 81 E.T.",
+    "fuente": "Decreto 898 de 2026 (29 de julio de 2026), arts. 1.2.1.12.6 y 1.2.1.17.19 DUR 1625 de 2016"
+  },
+  "pensiones": {"exenta_uvt_mensual": "1000", "norma": "Art. 206 num. 5 E.T."},
+  "ganancias_ocasionales": {"tarifa": "0.15", "norma": "Arts. 299, 300 y 314 E.T. (Ley 2277 de 2022)"},
+  "dividendos": {
+    "norma": "Art. 242 E.T. (Ley 2277 de 2022): la 1a subcédula se suma a la base del art. 241",
+    "descuento_tarifa": "0.19", "descuento_desde_uvt": "1090", "norma_descuento": "Art. 254-1 E.T."
+  },
+  "renta_presuntiva": {"porcentaje": "0", "norma": "Art. 188 E.T. (0 % desde 2021)"},
+  "anticipo": {
+    "norma": "Art. 807 E.T.",
+    "porcentaje_primer_anio": "0.25", "porcentaje_segundo_anio": "0.50", "porcentaje_siguientes": "0.75"
+  },
+  "aproximacion": {"multiplo": "1000", "norma": "Art. 577 E.T.: los valores se aproximan al múltiplo de mil más cercano"},
+  "sancion_extemporaneidad": {
+    "norma": "Art. 641 E.T.",
+    "por_mes_impuesto": "0.05", "tope_impuesto": "1.00",
+    "por_mes_ingresos": "0.005", "tope_ingresos": "0.05",
+    "minima_uvt": "10", "norma_minima": "Art. 639 E.T.",
+    "reduccion": "Art. 640 E.T.: puede reducirse al 50 % o 75 % si se cumplen sus condiciones"
+  },
+  "vencimientos": {
+    "norma": "Art. 1.6.1.13.2.15 DUR 1625 de 2016, modificado por el art. 1 del Decreto 2229 de 2023",
+    "por_ultimos_dos_digitos": {
+      "01-02": "2026-08-12", "03-04": "2026-08-13", "05-06": "2026-08-14", "07-08": "2026-08-18", "09-10": "2026-08-19",
+      "11-12": "2026-08-20", "13-14": "2026-08-21", "15-16": "2026-08-24", "17-18": "2026-08-25", "19-20": "2026-08-26",
+      "21-22": "2026-08-27", "23-24": "2026-08-28", "25-26": "2026-08-31", "27-28": "2026-09-01", "29-30": "2026-09-02",
+      "31-32": "2026-09-03", "33-34": "2026-09-04", "35-36": "2026-09-07", "37-38": "2026-09-08", "39-40": "2026-09-09",
+      "41-42": "2026-09-10", "43-44": "2026-09-11", "45-46": "2026-09-14", "47-48": "2026-09-15", "49-50": "2026-09-16",
+      "51-52": "2026-09-17", "53-54": "2026-09-18", "55-56": "2026-09-21", "57-58": "2026-09-22", "59-60": "2026-09-23",
+      "61-62": "2026-09-24", "63-64": "2026-09-25", "65-66": "2026-09-28", "67-68": "2026-10-01", "69-70": "2026-10-02",
+      "71-72": "2026-10-05", "73-74": "2026-10-06", "75-76": "2026-10-07", "77-78": "2026-10-08", "79-80": "2026-10-09",
+      "81-82": "2026-10-13", "83-84": "2026-10-14", "85-86": "2026-10-15", "87-88": "2026-10-16", "89-90": "2026-10-19",
+      "91-92": "2026-10-20", "93-94": "2026-10-21", "95-96": "2026-10-22", "97-98": "2026-10-23", "99-00": "2026-10-26"
+    }
+  }
+}

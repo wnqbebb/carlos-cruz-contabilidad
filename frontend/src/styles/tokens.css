@@ -247,6 +247,7 @@
 /* ── Identidad por sección (8.2): la fija `data-seccion` en el marco ──── */
 [data-seccion="tablero"] { --cabecera-fondo: var(--cabecera-tablero); --acento: var(--tinta); --sobre-acento: var(--sobre-tinta); }
 [data-seccion="clientes"] { --cabecera-fondo: var(--cabecera-clientes); --acento: var(--azul-tinta); --sobre-acento: var(--sobre-color); }
+[data-seccion="renta"] { --cabecera-fondo: var(--banda-taller); --acento: var(--grafito); --sobre-acento: var(--sobre-tinta); }
 [data-seccion="trabajar"] { --cabecera-fondo: var(--banda-taller); --acento: var(--grafito); --sobre-acento: var(--sobre-tinta); }
 [data-seccion="parametros"] { --cabecera-fondo: var(--cabecera-parametros); --acento: var(--frio-oscuro); --sobre-acento: var(--sobre-color); }
 /* La ficha de un cliente: su color, calculado de su esfera (8.3, `colorCliente.ts`). */

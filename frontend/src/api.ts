@@ -4,6 +4,8 @@ import type {
   Cierre,
   Cliente,
   ComparacionFicha,
+  DeclaracionRenta,
+  FilaCarteraRenta,
   Contador,
   FichaExtraida,
   Confirmacion,
@@ -266,6 +268,35 @@ export const puerta = {
       body: fd,
     });
   },
+};
+
+/* ── declaración de renta, formulario 210 (v2.3 · Fase 5) ─────────────── */
+export type CambioRenta =
+  | { tipo: "respuesta"; id: string; valor: string; extra?: string }
+  | { tipo: "beneficio"; id: string; valor: string | number | boolean | null; uno_por_ciento?: string }
+  | { tipo: "reclasificar"; linea: string; categoria: string }
+  | { tipo: "valor"; linea: string; valor: string }
+  | { tipo: "excluir"; linea: string }
+  | { tipo: "confirmar"; lineas: string[] }
+  | { tipo: "agregar"; categoria: string; valor: string; descripcion?: string }
+  | { tipo: "quitar_agregado"; id: string };
+
+export const renta = {
+  anios: () => pedir<{ anios: number[]; actual: number }>("/api/renta/anios"),
+  cartera: (anio: number) => pedir<{ anio: number; declaraciones: FilaCarteraRenta[] }>(`/api/renta/cartera${qs({ anio })}`),
+  ver: (clienteId: string, anio: number) => pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}`),
+  subir(clienteId: string, anio: number, archivos: File[]) {
+    const fd = new FormData();
+    archivos.forEach((a) => fd.append("archivos", a));
+    return pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}/documentos`, { method: "POST", body: fd });
+  },
+  cambiar: (clienteId: string, anio: number, cambio: CambioRenta) =>
+    pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}/cambio`, { method: "POST", ...json(cambio) }),
+  marcar: (clienteId: string, anio: number, estado: "revisada" | "borrador" | "presentada", numero = "", fecha = "") =>
+    pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}/estado`, { method: "POST", ...json({ estado, numero, fecha }) }),
+  recorte: (clienteId: string, anio: number, id: string) => `${BASE}/api/renta/${clienteId}/${anio}/recorte/${id}`,
+  descarga: (clienteId: string, anio: number, que: "todo" | "pdf" | "excel" | "resumen") =>
+    `${BASE}/api/renta/${clienteId}/${anio}/descargar/${que}`,
 };
 
 /* ── descargas ─────────────────────────────────────────────────────────── */

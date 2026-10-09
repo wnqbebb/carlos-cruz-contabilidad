@@ -22,5 +22,19 @@ Para agregar un año:
 
 ## Cuando cambia el año: declaración de renta
 
-Ver `data/renta/` (formulario 210 y parámetros tributarios por año gravable) y
-`docs/v23/SUPUESTOS_RENTA.md`.
+Cada año gravable tiene dos archivos en `data/renta/`; la aplicación no inventa ninguno.
+
+1. **Parámetros** — copie `parametros_ag2025.json` como `parametros_ag2026.json` y cambie, con su norma:
+   - la UVT del año gravable (resolución de la DIAN de finales del año anterior) y la de sanciones;
+   - el **componente inflacionario** (decreto de mediados del año siguiente; para 2025 fue el Decreto 898 de 2026);
+   - el **calendario** de personas naturales por los dos últimos dígitos del NIT (decreto de plazos);
+   - cualquier tope, tarifa o límite que haya cambiado una reforma tributaria.
+2. **Formulario** — si la DIAN prescribe un 210 nuevo, copie `210_ag2025.json` como `210_ag2026.json` y ajuste la
+   numeración y las fórmulas según el instructivo oficial. Si sigue vigente el mismo, copie el archivo igual.
+3. Cambie `ANIO_ACTUAL` en `backend/app/renta/servicio.py` (año gravable que se declara ese año).
+4. Agregue pruebas con valores calculados a mano en `backend/tests/test_renta_calculo.py`.
+5. Lo que no se pueda confirmar va a `docs/v23/SUPUESTOS_RENTA.md`.
+
+**Lector de fotos (Tesseract).** `iniciar.bat` lo deja listo la primera vez con `scripts/preparar_ocr.ps1`
+(copia el programa a `datos_app/tesseract` y descarga los idiomas a `datos_app/tessdata`); `empaquetar/construir.bat`
+lo mete dentro del `.exe`. Si falta, la renta sigue funcionando con PDF y Excel.

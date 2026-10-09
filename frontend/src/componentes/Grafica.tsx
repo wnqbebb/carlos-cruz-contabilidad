@@ -21,7 +21,6 @@ import { Rotulo } from "./ui";
 // Las series toman el color del cliente dentro de su ficha (8.3): --serie-1.
 const SERIE_1 = "var(--serie-1)";
 const SERIE_2 = "var(--ambar)";
-const SERIE_3 = "var(--esfera-3)";
 const POSITIVO = "var(--azul-tinta)";
 const ROJO = "var(--rojo)";
 

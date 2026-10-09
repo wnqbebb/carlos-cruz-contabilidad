@@ -54,3 +54,16 @@ para proponer directamente el cliente que ya existe en vez de un nombre a medias
 Hoy la comparación solo se hace con el nombre encontrado dentro del archivo.
 
 **Costo:** pequeño; es ampliar la búsqueda por parecido que ya existe.
+
+---
+
+## P05 · Declaración de renta de personas jurídicas (formulario 110)
+**Hoy:** la v2.3 prepara solo el formulario 210 (personas naturales). La sección Renta de una persona jurídica lo
+dice y no calcula nada.
+
+**Se propone:** el 110 a partir de la contabilidad que ya está en la aplicación: el estado de resultados y el balance
+del año dan casi todo el formulario (patrimonio, ingresos, costos, renta líquida); faltan la conciliación fiscal
+(formato 2516), la tarifa del art. 240 E.T. con sus tasas mínimas de tributación (TTD) y los descuentos.
+
+**Costo:** grande. Se reutiliza el motor del 210 (casillas versionadas por año, aproximación a miles, dos columnas),
+pero la conciliación contable–fiscal es un módulo propio.
