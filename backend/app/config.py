@@ -83,7 +83,7 @@ def _desde_almacen(nombre: str) -> str:
 MARCA = "Carlos Cruz"
 LEMA = "Contabilidad que cuadra."
 LEMA_LARGO = "Cuadramos sus cuentas; usted atiende su negocio."
-VERSION = "2.3.0"
+VERSION = "2.4.0"
 
 # Ruta del archivo SQLite local. `CC_SQLITE` permite apuntarla a otro sitio,
 # que es como las pruebas trabajan contra una base desechable.
