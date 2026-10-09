@@ -52,19 +52,22 @@ def _seguro_excel(texto) -> str:
     return "'" + t if t[:1] in ("=", "+", "-", "@", "\t", "\r") else t
 
 
-def _marca_borrador(lienzo, doc) -> None:
-    lienzo.saveState()
-    lienzo.setFillColor(colors.Color(0.55, 0.1, 0.1, alpha=0.12))
-    lienzo.setFont("Helvetica-Bold", 46)
-    lienzo.translate(letter[0] / 2, letter[1] / 2)
-    lienzo.rotate(35)
-    lienzo.drawCentredString(0, 0, "BORRADOR")
-    lienzo.restoreState()
-    lienzo.setFont("Helvetica", 7.5)
-    lienzo.setFillColor(AMBAR)
-    lienzo.drawString(1.5 * cm, 1 * cm, "BORRADOR — no válido para presentar. Diligencie la declaración en el portal "
-                                        "de la DIAN con la firma electrónica del contribuyente.")
-    lienzo.drawRightString(letter[0] - 1.5 * cm, 1 * cm, f"Página {doc.page}")
+def _marca_borrador_fabrica(incompleto: bool):
+    def _marca(lienzo, doc):
+        lienzo.saveState()
+        lienzo.setFillColor(colors.Color(0.65, 0.15, 0.15, alpha=0.14) if incompleto else colors.Color(0.55, 0.1, 0.1, alpha=0.12))
+        lienzo.setFont("Helvetica-Bold", 38 if incompleto else 46)
+        lienzo.translate(letter[0] / 2, letter[1] / 2)
+        lienzo.rotate(35)
+        lienzo.drawCentredString(0, 0, "BORRADOR INCOMPLETO" if incompleto else "BORRADOR")
+        lienzo.restoreState()
+        lienzo.setFont("Helvetica", 7.5)
+        lienzo.setFillColor(AMBAR)
+        pie = ("BORRADOR INCOMPLETO — Faltan datos para calcular. No válido para presentar." if incompleto else
+               "BORRADOR — no válido para presentar. Diligencie la declaración en el portal de la DIAN con la firma electrónica del contribuyente.")
+        lienzo.drawString(1.5 * cm, 1 * cm, pie)
+        lienzo.drawRightString(letter[0] - 1.5 * cm, 1 * cm, f"Página {doc.page}")
+    return _marca
 
 
 def _documento(buf) -> SimpleDocTemplate:
@@ -75,31 +78,39 @@ def _documento(buf) -> SimpleDocTemplate:
 
 def borrador_pdf(v: dict) -> bytes:
     r = v["resultado"]
+    incompleto = bool(r.get("incompleto"))
     buf = io.BytesIO()
     doc = _documento(buf)
     c = v["contribuyente"]
-    hist = [Paragraph(f"Formulario 210 · Año gravable {v['anio']} · BORRADOR", E_TIT),
+    tit = f"Formulario 210 · Año gravable {v['anio']} · {'BORRADOR INCOMPLETO' if incompleto else 'BORRADOR'}"
+    hist = [Paragraph(tit, E_TIT),
             Paragraph(f"{c['nombre']} · documento {c['nit']}", E_SUB)]
     oblig = r.get("obligacion") or {}
     if oblig:
         hist.append(Paragraph(oblig.get("veredicto", ""), E_SUB))
+    if incompleto:
+        hist.append(Spacer(1, 4))
+        hist.append(Paragraph("<b>ADVERTENCIA:</b> Faltan datos o confirmaciones para liquidar este borrador. Las cifras no son definitivas.", E_SUB))
     hist.append(Spacer(1, 6))
     seccion = None
     filas = [["Casilla", "Concepto", "Propuesta DIAN", "Declaración"]]
     estilo = [("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 7.5), ("BACKGROUND", (0, 0), (-1, 0), HOJA2),
               ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINEA), ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
               ("FONTSIZE", (0, 1), (-1, -1), 7.5), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]
-    for cas in r["casillas"]:
+    for cas in r.get("casillas", []):
         if cas["seccion"] != seccion:
             seccion = cas["seccion"]
             filas.append(["", Paragraph(f"<b>{seccion}</b>", E_CEL), "", ""])
             estilo.append(("BACKGROUND", (0, len(filas) - 1), (-1, len(filas) - 1), HOJA2))
         nombre = cas["nombre"] + (f" — {cas['columna']}" if cas.get("columna") else "")
-        filas.append([str(cas["casilla"]), Paragraph(nombre, E_CEL), pesos(cas["dian"]), pesos(cas["optimizada"])])
+        val_dian = pesos(cas["dian"]) if not (incompleto and cas["dian"] is None) else "—"
+        val_opt = pesos(cas["optimizada"]) if not (incompleto and cas["optimizada"] is None) else "—"
+        filas.append([str(cas["casilla"]), Paragraph(nombre, E_CEL), val_dian, val_opt])
     t = Table(filas, colWidths=[1.4 * cm, 10.6 * cm, 3 * cm, 3 * cm], repeatRows=1)
     t.setStyle(TableStyle(estilo))
     hist.append(t)
-    doc.build(hist, onFirstPage=_marca_borrador, onLaterPages=_marca_borrador)
+    marca = _marca_borrador_fabrica(incompleto)
+    doc.build(hist, onFirstPage=marca, onLaterPages=marca)
     return buf.getvalue()
 
 
@@ -131,7 +142,9 @@ def resumen_cliente(v: dict) -> bytes:
                  for b in beneficios]
     hist += [Spacer(1, 14), Paragraph("Este resumen se basa en la información disponible a la fecha. La declaración la "
                                       "presenta su contador en el portal de la DIAN con su firma electrónica.", E_SUB)]
-    doc.build(hist, onFirstPage=_marca_borrador, onLaterPages=_marca_borrador)
+    incompleto = bool(r.get("incompleto"))
+    marca = _marca_borrador_fabrica(incompleto)
+    doc.build(hist, onFirstPage=marca, onLaterPages=marca)
     return buf.getvalue()
 
 

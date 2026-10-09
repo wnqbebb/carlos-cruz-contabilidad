@@ -242,8 +242,8 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
     # 2. Comprobar ingresos clasificados de la exógena vs Tope 1
     tope_1 = rep.topes.get(1)
     ingresos_exogena = sum(
-        (c.linea.importe() for c in clas if c.incluida and c.categoria in (
-            "trabajo", "honorarios_compensacion", "no_laboral", "capital", "pensiones", "dividendos"
+        (c.linea.importe() for c in clas if c.incluida and (
+            c.categoria.startswith("ingreso_") or c.categoria in ("pension", "dividendo")
         )), CERO
     )
     if tope_1 and Decimal(str(tope_1)) > 0:
@@ -267,7 +267,9 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
 
     # 4. Líneas con baja confianza o dudosas que afectan casillas
     dudosas = [
-        c for c in clas if c.incluida and (c.linea.confianza < 0.6 or c.linea.encimada)
+        c for c in clas if c.incluida
+        and C.CAMPO_POR_CATEGORIA.get(c.categoria) is not None
+        and (c.linea.confianza < 0.6 or c.linea.encimada or (c.linea.tope is not None and not c.linea.validada))
         and not getattr(c.linea, "confirmada", False) and c.linea.importe() > Decimal(50000)
     ]
     if dudosas:
@@ -285,6 +287,11 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
             f"Falta confirmar {len(preguntas_pendientes)} pregunta(s) sobre el origen de los ingresos."
         )
 
+    total_lineas = len(rep.lineas)
+    dudosas_total = sum(1 for l in rep.lineas if (l.confianza < 0.6 or l.encimada or (l.tope is not None and not l.validada)) and not getattr(l, "confirmada", False))
+    porcentaje_por_verificar = round((dudosas_total / total_lineas), 2) if total_lineas > 0 else 0.0
+    ofrecer_digitar_esencial = bool(porcentaje_por_verificar >= 0.30 or dudosas_total >= 5)
+
     incompleto = bool(motivos_bloqueo)
 
     if incompleto:
@@ -292,15 +299,13 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
             "bloqueado": True,
             "incompleto": True,
             "motivos": motivos_bloqueo,
-            "neto": neto if L.a_favor > 0 else None,
-            "a_pagar": None if L.a_pagar > 0 else CERO,
-            "a_favor": L.a_favor,
-            "ahorro": comp["ahorro"],
-            "dian_neto": comp["dian"].neto,
+            "neto": None,
+            "a_pagar": None,
+            "a_favor": None,
+            "ahorro": None,
+            "dian_neto": None,
         }
         sancion_final = None
-        if oblig:
-            oblig = {**oblig, "veredicto": "Borrador incompleto"}
     else:
         cifras = {
             "bloqueado": False,
@@ -339,6 +344,8 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
         "confianza_alta": datos.get("confianza_alta"),
         "documentos_faltantes": faltantes,
         "maximo_1pct": L.maximo_1pct,
+        "ofrecer_digitar_esencial": ofrecer_digitar_esencial,
+        "porcentaje_por_verificar": porcentaje_por_verificar,
     }
 
 
@@ -398,6 +405,95 @@ def cartera(anio: int, hoy: date | None = None) -> list[dict]:
     return out
 
 
+def digitar_esencial(cliente_id: str, anio: int, entrada: dict) -> dict:
+    """Entrada rápida cuando la foto no sirve (spec v2.4 · 4.4):
+    Guarda los 6 topes y las líneas esenciales digitadas por el contador con la foto al lado.
+    """
+    cliente = _cliente(cliente_id)
+    decl = declaracion(cliente_id, anio)
+    datos = dict(decl["datos"])
+
+    topes_in = entrada.get("topes") or {}
+    esenciales = entrada.get("esenciales") or []
+    anterior_sf = entrada.get("anterior_saldo_favor")
+    anterior_pat = entrada.get("anterior_patrimonio")
+
+    rep = _reporte_guardado(datos) or Reporte(tipo_doc=cliente.get("tipo_doc") or "CC",
+                                              numero_doc=cliente.get("nit") or "",
+                                              nombre=cliente.get("razon_social") or "")
+    for k, v in topes_in.items():
+        if str(k) in ("1", "2", "3", "4", "5") and v is not None:
+            rep.topes[int(k)] = str(Decimal(str(v)))
+        elif str(k) == "6":
+            rep.responsable_iva = bool(v)
+
+    ajustes = dict(datos.get("ajustes") or {})
+    lineas_nuevas: list[Linea] = []
+    for i, it in enumerate(esenciales):
+        lid = f"esencial_{i+1}"
+        if it.get("categoria"):
+            ajustes[lid] = it["categoria"]
+        val = str(Decimal(str(it.get("valor", 0))))
+        det = it.get("detalle", f"Línea esencial #{i+1}")
+        renglon = it.get("renglon")
+        tope_num = it.get("tope")
+        lineas_nuevas.append(Linea(
+            id=lid,
+            entidad=it.get("entidad", "Digitado por el contador"),
+            titular="TITULAR PRINCIPAL",
+            detalle=det,
+            valor=val,
+            uso=it.get("uso", ""),
+            renglon=renglon,
+            tope=tope_num,
+            confianza=1.0,
+            validada=True,
+            confirmada=True,
+            encimada=False,
+            origen="contador_esencial"
+        ))
+
+    if anterior_sf:
+        lineas_nuevas.append(Linea(
+            id="esencial_anterior_sf",
+            entidad="DIAN",
+            titular="TITULAR PRINCIPAL",
+            detalle="Total saldo a favor",
+            valor=str(Decimal(str(anterior_sf))),
+            renglon=131,
+            confianza=1.0,
+            validada=True,
+            confirmada=True,
+            origen="contador_esencial"
+        ))
+
+    if anterior_pat:
+        lineas_nuevas.append(Linea(
+            id="esencial_anterior_pat",
+            entidad="DIAN",
+            titular="TITULAR PRINCIPAL",
+            detalle="Total patrimonio bruto declarado",
+            valor=str(Decimal(str(anterior_pat))),
+            confianza=1.0,
+            validada=True,
+            confirmada=True,
+            origen="contador_esencial"
+        ))
+
+    rep.lineas = lineas_nuevas
+    val_sumas = validar_sumas(rep)
+
+    datos["reporte"] = _reporte_a_dict(rep)
+    datos["validacion"] = [{**v, "encabezado": str(v["encabezado"]), "suma": str(v["suma"])} for v in val_sumas]
+    datos["digitado_esencial"] = True
+    datos["ajustes"] = ajustes
+
+    if entrada.get("respuestas"):
+        datos.setdefault("respuestas", {}).update(entrada["respuestas"])
+
+    return recalcular(cliente_id, anio, datos, motivo="digitar_esencial", estado="borrador")
+
+
 def subir_universal(anio: int, archivos: list[tuple[str, bytes]], avisos_previos: list[str] | None = None) -> dict:
     """Sube la exógena de cualquier persona: crea el contribuyente si no existe y abre su renta."""
     P.obtener(anio)
@@ -421,7 +517,7 @@ def subir_universal(anio: int, archivos: list[tuple[str, bytes]], avisos_previos
             "razon_social": nombre,
             "tipo_persona": "natural",
             "estado": "activo",
-            "etiquetas": ["renta"],
+            "etiquetas": ["renta", "solo_renta"],
             "regimen": "ordinario",
             "responsable_iva": bool(rep_principal.responsable_iva),
         }

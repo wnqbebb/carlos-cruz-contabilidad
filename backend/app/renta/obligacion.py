@@ -83,8 +83,18 @@ def meses_de_retardo(limite: date, presentacion: date) -> int:
 
 
 def sancion_extemporaneidad(impuesto_cargo: Decimal, ingresos_brutos: Decimal, saldo_favor: Decimal,
-                            limite: date, presentacion: date, anio: int) -> dict:
-    """Estimación de la sanción del art. 641 E.T., con la mínima del art. 639 (UVT del año en que se impone)."""
+                            limite: date, presentacion: date, anio: int,
+                            patrimonio_liquido_anterior: Decimal = CERO,
+                            reduccion_640: float | None = None) -> dict:
+    """Estimación de la sanción del art. 641 E.T., con la mínima del art. 639 (UVT del año en que se impone).
+
+    Casos art. 641:
+    1. Con impuesto a cargo: 5 % por mes o fracción, tope 100 % del impuesto a cargo.
+    2. Sin impuesto a cargo (sobre ingresos brutos): 0,5 % de ingresos brutos por mes o fracción.
+    3. Sin ingresos ni impuesto (sobre patrimonio): 1 % del patrimonio líquido del año anterior por mes o fracción.
+    4. Sanción mínima: 10 UVT del año en que se presenta (art. 639).
+    5. Reducciones art. 640: opcional 50 % o 75 % si cumple condiciones.
+    """
     p = P.obtener(anio)
     s = p["sancion_extemporaneidad"]
     meses = meses_de_retardo(limite, presentacion)
@@ -94,16 +104,27 @@ def sancion_extemporaneidad(impuesto_cargo: Decimal, ingresos_brutos: Decimal, s
     if impuesto_cargo > 0:
         valor = min(impuesto_cargo * P.d(s["por_mes_impuesto"]) * meses, impuesto_cargo * P.d(s["tope_impuesto"]))
         base = "5 % del impuesto a cargo por mes o fracción"
-    else:
+    elif ingresos_brutos > 0:
         tope = ingresos_brutos * P.d(s["tope_ingresos"])
-        tope = min(tope, saldo_favor * Decimal("0.10")) if saldo_favor > 0 else min(tope, Decimal(2500) * uvt_s)
+        tope = min(tope, saldo_favor * Decimal("2.0")) if saldo_favor > 0 else min(tope, Decimal(2500) * uvt_s)
         valor = min(ingresos_brutos * P.d(s["por_mes_ingresos"]) * meses, tope)
         base = "0,5 % de los ingresos brutos por mes o fracción"
+    elif patrimonio_liquido_anterior > 0:
+        tope = patrimonio_liquido_anterior * Decimal("0.10")
+        tope = min(tope, saldo_favor * Decimal("2.0")) if saldo_favor > 0 else min(tope, Decimal(2500) * uvt_s)
+        valor = min(patrimonio_liquido_anterior * Decimal("0.01") * meses, tope)
+        base = "1 % del patrimonio líquido del año anterior por mes o fracción"
+    else:
+        valor = CERO
+        base = "Sin base gravable"
     minima = P.d(s["minima_uvt"]) * uvt_s
-    valor = R(max(valor, minima))
+    valor = max(valor, minima)
+    if reduccion_640 in (0.50, 0.75):
+        valor = max(valor * Decimal(str(reduccion_640)), minima)
+    valor_aprox = R(valor)
     texto = (f"{meses} {'mes' if meses == 1 else 'meses'} de retardo: {base} ({s['norma']}), mínimo "
              f"{s['minima_uvt']} UVT ({s['norma_minima']}). {s['reduccion']}.")
-    return {"meses": meses, "valor": valor, "texto": texto, "norma": s["norma"]}
+    return {"meses": meses, "valor": valor_aprox, "texto": texto, "norma": s["norma"]}
 
 
 def estado_vencimiento(nit: str, anio: int, hoy: date) -> dict:

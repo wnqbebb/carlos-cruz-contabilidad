@@ -160,6 +160,21 @@ def recorte(cliente_id: str, anio: int, recorte_id: str):
     return Response(png, media_type="image/png", headers={"Cache-Control": "private, max-age=600"})
 
 
+class DigitarEsencial(BaseModel):
+    topes: dict = {}
+    esenciales: list[dict] = []
+    anterior_saldo_favor: object | None = None
+    anterior_patrimonio: object | None = None
+    respuestas: dict = {}
+
+
+@router.post("/{cliente_id}/{anio}/digitar-esencial")
+def digitar_esencial(cliente_id: str, anio: int, d: DigitarEsencial):
+    _anio(anio)
+    datos = {k: v for k, v in d.model_dump().items() if v is not None}
+    return JSONResponse(a_json(_errores(lambda: servicio.digitar_esencial(cliente_id, anio, datos))))
+
+
 @router.get("/{cliente_id}/{anio}/descargar/{que}")
 def descargar(request: Request, cliente_id: str, anio: int, que: str):
     _anio(anio)
@@ -172,6 +187,13 @@ def descargar(request: Request, cliente_id: str, anio: int, que: str):
         raise HTTPException(409, {"codigo": "sin_datos", "mensaje": "Todavía no hay borrador: suba los documentos."})
     v = a_json(v)
     base = f"renta-{anio}-{(v['contribuyente']['nit'] or 'cliente')}"
+    incompleto = bool(v.get("resultado", {}).get("incompleto"))
+
+    if incompleto:
+        # La regla de oro: nada se descarga con cifras mientras falten datos. Solo el borrador incompleto.
+        return Response(exportar.borrador_pdf(v), media_type="application/pdf",
+                        headers={"Content-Disposition": f'attachment; filename="{base}-borrador-incompleto.pdf"'})
+
     if que == "pdf":
         return Response(exportar.borrador_pdf(v), media_type="application/pdf",
                         headers={"Content-Disposition": f'attachment; filename="{base}-borrador-210.pdf"'})

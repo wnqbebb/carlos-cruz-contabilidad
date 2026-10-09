@@ -76,6 +76,7 @@ def test_caso_a_de_punta_a_punta(cliente_api):
     casillas = {c["casilla"]: D(c["optimizada"]) for c in res["casillas"]}
     for n, valor in CASO_A["esperado_210"].items():
         assert casillas[int(n)] == D(valor), f"casilla {n}: {casillas[int(n)]} ≠ {valor}"
+    assert res["motivos_incompleto"] == []
     assert D(res["cifras"]["a_favor"]) == D("5000")
 
 

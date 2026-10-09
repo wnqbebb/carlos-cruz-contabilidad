@@ -1,0 +1,163 @@
+[
+  {
+    "frase": "Saldo cuentas bancarias",
+    "categoria": "patrimonio",
+    "renglon": 29,
+    "tope": 2,
+    "descripcion": "Saldos en cuentas corrientes y de ahorros al 31 de diciembre"
+  },
+  {
+    "frase": "Saldo cuentas bancarias (Titular Principal)",
+    "categoria": "patrimonio",
+    "renglon": 29,
+    "tope": 2,
+    "descripcion": "Saldos en cuentas corrientes y de ahorros como titular principal"
+  },
+  {
+    "frase": "Cuentas por pagar de clientes (Concepto: 1315)",
+    "categoria": "deuda",
+    "renglon": 30,
+    "tope": null,
+    "descripcion": "Obligaciones financieras y cuentas por pagar"
+  },
+  {
+    "frase": "Valor total de los movimientos en cuentas",
+    "categoria": "informativo",
+    "renglon": null,
+    "tope": 4,
+    "descripcion": "Movimientos y consignaciones bancarias acumuladas en el año"
+  },
+  {
+    "frase": "Total consumos o gastos con tarjeta Crédito o Débito",
+    "categoria": "informativo",
+    "renglon": null,
+    "tope": 3,
+    "descripcion": "Consumos acumulados con tarjetas débito y crédito"
+  },
+  {
+    "frase": "Cartera Colectiva Rendimientos Pagados (Titular Principal)",
+    "categoria": "ingreso_capital_financiero",
+    "renglon": 58,
+    "tope": 1,
+    "descripcion": "Rendimientos pagados por carteras colectivas o fondos"
+  },
+  {
+    "frase": "Cartera Colectiva Rendimientos Pagados",
+    "categoria": "ingreso_capital_financiero",
+    "renglon": 58,
+    "tope": 1,
+    "descripcion": "Rendimientos pagados por carteras colectivas o fondos"
+  },
+  {
+    "frase": "Retención practicada rendimientos o utilidades",
+    "categoria": "retencion",
+    "renglon": 132,
+    "tope": null,
+    "descripcion": "Retenciones en la fuente sobre rendimientos financieros"
+  },
+  {
+    "frase": "Saldo Inversión en fondos de inversión colectiva",
+    "categoria": "patrimonio",
+    "renglon": 29,
+    "tope": 2,
+    "descripcion": "Saldo patrimonial en fondos y carteras colectivas"
+  },
+  {
+    "frase": "Inversiones en fondos de inversión colectiva",
+    "categoria": "informativo",
+    "renglon": null,
+    "tope": 4,
+    "descripcion": "Inversiones acumuladas del año (para tope de consignaciones)"
+  },
+  {
+    "frase": "Monto total de facturación electrónica",
+    "categoria": "facturacion_emitida",
+    "renglon": null,
+    "tope": null,
+    "descripcion": "Monto emitido en facturación electrónica"
+  },
+  {
+    "frase": "Suma valor total facturas tras ajustes por notas",
+    "categoria": "compras_fe",
+    "renglon": null,
+    "tope": 5,
+    "descripcion": "Compras acumuladas con factura electrónica (base del 1%)"
+  },
+  {
+    "frase": "Ingresos documentos soporte",
+    "categoria": "ingreso_por_definir",
+    "renglon": null,
+    "tope": 1,
+    "descripcion": "Pagos registrados mediante documento soporte en compras a no obligados"
+  },
+  {
+    "frase": "Otros ingresos (Concepto: 5016)",
+    "categoria": "ingreso_por_definir",
+    "renglon": null,
+    "tope": 1,
+    "descripcion": "Otros pagos e ingresos reportados por terceros"
+  },
+  {
+    "frase": "Valor avalúo catastral",
+    "categoria": "patrimonio",
+    "renglon": 29,
+    "tope": 2,
+    "descripcion": "Avalúo catastral de inmuebles a declarar en patrimonio"
+  },
+  {
+    "frase": "Valor patrimonial de los vehículos",
+    "categoria": "patrimonio",
+    "renglon": 29,
+    "tope": 2,
+    "descripcion": "Valor fiscal de vehículos automotores"
+  },
+  {
+    "frase": "Total saldo a favor",
+    "categoria": "anterior_saldo_favor",
+    "renglon": 131,
+    "tope": null,
+    "descripcion": "Saldo a favor de la declaración de renta del año gravable anterior"
+  },
+  {
+    "frase": "Total patrimonio bruto declarado",
+    "categoria": "anterior_patrimonio",
+    "renglon": null,
+    "tope": null,
+    "descripcion": "Patrimonio bruto declarado en el año gravable anterior"
+  },
+  {
+    "frase": "Total saldo de deudas",
+    "categoria": "deuda",
+    "renglon": 30,
+    "tope": null,
+    "descripcion": "Deudas financieras y comerciales vigentes al cierre"
+  },
+  {
+    "frase": "Pagos laborales y de seguridad social",
+    "categoria": "ingreso_trabajo",
+    "renglon": 32,
+    "tope": 1,
+    "descripcion": "Salarios, cesantías y pagos laborales"
+  },
+  {
+    "frase": "Honorarios y compensaciones por servicios personales",
+    "categoria": "ingreso_honorarios",
+    "renglon": 43,
+    "tope": 1,
+    "descripcion": "Honorarios y compensaciones de personas naturales"
+  },
+  {
+    "frase": "Pensiones de jubilación o invalidez",
+    "categoria": "pension",
+    "renglon": 99,
+    "tope": 1,
+    "descripcion": "Mesadas pensionales pagadas por fondos públicos o privados"
+  },
+  {
+    "frase": "Dividendos y participaciones",
+    "categoria": "dividendo",
+    "renglon": 104,
+    "tope": 1,
+    "descripcion": "Distribución de dividendos y utilidades de sociedades"
+  }
+]

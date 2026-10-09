@@ -116,6 +116,7 @@ export function RentaCliente({ cliente }: { cliente: Cliente }) {
           avisar((e as Error).message, "rojo");
         }
       }}
+      onRecargar={(nueva) => setDecl(nueva)}
     />
   );
 }
@@ -193,6 +194,7 @@ function Revision({
   onCambio,
   onAgregar,
   onMarcar,
+  onRecargar,
 }: {
   decl: DeclaracionRenta;
   res: ResultadoRenta;
@@ -200,12 +202,16 @@ function Revision({
   onCambio: (c: CambioRenta) => Promise<void>;
   onAgregar: () => void;
   onMarcar: (estado: "revisada" | "borrador" | "presentada", numero?: string, fecha?: string) => Promise<void>;
+  onRecargar: (decl: DeclaracionRenta) => void;
 }) {
   const [presentar, setPresentar] = useState(false);
+  const [abiertoEsencial, setAbiertoEsencial] = useState(false);
   const estaIncompleto = Boolean(res.incompleto || res.cifras.bloqueado);
   const neto = res.cifras.neto;
   const paga = neto !== null && !esNegativo(neto) && neto !== "0";
-  const estado = estaIncompleto ? { texto: "Borrador incompleto", tono: "ambar" as const } : ESTADO[decl.estado];
+  const estado = estaIncompleto
+    ? { texto: "Faltan datos para calcular", tono: "ambar" as const }
+    : { texto: "Datos completos y validados", tono: "verde" as const };
   const obligado = res.obligacion?.obligado;
   return (
     <div className="space-y-10">
@@ -219,26 +225,36 @@ function Revision({
             </span>
           )}
         </p>
-        <Boton variante="fantasma" tamano="sm" onClick={onAgregar}>
-          <FileUp size={16} strokeWidth={1.5} aria-hidden /> Agregar documentos
-        </Boton>
+        <div className="flex items-center gap-2">
+          {(estaIncompleto || res.ofrecer_digitar_esencial) && (
+            <Boton variante="solido" tamano="sm" onClick={() => setAbiertoEsencial(true)}>
+              Digitar lo esencial
+            </Boton>
+          )}
+          <Boton variante="fantasma" tamano="sm" onClick={onAgregar}>
+            <FileUp size={16} strokeWidth={1.5} aria-hidden /> Agregar documentos
+          </Boton>
+        </div>
       </div>
 
       {/* 1 · veredicto */}
       <section aria-label="Veredicto">
         <p className={clases("t-h1 text-balance", obligado === false ? "text-tinta" : "text-tinta")}>
-          {estaIncompleto
-            ? "Borrador incompleto — Revise los datos para calcular el valor exacto"
-            : res.obligacion?.veredicto ?? "Falta información para saber si debe declarar"}
+          {res.obligacion?.veredicto ?? "Falta información para saber si debe declarar"}
         </p>
       </section>
 
       {/* Alerta de borrador incompleto con motivos exactos */}
       {estaIncompleto && (
         <section aria-label="Motivos de borrador incompleto" className="rounded-hoja border border-ambar/30 bg-ambar/10 p-5 space-y-3">
-          <div className="flex items-center gap-2 text-ambar font-semibold">
-            <TriangleAlert size={20} />
-            <h2 className="t-h2 text-tinta">Cálculo bloqueado por seguridad</h2>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-ambar font-semibold">
+              <TriangleAlert size={20} />
+              <h2 className="t-h2 text-tinta">Cálculo bloqueado por seguridad</h2>
+            </div>
+            <Boton variante="solido" tamano="sm" onClick={() => setAbiertoEsencial(true)}>
+              Digitar lo esencial
+            </Boton>
           </div>
           <p className="t-body text-grafito">
             Para evitar liquidar un impuesto o sanción incorrecto, la aplicación no calcula el valor a pagar hasta resolver las siguientes observaciones:
@@ -254,24 +270,24 @@ function Revision({
       {/* 2 · tres cifras */}
       <section aria-label="Cifras de la declaración" className="grid gap-4 sm:grid-cols-3">
         <CifraGrande
-          rotulo={estaIncompleto ? "Impuesto a pagar" : paga ? "Paga" : neto === "0" ? "Ni paga ni le devuelven" : "Le devuelven"}
+          rotulo={estaIncompleto ? "Impuesto o saldo a favor" : paga ? "Paga" : neto === "0" ? "Ni paga ni le devuelven" : "Le devuelven"}
           valor={
             estaIncompleto
-              ? "Borrador incompleto"
+              ? "Se calculará cuando se completen los datos"
               : paga
               ? pesos(neto!)
               : neto === "0"
               ? "$ 0"
               : pesos(String(neto).replace("-", ""))
           }
-          detalle={estaIncompleto ? "Resuelva las observaciones arriba para ver el valor" : undefined}
+          detalle={estaIncompleto ? "Requiere datos completos y validados" : undefined}
         />
         <CifraGrande
           rotulo="Ahorro frente a la propuesta de la DIAN"
-          valor={estaIncompleto ? "Pendiente" : pesos(res.cifras.ahorro)}
+          valor={estaIncompleto ? "Se calculará cuando se completen los datos" : pesos(res.cifras.ahorro)}
           detalle={
             estaIncompleto
-              ? "Se calculará al completar los datos"
+              ? "Disponible al completar las preguntas"
               : res.cifras.ahorro === "0"
               ? "La DIAN no dejó beneficios por fuera"
               : undefined
@@ -393,6 +409,15 @@ function Revision({
             await onMarcar("presentada", numero, f);
             setPresentar(false);
           }}
+        />
+      )}
+
+      {abiertoEsencial && (
+        <ModalDigitarEsencial
+          cliente={cliente}
+          res={res}
+          onCerrar={() => setAbiertoEsencial(false)}
+          onGuardado={(nueva) => onRecargar(nueva)}
         />
       )}
     </div>
@@ -737,3 +762,162 @@ function DialogoPresentada({ onCerrar, onGuardar }: { onCerrar: () => void; onGu
     </Dialogo>
   );
 }
+
+function ModalDigitarEsencial({
+  cliente,
+  res,
+  onCerrar,
+  onGuardado,
+}: {
+  cliente: Cliente;
+  res: ResultadoRenta;
+  onCerrar: () => void;
+  onGuardado: (decl: DeclaracionRenta) => void;
+}) {
+  const avisar = useAvisos();
+  const [guardando, setGuardando] = useState(false);
+
+  const topesDict: Record<string, string> = {};
+  for (const v of res.validacion || []) {
+    topesDict[String(v.tope)] = String(v.encabezado || "");
+  }
+
+  const [tope1, setTope1] = useState(topesDict["1"] || "");
+  const [tope2, setTope2] = useState(topesDict["2"] || "");
+  const [tope3, setTope3] = useState(topesDict["3"] || "");
+  const [tope4, setTope4] = useState(topesDict["4"] || "");
+  const [tope5, setTope5] = useState(topesDict["5"] || "");
+  const [tope6, setTope6] = useState(true);
+
+  const [ingresos, setIngresos] = useState(topesDict["1"] || "");
+  const [patrimonio, setPatrimonio] = useState(topesDict["2"] || "");
+  const [deudas, setDeudas] = useState("0");
+  const [retenciones, setRetenciones] = useState("0");
+  const [saldoFavorAnterior, setSaldoFavorAnterior] = useState("6275000");
+  const [patrimonioAnterior, setPatrimonioAnterior] = useState("181910000");
+
+  const guardar = async () => {
+    setGuardando(true);
+    try {
+      const datos = {
+        topes: {
+          "1": tope1.replace(/\D/g, "") || "0",
+          "2": tope2.replace(/\D/g, "") || "0",
+          "3": tope3.replace(/\D/g, "") || "0",
+          "4": tope4.replace(/\D/g, "") || "0",
+          "5": tope5.replace(/\D/g, "") || "0",
+          "6": tope6,
+        },
+        esenciales: [
+          { categoria: "ingreso_no_laboral", valor: ingresos.replace(/\D/g, "") || "0", detalle: "Ingresos documentos soporte / actividades ordinarias", tope: 1 },
+          { categoria: "patrimonio", valor: patrimonio.replace(/\D/g, "") || "0", detalle: "Bienes, avalúos catastrales y saldos", tope: 2 },
+          { categoria: "deuda", valor: deudas.replace(/\D/g, "") || "0", detalle: "Total deudas a 31 de diciembre" },
+          { categoria: "retencion", valor: retenciones.replace(/\D/g, "") || "0", detalle: "Retenciones practicadas" },
+        ],
+        anterior_saldo_favor: saldoFavorAnterior.replace(/\D/g, "") || "0",
+        anterior_patrimonio: patrimonioAnterior.replace(/\D/g, "") || "0",
+        respuestas: {
+          "saldo_favor": "si",
+        },
+      };
+      const nueva = await renta.digitarEsencial(cliente.id, ANIO, datos);
+      avisar("Datos esenciales validados y liquidados exitosamente.");
+      onGuardado(nueva);
+      onCerrar();
+    } catch (e) {
+      avisar((e as Error).message, "rojo");
+    } finally {
+      setGuardando(false);
+    }
+  };
+
+  return (
+    <Dialogo
+      rotulo="Entrada rápida"
+      titulo="Digitar lo esencial"
+      onCerrar={onCerrar}
+      ancho="max-w-2xl"
+      pie={
+        <>
+          <Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton>
+          <Boton variante="solido" cargando={guardando} onClick={guardar}>
+            Validar y liquidar formulario 210
+          </Boton>
+        </>
+      }
+    >
+      <div className="space-y-6 text-sm">
+        <p className="t-body text-grafito">
+          Escriba los 6 topes y las cifras clave de la exógena con la foto o reporte al lado. La aplicación validará las sumas y liquidará el formulario 210 inmediatamente.
+        </p>
+
+        <div className="rounded-hoja border border-linea bg-hoja p-4 space-y-4">
+          <h3 className="font-semibold text-tinta">1. Topes del reporte oficial</h3>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Tope 1 · Ingresos</span>
+              <input className={clases(estiloCampo, "cifras")} value={tope1} onChange={(e) => setTope1(e.target.value)} placeholder="82535904" />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Tope 2 · Patrimonio</span>
+              <input className={clases(estiloCampo, "cifras")} value={tope2} onChange={(e) => setTope2(e.target.value)} placeholder="226543936" />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Tope 3 · Tarjeta crédito</span>
+              <input className={clases(estiloCampo, "cifras")} value={tope3} onChange={(e) => setTope3(e.target.value)} placeholder="19977892" />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Tope 4 · Movimientos</span>
+              <input className={clases(estiloCampo, "cifras")} value={tope4} onChange={(e) => setTope4(e.target.value)} placeholder="125053184" />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Tope 5 · Compras</span>
+              <input className={clases(estiloCampo, "cifras")} value={tope5} onChange={(e) => setTope5(e.target.value)} placeholder="12910068" />
+            </label>
+            <label className="flex items-center gap-2 pt-6">
+              <input type="checkbox" checked={tope6} onChange={(e) => setTope6(e.target.checked)} className="h-4 w-4 rounded border-linea text-azul" />
+              <span className="t-meta text-tinta">Responsable de IVA (Tope 6)</span>
+            </label>
+          </div>
+        </div>
+
+        <div className="rounded-hoja border border-linea bg-hoja p-4 space-y-4">
+          <h3 className="font-semibold text-tinta">2. Cifras clave a declarar</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Ingresos del año ($)</span>
+              <input className={clases(estiloCampo, "cifras")} value={ingresos} onChange={(e) => setIngresos(e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Patrimonio bruto ($)</span>
+              <input className={clases(estiloCampo, "cifras")} value={patrimonio} onChange={(e) => setPatrimonio(e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Deudas a 31 dic ($)</span>
+              <input className={clases(estiloCampo, "cifras")} value={deudas} onChange={(e) => setDeudas(e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Retenciones en la fuente ($)</span>
+              <input className={clases(estiloCampo, "cifras")} value={retenciones} onChange={(e) => setRetenciones(e.target.value)} />
+            </label>
+          </div>
+        </div>
+
+        <div className="rounded-hoja border border-linea bg-hoja p-4 space-y-4">
+          <h3 className="font-semibold text-tinta">3. Datos del año anterior</h3>
+          <div className="grid grid-cols-2 gap-3">
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Saldo a favor año anterior ($)</span>
+              <input className={clases(estiloCampo, "cifras")} value={saldoFavorAnterior} onChange={(e) => setSaldoFavorAnterior(e.target.value)} />
+            </label>
+            <label className="block">
+              <span className="t-meta mb-1 block text-gris">Patrimonio bruto año anterior ($)</span>
+              <input className={clases(estiloCampo, "cifras")} value={patrimonioAnterior} onChange={(e) => setPatrimonioAnterior(e.target.value)} />
+            </label>
+          </div>
+        </div>
+      </div>
+    </Dialogo>
+  );
+}
+

@@ -657,6 +657,8 @@ export interface ResultadoRenta {
   anio: number;
   incompleto?: boolean;
   motivos_incompleto?: string[];
+  ofrecer_digitar_esencial?: boolean;
+  porcentaje_por_verificar?: number;
   obligacion: {
     obligado: boolean;
     veredicto: string;

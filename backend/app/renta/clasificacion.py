@@ -8,15 +8,44 @@
 """
 from __future__ import annotations
 
+import json
 import re
 from dataclasses import dataclass, field
 from decimal import Decimal
+from pathlib import Path
 
 from rapidfuzz import fuzz
 
+from ..config import RAIZ
 from . import parametros as P
 from .calculo import CERO, EntradaRenta, liquidar
 from .lectura import Linea, sin_tildes
+
+CATALOGO_CONCEPTOS: list[dict] = []
+_ruta_conceptos = RAIZ / "data" / "renta" / "conceptos_exogena.json"
+if _ruta_conceptos.exists():
+    try:
+        CATALOGO_CONCEPTOS = json.loads(_ruta_conceptos.read_text(encoding="utf-8"))
+    except Exception:
+        pass
+
+
+def conciliar_con_catalogo(detalle: str, uso: str = "") -> dict | None:
+    if not CATALOGO_CONCEPTOS or not detalle:
+        return None
+    D = sin_tildes(f"{detalle} {uso}".strip())
+    mejor_item = None
+    mejor_score = 0
+    for item in CATALOGO_CONCEPTOS:
+        frase = sin_tildes(item.get("frase", ""))
+        score = fuzz.token_set_ratio(frase, D)
+        if score > mejor_score:
+            mejor_score = score
+            mejor_item = item
+    if mejor_score >= 80 and mejor_item:
+        return mejor_item
+    return None
+
 
 CATEGORIAS = {
     "patrimonio": "Patrimonio (bienes y saldos)",
@@ -107,6 +136,15 @@ REGLAS: list[tuple[str, tuple[str, ...], tuple[str, ...]]] = [
 
 def clasificar(l: Linea) -> tuple[str, str, bool]:
     """(categoría, por qué, el renglón de la DIAN no coincide)."""
+    # 1. Reconciliación con catálogo de conceptos de la exógena (data/renta/conceptos_exogena.json)
+    concepto = conciliar_con_catalogo(l.detalle, l.uso)
+    if concepto:
+        cat = concepto["categoria"]
+        renglon_cat = concepto.get("renglon")
+        conflicto = bool(l.renglon) and bool(renglon_cat) and l.renglon != renglon_cat
+        motivo = f"Conciliado con catálogo: «{concepto['frase']}»" + (f"; la DIAN sugiere R{l.renglon}" if l.renglon else "")
+        return cat, motivo, conflicto
+
     D = sin_tildes(f"{l.detalle} {l.uso}" if not l.detalle else l.detalle)
     por_regla = None
     for cat, todas, excluye in REGLAS:
@@ -179,8 +217,11 @@ def clave_pagador(entidad: str) -> str:
 def es_entidad_financiera(entidad: str) -> bool:
     T = sin_tildes(entidad).upper()
     return any(k in T for k in ("BANCO", "BANCOLOMBIA", "DAVIVIENDA", "BBVA", "OCCIDENTE", "POPULAR",
-                                "COLPATRIA", "FALABELLA", "SERFINANZA", "PICHINCHA", "COOPERATIVA",
-                                "FIDUCIARIA", "FONDO DE EMPLEADOS", "COOP", "FINANCIERA"))
+                                "COLPATRIA", "SCOTIABANK", "FALABELLA", "SERFINANZA", "PICHINCHA",
+                                "CAJA SOCIAL", "AGRARIO", "SUDAMERIS", "ITAU", "COOPERATIVA",
+                                "COOMEVA", "COLTEFINANCIERA", "FIDUCIARIA", "FONDO DE EMPLEADOS",
+                                "COOP", "FINANCIERA", "DIAN", "PORVENIR", "PROTECCION", "COLFONDOS",
+                                "SKANDIA", "COLPENSIONES"))
 
 
 def clasificar_todas(lineas: list[Linea], ajustes: dict[str, str] | None = None) -> list[Clasificada]:
@@ -367,7 +408,10 @@ def construir(clas: list[Clasificada], respuestas: dict[str, str], beneficios: d
         cat = c.categoria
         campo = CAMPO_POR_CATEGORIA.get(cat)
         if cat == "ingreso_por_definir":
-            resp = respuestas.get(f"pagador:{c.pagador}", "trabajo")
+            resp = respuestas.get(f"pagador:{c.pagador}")
+            if not resp:
+                # La regla de oro: sin confirmación del contador no se asigna a trabajo ni se suma
+                continue
             if resp == "no_ingreso":
                 continue
             campo = {"trabajo": "trabajo_ingresos", "honorarios": "honorarios_ingresos"}.get(resp, "nolab_ingresos")

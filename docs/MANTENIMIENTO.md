@@ -52,3 +52,10 @@ lo mete dentro del `.exe`. Si falta, la renta sigue funcionando con PDF y Excel.
     código del teléfono. Después se puede activar de nuevo desde Sistema.
 - **Copias aisladas de prueba**: siempre con su propio `CC_ENV`, como lo hace `scripts/copia_aislada.sh`. Una
   instancia sin `CC_ENV` lee `backend/.env` y es, para todo efecto, la instalación real.
+
+## Restablecer acceso local (olvido de usuario o contraseña)
+
+Si el usuario olvidó su contraseña o usuario en el equipo local:
+1. Ejecute `restablecer_acceso.bat` en la raíz del proyecto.
+2. El script elimina las credenciales locales y sesiones previas.
+3. Al abrir de nuevo la aplicación (`http://localhost:8000`), aparecerá la pantalla «Crear su acceso» para definir el nuevo usuario y contraseña.

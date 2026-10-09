@@ -399,6 +399,21 @@ export const renta = {
       { method: "POST", body: fd }
     );
   },
+  digitarEsencial: (
+    clienteId: string,
+    anio: number,
+    datos: {
+      topes: Record<string, string | number | boolean>;
+      esenciales: Array<{ categoria: string; valor: string | number; detalle?: string; renglon?: number; tope?: number }>;
+      anterior_saldo_favor?: string | number;
+      anterior_patrimonio?: string | number;
+      respuestas?: Record<string, string>;
+    }
+  ) =>
+    pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}/digitar-esencial`, {
+      method: "POST",
+      ...json(datos),
+    }),
   recorte: (clienteId: string, anio: number, id: string) => `${BASE}/api/renta/${clienteId}/${anio}/recorte/${id}`,
   descarga: (clienteId: string, anio: number, que: "todo" | "pdf" | "excel" | "resumen") =>
     `${BASE}/api/renta/${clienteId}/${anio}/descargar/${que}`,

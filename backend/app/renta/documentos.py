@@ -111,6 +111,10 @@ def leer_pdf(nombre: str, contenido: bytes) -> Leido:
             if not filas:
                 filas = [re.split(r"\s{2,}", l) for l in texto.splitlines()]
             rep = LT.interpretar_filas(filas, documento=nombre, pagina=n)
+            for l in rep.lineas:
+                l.confianza = 1.0
+                l.encimada = False
+                l.alternativas = []
             for l in texto.splitlines():
                 LT._cabecera(l, rep)
             rep.nombre = rep.nombre or LT.nombre_desde_cabecera(texto.splitlines())[0]
@@ -135,6 +139,10 @@ def leer_hoja(nombre: str, contenido: bytes) -> Leido:
             for fila in hoja.iter_rows(values_only=True):
                 filas.append([_celda_excel(v) for v in fila])
     rep = LT.interpretar_filas(filas, documento=nombre)
+    for l in rep.lineas:
+        l.confianza = 1.0
+        l.encimada = False
+        l.alternativas = []
     cabecera = [" ".join(c for c in f if c) for f in filas[:8]]
     for l in cabecera:
         LT._cabecera(l, rep)

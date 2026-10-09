@@ -291,6 +291,7 @@ def listar(
     descendente: bool = False,
     pagina: int = 1,
     por_pagina: int = 50,
+    incluir_solo_renta: bool = False,
 ) -> dict:
     """Página de clientes + total. `estado=''` incluye archivados."""
     por_pagina = max(1, min(int(por_pagina or 50), 500))
@@ -304,6 +305,11 @@ def listar(
             filtros.append(T.c.etiquetas.any(etiqueta))
         else:
             filtros.append(T.c.etiquetas.cast(Text).like(f'%"{etiqueta}"%'))
+    elif not incluir_solo_renta:
+        if ES_POSTGRES:
+            filtros.append(~T.c.etiquetas.any("solo_renta"))
+        else:
+            filtros.append(~T.c.etiquetas.cast(Text).like('%"solo_renta"%'))
     cond = _condicion_busqueda(q)
     if cond is not None:
         filtros.append(cond)

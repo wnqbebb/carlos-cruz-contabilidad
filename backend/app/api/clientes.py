@@ -34,9 +34,11 @@ def listar(
     descendente: bool = Query(False),
     pagina: int = Query(1, ge=1),
     por_pagina: int = Query(50, ge=1, le=500),
+    incluir_solo_renta: bool = Query(False),
 ):
     return repo.listar(q=q, estado=estado, etiqueta=etiqueta, orden=orden,
-                       descendente=descendente, pagina=pagina, por_pagina=por_pagina)
+                       descendente=descendente, pagina=pagina, por_pagina=por_pagina,
+                       incluir_solo_renta=incluir_solo_renta)
 
 
 @router.get("/demostracion")
