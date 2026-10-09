@@ -67,6 +67,27 @@ def cartera(anio: int = servicio.ANIO_ACTUAL):
     return JSONResponse(a_json({"anio": _anio(anio), "declaraciones": servicio.cartera(anio)}))
 
 
+@router.post("/subir-universal")
+def subir_universal(anio: int = servicio.ANIO_ACTUAL, archivos: list[UploadFile] = File(...)):
+    _anio(anio)
+    if len(archivos) > MAXIMO_ARCHIVOS:
+        raise HTTPException(413, {"codigo": "demasiados", "mensaje": f"Suba hasta {MAXIMO_ARCHIVOS} archivos a la vez."})
+    leidos = []
+    for a in archivos:
+        contenido = a.file.read(TAMANO_MAXIMO + 1)
+        if len(contenido) > TAMANO_MAXIMO:
+            raise HTTPException(413, {"codigo": "muy_grande", "mensaje": f"«{a.filename}» pasa de 25 MB."})
+        leidos.append((a.filename or "archivo", contenido))
+    try:
+        avisos = seg_archivos.validar_todos(leidos, PERMITIDAS)
+    except seg_archivos.ArchivoRechazado as ex:
+        raise HTTPException(400, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
+    try:
+        return JSONResponse(a_json(_errores(lambda: servicio.subir_universal(anio, leidos, avisos))))
+    except aislado.ArchivoNoProcesable as ex:
+        raise HTTPException(422, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
+
+
 @router.get("/{cliente_id}/{anio}")
 def ver(cliente_id: str, anio: int):
     _anio(anio)

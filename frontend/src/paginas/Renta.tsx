@@ -1,20 +1,22 @@
-import { Search } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { FileUp, Search } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { renta } from "../api";
 import { Cabecera } from "../componentes/Marco";
+import { Procesando } from "../componentes/Procesando";
 import { Aviso, Cargando, Insignia, Vacio, estiloCampoAuto } from "../componentes/ui";
 import { clases, documentoEnLista, esNegativo, fecha, pesos } from "../formato";
 import type { FilaCarteraRenta } from "../tipos";
 import { TituloPagina } from "../ui";
 
 /**
- * Renta⁰³ (v2.3 · Fase 5): la declaración de renta de cada persona natural de la cartera.
- * Ordenable y filtrable. Un clic lleva a la sección Renta del cliente.
+ * Renta⁰³ (v2.3 · Fase 5 / v2.4): la declaración de renta de cada persona natural de la cartera.
+ * Incluye la puerta de entrada universal: «Suelte la exógena de cualquier persona».
  */
 
 const ESTADOS: Record<string, { texto: string; tono: "neutro" | "ambar" | "azul" | "verde" }> = {
   sin_informacion: { texto: "Sin información", tono: "neutro" },
+  incompleto: { texto: "Borrador incompleto", tono: "ambar" },
   borrador: { texto: "Borrador", tono: "ambar" },
   revisada: { texto: "Revisada", tono: "azul" },
   presentada: { texto: "Presentada", tono: "verde" },
@@ -23,6 +25,7 @@ const ESTADOS: Record<string, { texto: string; tono: "neutro" | "ambar" | "azul"
 type Orden = "vencimiento" | "nombre" | "estado" | "neto" | "ahorro";
 
 export function Renta() {
+  const navegar = useNavigate();
   const [anio, setAnio] = useState<number | null>(null);
   const [anios, setAnios] = useState<number[]>([]);
   const [filas, setFilas] = useState<FilaCarteraRenta[] | null>(null);
@@ -30,6 +33,9 @@ export function Renta() {
   const [q, setQ] = useState("");
   const [estado, setEstado] = useState("");
   const [orden, setOrden] = useState<Orden>("vencimiento");
+  const [subiendo, setSubiendo] = useState(false);
+  const [encima, setEncima] = useState(false);
+  const entradaUniversal = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     renta.anios().then((r) => { setAnios(r.anios); setAnio(r.actual); }).catch((e) => setError((e as Error).message));
@@ -39,6 +45,19 @@ export function Renta() {
     setFilas(null);
     renta.cartera(anio).then((r) => setFilas(r.declaraciones)).catch((e) => setError((e as Error).message));
   }, [anio]);
+
+  const subirArchivos = async (archivos: File[]) => {
+    if (!archivos.length) return;
+    setSubiendo(true);
+    setError("");
+    try {
+      const res = await renta.subirUniversal(archivos, anio ?? 2025);
+      navegar(`/clientes/${res.cliente_id}?seccion=renta`);
+    } catch (e) {
+      setError((e as Error).message || "No se pudo procesar la exógena.");
+      setSubiendo(false);
+    }
+  };
 
   const visibles = useMemo(() => {
     const t = q.trim().toLowerCase();
@@ -65,11 +84,75 @@ export function Renta() {
         </TituloPagina>
       </Cabecera>
 
-      {error && <Aviso tono="rojo">{error}</Aviso>}
+      {error && <Aviso tono="rojo" onCerrar={() => setError("")}>{error}</Aviso>}
       {vencidas > 0 && (
         <Aviso tono="rojo" titulo={`${vencidas} ${vencidas === 1 ? "declaración vencida" : "declaraciones vencidas"} sin presentar`}>
           Cada mes de retardo suma sanción (art. 641 E.T.).
         </Aviso>
+      )}
+
+      {/* Zona universal de subida para cualquier contribuyente */}
+      {subiendo ? (
+        <div className="material-hoja mx-auto max-w-xl p-8">
+          <Procesando
+            titulo="Leyendo exógena y preparando la declaración"
+            etapas={[
+              "Enderezando fotos o analizando PDF",
+              "Identificando al contribuyente",
+              "Verificando topes del reporte",
+              "Abriendo la declaración de renta",
+            ]}
+          />
+        </div>
+      ) : (
+        <section
+          role="button"
+          tabIndex={0}
+          aria-label="Suelte la exógena de cualquier persona para crearla o abrir su renta"
+          onClick={() => entradaUniversal.current?.click()}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault();
+              entradaUniversal.current?.click();
+            }
+          }}
+          onDragOver={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setEncima(true);
+          }}
+          onDragLeave={() => setEncima(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setEncima(false);
+            subirArchivos(Array.from(e.dataTransfer.files));
+          }}
+          className={clases(
+            "material-hundido flex min-h-[170px] cursor-pointer flex-col items-center justify-center rounded-hoja border-2 border-dashed px-6 text-center transition-[border-color] duration-200 select-none",
+            encima ? "border-azul bg-azul/5" : "border-tinta/20 hover:border-tinta/40 bg-hoja/50",
+          )}
+        >
+          <FileUp size={28} strokeWidth={1.5} aria-hidden className="text-grafito" />
+          <p className="t-h2 mt-3 text-tinta">
+            {encima ? "Suelte la exógena aquí" : "Suelte la exógena de cualquier persona"}
+          </p>
+          <p className="t-body mt-1 text-gris">
+            Fotos, PDF o Excel del portal de la DIAN · Si no está en clientes, se crea como contribuyente en el acto
+          </p>
+          <input
+            ref={entradaUniversal}
+            type="file"
+            multiple
+            accept="image/*,.pdf,.xlsx,.xls,.csv"
+            className="hidden"
+            aria-label="Archivos de exógena"
+            onChange={(e) => {
+              subirArchivos(Array.from(e.target.files ?? []));
+              e.target.value = "";
+            }}
+          />
+        </section>
       )}
 
       <div className="flex flex-wrap items-center gap-3">
@@ -89,10 +172,10 @@ export function Renta() {
         )}
       </div>
 
-      {!filas && !error && <Cargando texto="Leyendo la cartera de renta" />}
-      {filas && filas.length === 0 && (
+      {!filas && !error && !subiendo && <Cargando texto="Leyendo la cartera de renta" />}
+      {filas && filas.length === 0 && !subiendo && (
         <Vacio titulo="No hay personas naturales en la cartera">
-          La declaración de renta que se prepara aquí es la de las personas naturales (formulario 210).
+          Suelte arriba la exógena de cualquier persona para registrarla y preparar su formulario 210 de inmediato.
         </Vacio>
       )}
       {filas && filas.length > 0 && (

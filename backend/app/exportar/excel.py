@@ -957,12 +957,185 @@ def _grupo_en_hoja(wb: Workbook, nombre: str, claves: tuple[str, ...], res: dict
     return True
 
 
+def _reconstruir_mayor(res: dict) -> dict[str, CuentaMayor] | None:
+    """Obtiene el libro mayor: directamente del cálculo en vivo o reconstruido desde el balance."""
+    mayor_raw = res.get("mayor_ajustado")
+    if mayor_raw and isinstance(mayor_raw, dict):
+        primer = next(iter(mayor_raw.values()), None)
+        if isinstance(primer, CuentaMayor):
+            return mayor_raw
+        if isinstance(primer, dict):
+            reconst = {}
+            for cod, d in mayor_raw.items():
+                reconst[cod] = CuentaMayor(
+                    codigo=str(d.get("codigo", cod)),
+                    nombre=str(d.get("nombre", "")),
+                    naturaleza=str(d.get("naturaleza", "D" if str(cod)[:1] in "1567" else "C")),
+                    ini_d=_d(d.get("ini_d", 0)) or CERO,
+                    ini_c=_d(d.get("ini_c", 0)) or CERO,
+                    mov_d=_d(d.get("mov_d", 0)) or CERO,
+                    mov_c=_d(d.get("mov_c", 0)) or CERO,
+                )
+            return reconst
+
+    reps = res.get("reportes") or {}
+    rep_bal = reps.get("balance_ajustado") or reps.get("balance_prueba")
+    if not rep_bal or not isinstance(rep_bal, dict):
+        return None
+
+    filas = rep_bal.get("filas") or []
+    mayor_reconst: dict[str, CuentaMayor] = {}
+    for f in filas:
+        if f.get("tipo") != "linea":
+            continue
+        v = f.get("valores") or {}
+        codigo = str(v.get("codigo") or "").strip()
+        if not codigo:
+            continue
+        nombre = str(v.get("cuenta") or "")
+        clase = codigo[:1]
+        naturaleza = "D" if clase in ("1", "5", "6", "7") else "C"
+        mayor_reconst[codigo] = CuentaMayor(
+            codigo=codigo,
+            nombre=nombre,
+            naturaleza=naturaleza,
+            ini_d=_d(v.get("ini_d")) or CERO,
+            ini_c=_d(v.get("ini_c")) or CERO,
+            mov_d=_d(v.get("mov_d")) or CERO,
+            mov_c=_d(v.get("mov_c")) or CERO,
+        )
+    return mayor_reconst if mayor_reconst else None
+
+
+def _hoja_cuentas_t(ws: Worksheet, mayor: dict[str, CuentaMayor], empresa: Empresa, periodo: str) -> None:
+    """Esquema gráfico de Cuentas T (Libro Mayor visual) con debe, haber y saldo."""
+    ws.sheet_view.showGridLines = True
+    ws.column_dimensions["A"].width = 3
+    ws.column_dimensions["B"].width = 20
+    ws.column_dimensions["C"].width = 20
+    ws.column_dimensions["D"].width = 4
+    ws.column_dimensions["E"].width = 20
+    ws.column_dimensions["F"].width = 20
+
+    fila = _titulo_hoja(ws, empresa, "ESQUEMA DE CUENTAS T (LIBRO MAYOR)", periodo, 6)
+    fila += 1
+
+    cuentas_activas = [
+        c for c in sorted(mayor.values(), key=lambda x: x.codigo)
+        if c.ini_d != 0 or c.ini_c != 0 or c.mov_d != 0 or c.mov_c != 0 or c.neto != 0
+    ]
+    if not cuentas_activas:
+        cuentas_activas = list(sorted(mayor.values(), key=lambda x: x.codigo))
+
+    for i in range(0, len(cuentas_activas), 2):
+        par = cuentas_activas[i:i + 2]
+        fila_inicio_bloque = fila
+        max_filas_bloque = 0
+
+        for idx_col, c in enumerate(par):
+            col_d = "B" if idx_col == 0 else "E"
+            col_c = "C" if idx_col == 0 else "F"
+
+            f = fila_inicio_bloque
+            ws.merge_cells(f"{col_d}{f}:{col_c}{f}")
+            celda_cab = ws[f"{col_d}{f}"]
+            celda_cab.value = f"{c.codigo} — {c.nombre}"
+            celda_cab.font = Font(bold=True, size=10, color=TINTA)
+            celda_cab.fill = PatternFill("solid", fgColor=HUESO)
+            celda_cab.alignment = Alignment(horizontal="center")
+            f += 1
+
+            ws[f"{col_d}{f}"].value = "DÉBITO"
+            ws[f"{col_d}{f}"].font = Font(bold=True, size=9, color=TINTA_MEDIA)
+            ws[f"{col_d}{f}"].alignment = Alignment(horizontal="center")
+            ws[f"{col_d}{f}"].border = Border(top=_FINA, bottom=_MEDIA, right=_MEDIA)
+
+            ws[f"{col_c}{f}"].value = "CRÉDITO"
+            ws[f"{col_c}{f}"].font = Font(bold=True, size=9, color=TINTA_MEDIA)
+            ws[f"{col_c}{f}"].alignment = Alignment(horizontal="center")
+            ws[f"{col_c}{f}"].border = Border(top=_FINA, bottom=_MEDIA)
+            f += 1
+
+            f_datos_inicio = f
+
+            if c.ini_d != 0 or c.ini_c != 0:
+                if c.ini_d != 0:
+                    ws[f"{col_d}{f}"].value = float(c.ini_d)
+                    ws[f"{col_d}{f}"].number_format = FMT_DINERO
+                if c.ini_c != 0:
+                    ws[f"{col_c}{f}"].value = float(c.ini_c)
+                    ws[f"{col_c}{f}"].number_format = FMT_DINERO
+                ws[f"{col_d}{f}"].border = Border(right=_MEDIA)
+                f += 1
+
+            if getattr(c, "movimientos", None):
+                for m in c.movimientos:
+                    deb = getattr(m, "debito", 0)
+                    cred = getattr(m, "credito", 0)
+                    if deb:
+                        ws[f"{col_d}{f}"].value = float(deb)
+                        ws[f"{col_d}{f}"].number_format = FMT_DINERO
+                    if cred:
+                        ws[f"{col_c}{f}"].value = float(cred)
+                        ws[f"{col_c}{f}"].number_format = FMT_DINERO
+                    ws[f"{col_d}{f}"].border = Border(right=_MEDIA)
+                    f += 1
+            elif c.mov_d != 0 or c.mov_c != 0:
+                if c.mov_d != 0:
+                    ws[f"{col_d}{f}"].value = float(c.mov_d)
+                    ws[f"{col_d}{f}"].number_format = FMT_DINERO
+                if c.mov_c != 0:
+                    ws[f"{col_c}{f}"].value = float(c.mov_c)
+                    ws[f"{col_c}{f}"].number_format = FMT_DINERO
+                ws[f"{col_d}{f}"].border = Border(right=_MEDIA)
+                f += 1
+            else:
+                ws[f"{col_d}{f}"].border = Border(right=_MEDIA)
+                f += 1
+
+            f_datos_fin = f - 1
+
+            ws[f"{col_d}{f}"].value = f"=SUM({col_d}{f_datos_inicio}:{col_d}{f_datos_fin})"
+            ws[f"{col_d}{f}"].number_format = FMT_DINERO
+            ws[f"{col_d}{f}"].font = Font(bold=True, size=9)
+            ws[f"{col_d}{f}"].border = Border(top=_FINA, bottom=_FINA, right=_MEDIA)
+
+            ws[f"{col_c}{f}"].value = f"=SUM({col_c}{f_datos_inicio}:{col_c}{f_datos_fin})"
+            ws[f"{col_c}{f}"].number_format = FMT_DINERO
+            ws[f"{col_c}{f}"].font = Font(bold=True, size=9)
+            ws[f"{col_c}{f}"].border = Border(top=_FINA, bottom=_FINA)
+            f_totales = f
+            f += 1
+
+            if c.neto >= 0:
+                ws[f"{col_d}{f}"].value = f"={col_d}{f_totales}-{col_c}{f_totales}"
+                ws[f"{col_d}{f}"].number_format = FMT_DINERO
+                ws[f"{col_d}{f}"].font = Font(bold=True, size=10, color=TINTA)
+                ws[f"{col_d}{f}"].fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
+                ws[f"{col_d}{f}"].border = Border(bottom=Side(style="double", color=TINTA), right=_MEDIA)
+            else:
+                ws[f"{col_c}{f}"].value = f"={col_c}{f_totales}-{col_d}{f_totales}"
+                ws[f"{col_c}{f}"].number_format = FMT_DINERO
+                ws[f"{col_c}{f}"].font = Font(bold=True, size=10, color=ROJO if c.clase == "1" else TINTA)
+                ws[f"{col_c}{f}"].fill = PatternFill("solid", fgColor=ACENTO_PALIDO)
+                ws[f"{col_d}{f}"].border = Border(right=_MEDIA)
+                ws[f"{col_c}{f}"].border = Border(bottom=Side(style="double", color=TINTA))
+            f += 1
+
+            if (f - fila_inicio_bloque) > max_filas_bloque:
+                max_filas_bloque = f - fila_inicio_bloque
+
+        fila = fila_inicio_bloque + max_filas_bloque + 2
+
+    _imprimir(ws, horizontal=False)
+
+
 def libro_completo(res: dict, empresa: Empresa) -> bytes:
     """Un libro con todo el trabajo del periodo.
 
     Acepta el resultado del cálculo en vivo (importes `Decimal`) y el resultado
-    guardado en la base (importes en cadena). La hoja «EF formato contador»
-    solo se genera en el primer caso, porque necesita el libro mayor en memoria.
+    guardado en la base (importes en cadena). Ambas formas incluyen todas las hojas,
+    incluyendo «EF formato contador» y «Cuentas T».
     """
     wb = Workbook()
     portada = wb.active
@@ -993,12 +1166,18 @@ def libro_completo(res: dict, empresa: Empresa) -> bytes:
         _hoja_notas(wb.create_sheet("Notas"), res["notas"], empresa, res["resumen"].get("periodo", ""))
         indice.append(("Notas", "Notas a los estados financieros, listas para firmar."))
 
-    # Formato propio del contador (solo con el cálculo en vivo)
-    if res.get("mayor_ajustado"):
-        hoja_formato_contador(wb.create_sheet("EF formato contador"), res["mayor_ajustado"], empresa,
+    # Formato propio del contador y Cuentas T (cálculo en vivo y guardado)
+    mayor = _reconstruir_mayor(res)
+    if mayor:
+        hoja_formato_contador(wb.create_sheet("EF formato contador"), mayor, empresa,
                               res["resumen"].get("corte", ""), res["resumen"].get("periodo", ""))
         indice.append(("EF formato contador",
                        "La misma información en el formato de dos columnas que usa el contador, corregido."))
+
+        _hoja_cuentas_t(wb.create_sheet("Cuentas T"), mayor, empresa,
+                        res["resumen"].get("periodo", ""))
+        indice.append(("Cuentas T",
+                       "Esquema gráfico en T de todas las cuentas con movimiento o saldo."))
 
     # Auditorías
     aud_nomina = (res.get("nomina") or {}).get("auditoria") or []
@@ -1046,7 +1225,8 @@ def libro_completo(res: dict, empresa: Empresa) -> bytes:
     colores = {"Portada": AZUL_MARCA, "Estados financieros": TINTA, "Indicadores": TINTA,
                "Balances": TINTA_MEDIA, "Hoja de trabajo": TINTA_MEDIA, "Libro mayor": TINTA_MEDIA,
                "Libro diario": TINTA_MEDIA, "Mayor y balances": TINTA_MEDIA,
-               "Alertas": ROJO, "Auditoría": ROJO, "Notas": AZUL_MARCA, "Ajustes": AMBAR}
+               "Alertas": ROJO, "Auditoría": ROJO, "Notas": AZUL_MARCA, "Ajustes": AMBAR,
+               "EF formato contador": TINTA, "Cuentas T": AZUL_MARCA}
     for hoja in wb.worksheets:
         hoja.sheet_properties.tabColor = colores.get(hoja.title, "BFBFBF")
 

@@ -61,6 +61,8 @@
   --cabecera-tablero: transparent;
   --cabecera-clientes: rgba(32, 56, 162, 0.06);    /* velo de azul tinta al 6 % */
   --cabecera-parametros: #e6e7e9;                  /* gris frío */
+  --cabecera-renta: rgba(168, 79, 6, 0.06);        /* tono cálido sutil para renta */
+  --cabecera-trabajar: rgba(35, 71, 214, 0.05);     /* tono azul sutil para contabilidad */
   --frio-oscuro: #4a505c;                          /* píldora de Parámetros */
   /* Banda de taller (Trabajar): oscura en los dos modos, con su propio texto. */
   --banda-taller: #24221f;
@@ -195,6 +197,8 @@
     --cabecera-tablero: transparent;
     --cabecera-clientes: rgba(143, 166, 255, 0.07);
     --cabecera-parametros: #1c1e22;
+    --cabecera-renta: rgba(217, 117, 42, 0.08);
+    --cabecera-trabajar: rgba(143, 166, 255, 0.07);
     --frio-oscuro: #aeb6c4;
     --banda-taller: #2a2824;
     --banda-texto: #f2efe9;
@@ -247,8 +251,8 @@
 /* ── Identidad por sección (8.2): la fija `data-seccion` en el marco ──── */
 [data-seccion="tablero"] { --cabecera-fondo: var(--cabecera-tablero); --acento: var(--tinta); --sobre-acento: var(--sobre-tinta); }
 [data-seccion="clientes"] { --cabecera-fondo: var(--cabecera-clientes); --acento: var(--azul-tinta); --sobre-acento: var(--sobre-color); }
-[data-seccion="renta"] { --cabecera-fondo: var(--banda-taller); --acento: var(--grafito); --sobre-acento: var(--sobre-tinta); }
-[data-seccion="trabajar"] { --cabecera-fondo: var(--banda-taller); --acento: var(--grafito); --sobre-acento: var(--sobre-tinta); }
+[data-seccion="renta"] { --cabecera-fondo: var(--cabecera-renta); --acento: var(--ambar); --sobre-acento: var(--sobre-color); }
+[data-seccion="trabajar"] { --cabecera-fondo: var(--cabecera-trabajar); --acento: var(--azul-tinta); --sobre-acento: var(--sobre-color); }
 [data-seccion="parametros"] { --cabecera-fondo: var(--cabecera-parametros); --acento: var(--frio-oscuro); --sobre-acento: var(--sobre-color); }
 /* La ficha de un cliente: su color, calculado de su esfera (8.3, `colorCliente.ts`). */
 [data-seccion="ficha"] {

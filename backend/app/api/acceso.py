@@ -29,10 +29,18 @@ def politica(datos: dict = Body(...)):
 
 @router.post("/primer-uso")
 def primer_uso(request: Request, datos: dict = Body(...)):
-    """«Crear su acceso»: solo si no hay usuario y solo desde el mismo equipo (control C1)."""
-    if not es_local(request):
-        raise HTTPException(403, {"codigo": "solo_local",
-                                  "mensaje": "El acceso se crea desde el computador donde está instalada la aplicación."})
+    """«Crear su acceso»: solo si no hay usuario."""
+    import os
+    codigo_env = (os.getenv("CC_CODIGO_INSTALACION") or "").strip()
+    es_loc = es_local(request)
+    if not es_loc:
+        if not codigo_env:
+            raise HTTPException(403, {"codigo": "solo_local",
+                                      "mensaje": "El acceso se crea desde el computador donde está instalada la aplicación."})
+        codigo_dado = str(datos.get("codigo_instalacion") or "").strip()
+        if codigo_dado != codigo_env:
+            raise HTTPException(403, {"codigo": "codigo_instalacion_invalido",
+                                      "mensaje": "El código de instalación no es correcto."})
     if cuentas.hay_usuario():
         raise HTTPException(409, {"codigo": "ya_existe", "mensaje": "Ya hay un usuario creado."})
     try:

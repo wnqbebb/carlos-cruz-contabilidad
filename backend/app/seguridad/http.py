@@ -54,6 +54,24 @@ def _host(valor: str) -> str:
     return valor.rsplit(":", 1)[0] if valor.count(":") == 1 else valor
 
 
+def host_permitido(host_val: str) -> bool:
+    h = _host(host_val)
+    if not h:
+        return False
+    permitidos = hosts_permitidos()
+    if "*" in permitidos or h in permitidos:
+        return True
+    for p in permitidos:
+        if p.startswith("*.") and h.endswith(p[1:]):
+            return True
+        if p.startswith(".") and h.endswith(p):
+            return True
+    # Dominios habituales de despliegue en nube
+    if h.endswith(".onrender.com") or h.endswith(".vercel.app"):
+        return True
+    return False
+
+
 def origen_permitido(origen: str, request: Request) -> bool:
     if not origen or origen == "null":
         return False
@@ -61,7 +79,10 @@ def origen_permitido(origen: str, request: Request) -> bool:
     propio = f"{partes.scheme}://{partes.netloc}".lower()
     if propio in {o.lower().rstrip("/") for o in CORS_ORIGENES}:
         return True
-    return _host(partes.netloc) in hosts_permitidos() and _host(partes.netloc) == _host(request.headers.get("host", ""))
+    netloc_host = _host(partes.netloc)
+    if host_permitido(netloc_host):
+        return True
+    return False
 
 
 # ── límite de solicitudes ───────────────────────────────────────────────
@@ -114,7 +135,9 @@ def _con_encabezados(respuesta, request: Request):
 async def proteger(request: Request, siguiente):
     ruta = request.url.path
     metodo = request.method.upper()
-    if _host(request.headers.get("host", "")) not in hosts_permitidos():
+    h_req = request.headers.get("host", "")
+    h_fwd = request.headers.get("x-forwarded-host", "")
+    if not host_permitido(h_req) and (not h_fwd or not host_permitido(h_fwd)):
         return _con_encabezados(_rechazo(400, "host", "Solicitud rechazada."), request)
     es_api = ruta.startswith("/api/")
     if es_api and metodo != "OPTIONS":

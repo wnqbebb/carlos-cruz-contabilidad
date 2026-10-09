@@ -655,13 +655,24 @@ export interface CasillaRenta {
 
 export interface ResultadoRenta {
   anio: number;
+  incompleto?: boolean;
+  motivos_incompleto?: string[];
   obligacion: {
     obligado: boolean;
     veredicto: string;
     motivos: { tope: string; nombre: string; valor: Monto | null; umbral: Monto | null; supera: boolean }[];
     norma: string;
   } | null;
-  cifras: { neto: Monto; a_pagar: Monto; a_favor: Monto; ahorro: Monto; dian_neto: Monto };
+  cifras: {
+    neto: Monto | null;
+    a_pagar: Monto | null;
+    a_favor: Monto | null;
+    ahorro: Monto;
+    dian_neto: Monto | null;
+    bloqueado?: boolean;
+    incompleto?: boolean;
+    motivos?: string[];
+  };
   vencimiento: { fecha: string | null; dias: number | null; texto: string; vencida?: boolean };
   sancion: { meses: number; valor: Monto; texto: string } | null;
   casillas: CasillaRenta[];

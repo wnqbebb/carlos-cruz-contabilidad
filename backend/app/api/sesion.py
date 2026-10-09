@@ -36,13 +36,17 @@ def poner_cookie(respuesta: JSONResponse, request: Request, token: str) -> None:
 @router.get("/sesion")
 def estado(request: Request):
     """¿Hay sesión? La pantalla de ingreso lo consulta al abrir la aplicación."""
+    import os
     info = sesion.leer(request.cookies.get(sesion.COOKIE))
     u = cuentas.por_id(info["usuario_id"]) if info else None
     hay = cuentas.hay_usuario()
+    codigo_env = bool((os.getenv("CC_CODIGO_INSTALACION") or "").strip())
+    es_loc = es_local(request)
     return {
         "activa": bool(u), "usuario": u["usuario"] if u else None, "configurado": hay,
-        # El primer uso solo se ofrece desde el mismo equipo.
-        "puede_crear": (not hay) and es_local(request),
+        # El primer uso solo se ofrece desde el mismo equipo o con código en la nube.
+        "puede_crear": (not hay) and (es_loc or codigo_env),
+        "requiere_codigo_instalacion": (not hay) and (not es_loc) and codigo_env,
         "csrf": info["csrf"] if u else None,
         "totp": bool(u and u["totp_activo"]),
         "reautenticacion_vigente": bool(u) and _reautenticada(info),

@@ -57,31 +57,17 @@ interface Punto {
 export function GraficaEvolucion({ puntos }: { puntos: Punto[] }) {
   const [activo, setActivo] = useState<number | null>(null);
   const idT = useId();
-  const idDeg = useId();
 
   const tope = px(maximo(puntos.flatMap((p) => [p.ingresos, p.gastos]))) || 1;
-  const A = 100;   // ancho del lienzo
-  const H = 150;   // alto
-  const borde = 8;
-
-  const coord = (i: number, v: Monto) => {
-    const x = puntos.length === 1 ? A / 2 : (i / (puntos.length - 1)) * A;
-    const y = H - borde - (px(v) / tope) * (H - borde * 2);
-    return [x, y] as const;
-  };
-
-  const ruta = (clave: "ingresos" | "gastos") =>
-    puntos.map((p, i) => {
-      const [x, y] = coord(i, p[clave]);
-      return `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
-    }).join(" ");
-
-  const area = `${ruta("ingresos")} L${A},${H} L0,${H} Z`;
+  const H = 140;
+  const borde = 12;
+  const grupo = 100 / puntos.length;
+  const anchoBarra = grupo * 0.36;
 
   return (
     <figure className="m-0 contener">
       <figcaption className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <Rotulo id={idT}>Ingresos y gastos por periodo</Rotulo>
+        <Rotulo id={idT}>Ingresos vs. Gastos (barras comparativas)</Rotulo>
         <div className="flex items-center gap-4">
           <Leyenda color={SERIE_1} texto="Ingresos" />
           <Leyenda color={SERIE_2} texto="Gastos" />
@@ -89,58 +75,73 @@ export function GraficaEvolucion({ puntos }: { puntos: Punto[] }) {
       </figcaption>
 
       <div className="relative" onMouseLeave={() => setActivo(null)}>
-        <svg viewBox={`0 0 ${A} ${H}`} preserveAspectRatio="none" role="img" aria-labelledby={idT} className="h-[150px] w-full">
-          <defs>
-            <linearGradient id={idDeg} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="var(--serie-1)" stopOpacity="0.28" />
-              <stop offset="100%" stopColor="var(--serie-1)" stopOpacity="0" />
-            </linearGradient>
-          </defs>
-
+        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" role="img" aria-labelledby={idT} className="h-[140px] w-full">
           {[0, 0.25, 0.5, 0.75, 1].map((f) => (
-            <line key={f} x1="0" x2={A} y1={H - borde - f * (H - borde * 2)} y2={H - borde - f * (H - borde * 2)}
-              stroke="var(--rejilla)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+            <line
+              key={f}
+              x1="0"
+              x2="100"
+              y1={H - borde - f * (H - borde * 2)}
+              y2={H - borde - f * (H - borde * 2)}
+              stroke="var(--rejilla)"
+              strokeWidth="1"
+              vectorEffect="non-scaling-stroke"
+            />
           ))}
 
-          <path d={area} fill={`url(#${idDeg})`} />
-          <path d={ruta("ingresos")} fill="none" stroke={SERIE_1} strokeWidth="2"
-            vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
-          <path d={ruta("gastos")} fill="none" stroke={SERIE_2} strokeWidth="2" strokeDasharray="5 3"
-            vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
-
-          {/* zonas sensibles y marcadores */}
           {puntos.map((p, i) => {
-            const [xi, yi] = coord(i, p.ingresos);
-            const [, yg] = coord(i, p.gastos);
-            const ancho = A / puntos.length;
+            const xCentro = i * grupo + grupo / 2;
+            const xIng = xCentro - anchoBarra - 0.5;
+            const xGas = xCentro + 0.5;
+            const hIng = Math.max((px(p.ingresos) / tope) * (H - borde * 2), 1.5);
+            const hGas = Math.max((px(p.gastos) / tope) * (H - borde * 2), 1.5);
+            const yIng = H - borde - hIng;
+            const yGas = H - borde - hGas;
+            const seleccionado = activo === i;
+
             return (
-              <g key={i} onMouseEnter={() => setActivo(i)}>
-                <rect x={xi - ancho / 2} y={0} width={ancho} height={H} fill="transparent" />
-                {activo === i && (
-                  <line x1={xi} x2={xi} y1={0} y2={H} stroke="var(--tinta)" strokeWidth="1"
-                    strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
-                )}
-                <circle cx={xi} cy={yi} r={activo === i ? 3.2 : 2.2} fill={SERIE_1}
-                  stroke="var(--papel)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
-                <circle cx={xi} cy={yg} r={activo === i ? 3.2 : 2.2} fill={SERIE_2}
-                  stroke="var(--papel)" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+              <g key={i} onMouseEnter={() => setActivo(i)} className="cursor-pointer">
+                {/* Zona de captura transparente */}
+                <rect x={i * grupo} y={0} width={grupo} height={H} fill="transparent" />
+                {/* Barra Ingresos */}
+                <rect
+                  x={xIng}
+                  y={yIng}
+                  width={anchoBarra}
+                  height={hIng}
+                  rx="1.5"
+                  fill={SERIE_1}
+                  opacity={activo === null || seleccionado ? 1 : 0.4}
+                />
+                {/* Barra Gastos */}
+                <rect
+                  x={xGas}
+                  y={yGas}
+                  width={anchoBarra}
+                  height={hGas}
+                  rx="1.5"
+                  fill={SERIE_2}
+                  opacity={activo === null || seleccionado ? 1 : 0.4}
+                />
               </g>
             );
           })}
 
-          <line x1="0" x2={A} y1={H} y2={H} stroke="var(--tinta)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+          <line x1="0" x2="100" y1={H - borde} y2={H - borde} stroke="var(--tinta)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
         </svg>
 
         {activo !== null && (
           <Globo
             titulo={puntos[activo].etiqueta}
-            posicion={puntos.length === 1 ? 0.5 : activo / (puntos.length - 1)}
+            posicion={(activo + 0.5) / puntos.length}
             filas={[
               ["Ingresos", puntos[activo].ingresos, SERIE_1],
               ["Gastos", puntos[activo].gastos, SERIE_2],
-              [esNegativo(puntos[activo].utilidad) ? "Pérdida" : "Utilidad",
-               puntos[activo].utilidad,
-               esNegativo(puntos[activo].utilidad) ? ROJO : POSITIVO],
+              [
+                esNegativo(restar(puntos[activo].ingresos, puntos[activo].gastos)) ? "Déficit" : "Margen neto",
+                restar(puntos[activo].ingresos, puntos[activo].gastos),
+                esNegativo(restar(puntos[activo].ingresos, puntos[activo].gastos)) ? ROJO : POSITIVO,
+              ],
             ]}
           />
         )}
@@ -155,58 +156,88 @@ export function GraficaEvolucion({ puntos }: { puntos: Punto[] }) {
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   2. UTILIDAD · barras divergentes con línea de cero
+   2. UTILIDAD · línea con cero de referencia
    ═════════════════════════════════════════════════════════════════════════ */
 export function GraficaUtilidad({ puntos }: { puntos: Punto[] }) {
   const [activo, setActivo] = useState<number | null>(null);
   const idT = useId();
 
-  const tope = px(maximo(puntos.map((p) => p.utilidad))) || 1;
-  const H = 130;
+  const maxAbs = px(maximo(puntos.map((p) => p.utilidad))) || 1;
+  const H = 140;
   const cero = H / 2;
-  const grupo = 100 / puntos.length;
+  const A = 100;
+  const margen = 10;
+
+  const coord = (i: number, v: Monto) => {
+    const x = puntos.length === 1 ? A / 2 : (i / (puntos.length - 1)) * (A - margen * 2) + margen;
+    const num = px(v);
+    const y = cero - (num / maxAbs) * (cero - 15);
+    return [x, y] as const;
+  };
+
+  const ruta = puntos.map((p, i) => {
+    const [x, y] = coord(i, p.utilidad);
+    return `${i === 0 ? "M" : "L"}${x.toFixed(2)},${y.toFixed(2)}`;
+  }).join(" ");
 
   return (
     <figure className="m-0 contener">
       <figcaption className="mb-3">
-        <Rotulo id={idT}>Resultado de cada periodo</Rotulo>
+        <Rotulo id={idT}>Utilidad o pérdida neta (línea mensual)</Rotulo>
         <p className="mt-1 text-xs text-grafito">
-          Arriba del cero es utilidad; abajo, pérdida.
+          Sobre la línea central es utilidad neta; bajo la línea es pérdida.
         </p>
       </figcaption>
 
       <div className="relative" onMouseLeave={() => setActivo(null)}>
-        <svg viewBox={`0 0 100 ${H}`} preserveAspectRatio="none" role="img" aria-labelledby={idT} className="h-[130px] w-full">
+        <svg viewBox={`0 0 ${A} ${H}`} preserveAspectRatio="none" role="img" aria-labelledby={idT} className="h-[140px] w-full">
+          {/* Línea cero */}
+          <line x1="0" x2={A} y1={cero} y2={cero} stroke="var(--tinta)" strokeWidth="1.2" strokeDasharray="3 3" vectorEffect="non-scaling-stroke" />
+
+          {/* Línea de utilidad */}
+          <path
+            d={ruta}
+            fill="none"
+            stroke="var(--azul-tinta)"
+            strokeWidth="2.5"
+            vectorEffect="non-scaling-stroke"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+          />
+
+          {/* Marcadores circulares y zonas interactivas */}
           {puntos.map((p, i) => {
-            const x = i * grupo;
-            const ancho = grupo * 0.52;
-            const v = px(p.utilidad);
-            const alto = (Math.abs(v) / tope) * (cero - 5);
-            const neg = v < 0;
+            const [x, y] = coord(i, p.utilidad);
+            const neg = esNegativo(p.utilidad);
+            const anchoZona = A / puntos.length;
+            const seleccionado = activo === i;
+
             return (
-              <g key={i} onMouseEnter={() => setActivo(i)}>
-                <rect x={x} y={0} width={grupo} height={H} fill="transparent" />
-                <rect
-                  x={x + (grupo - ancho) / 2}
-                  y={neg ? cero : cero - alto}
-                  width={ancho}
-                  height={Math.max(alto, 1.2)}
-                  rx="1"
+              <g key={i} onMouseEnter={() => setActivo(i)} className="cursor-pointer">
+                <rect x={x - anchoZona / 2} y={0} width={anchoZona} height={H} fill="transparent" />
+                {seleccionado && (
+                  <line x1={x} x2={x} y1={0} y2={H} stroke="var(--linea)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+                )}
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={seleccionado ? 4.5 : 3}
                   fill={neg ? ROJO : POSITIVO}
-                  opacity={activo === null || activo === i ? 1 : 0.35}
+                  stroke="var(--papel)"
+                  strokeWidth="1.5"
+                  vectorEffect="non-scaling-stroke"
                 />
               </g>
             );
           })}
-          <line x1="0" x2="100" y1={cero} y2={cero} stroke="var(--tinta)" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
         </svg>
 
         {activo !== null && (
           <Globo
             titulo={puntos[activo].etiqueta}
-            posicion={(activo + 0.5) / puntos.length}
+            posicion={puntos.length === 1 ? 0.5 : (activo / (puntos.length - 1))}
             filas={[[
-              esNegativo(puntos[activo].utilidad) ? "Pérdida" : "Utilidad",
+              esNegativo(puntos[activo].utilidad) ? "Pérdida neta" : "Utilidad neta",
               puntos[activo].utilidad,
               esNegativo(puntos[activo].utilidad) ? ROJO : POSITIVO,
             ]]}
@@ -220,8 +251,8 @@ export function GraficaUtilidad({ puntos }: { puntos: Punto[] }) {
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   3. ESTRUCTURA DEL BALANCE · anillo de dos porciones
-      Pasivo + Patrimonio = Activo. Es la ecuación contable, dibujada.
+   3. ESTRUCTURA DEL BALANCE · desglose proporcional claro
+      Pasivo + Patrimonio = Activo.
    ═════════════════════════════════════════════════════════════════════════ */
 export function AnilloBalance({
   activo,
@@ -232,7 +263,6 @@ export function AnilloBalance({
   pasivo: Monto;
   patrimonio: Monto;
 }) {
-  const idT = useId();
   const total = px(activo);
   if (total <= 0) {
     return (
@@ -242,74 +272,58 @@ export function AnilloBalance({
     );
   }
 
-  const fPasivo = Math.max(0, Math.min(1, px(pasivo) / total));
-  const fPatrim = Math.max(0, Math.min(1, px(patrimonio) / total));
-  const radio = 42;
-  const circunf = 2 * Math.PI * radio;
-  // 2 px de aire entre porciones, como pide el sistema de marcas.
-  const hueco = 1.4;
+  const pctPasivo = Math.max(0, Math.min(100, (px(pasivo) / total) * 100));
+  const pctPatrim = Math.max(0, Math.min(100, (px(patrimonio) / total) * 100));
 
   return (
     <figure className="m-0 contener">
       <figcaption className="mb-3">
-        <Rotulo id={idT}>Estructura del balance</Rotulo>
+        <Rotulo>Ecuación contable (Activo = Pasivo + Patrimonio)</Rotulo>
       </figcaption>
 
-      <div className="flex flex-wrap items-center gap-6">
-        <div className="relative h-[150px] w-[150px] shrink-0">
-          <svg viewBox="0 0 110 110" role="img" aria-labelledby={idT} className="h-full w-full -rotate-90">
-            <circle cx="55" cy="55" r={radio} fill="none" stroke="var(--rejilla)" strokeWidth="13" />
-            <circle
-              cx="55" cy="55" r={radio} fill="none" stroke={SERIE_2} strokeWidth="13"
-              strokeDasharray={`${Math.max(fPasivo * circunf - hueco, 0)} ${circunf}`}
-              strokeLinecap="butt"
-            />
-            <circle
-              cx="55" cy="55" r={radio} fill="none" stroke={POSITIVO} strokeWidth="13"
-              strokeDasharray={`${Math.max(fPatrim * circunf - hueco, 0)} ${circunf}`}
-              strokeDashoffset={-fPasivo * circunf}
-              strokeLinecap="butt"
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-            <Rotulo className="!text-[9px]">Activo</Rotulo>
-            <span className="cifras mt-0.5 text-[15px] font-bold leading-none">{pesos(activo)}</span>
-          </div>
-        </div>
-
-        <dl className="contener min-w-[11rem] flex-1 space-y-2.5">
-          <FilaAnillo color={SERIE_2} nombre="Pasivo" valor={pasivo} fraccion={fPasivo} />
-          <FilaAnillo color={POSITIVO} nombre="Patrimonio" valor={patrimonio} fraccion={fPatrim} />
-          <div className="flex items-baseline justify-between gap-3 border-t border-linea pt-2.5">
-            <dt className="rotulo">Activo total</dt>
-            <dd className="cifras text-sm font-bold">{pesos(activo)}</dd>
-          </div>
-        </dl>
+      {/* Barra proporcional horizontal limpia */}
+      <div className="h-4 w-full overflow-hidden rounded-full bg-hoja flex border border-linea">
+        <div
+          style={{ width: `${pctPasivo}%`, background: SERIE_2 }}
+          title={`Pasivo: ${pesos(pasivo)} (${pctPasivo.toFixed(1)}%)`}
+          className="h-full transition-all"
+        />
+        <div
+          style={{ width: `${pctPatrim}%`, background: POSITIVO }}
+          title={`Patrimonio: ${pesos(patrimonio)} (${pctPatrim.toFixed(1)}%)`}
+          className="h-full transition-all"
+        />
       </div>
-    </figure>
-  );
-}
 
-function FilaAnillo({
-  color, nombre, valor, fraccion,
-}: { color: string; nombre: string; valor: Monto; fraccion: number }) {
-  return (
-    <div className="flex items-baseline justify-between gap-3">
-      <dt className="flex min-w-0 items-center gap-2">
-        <span aria-hidden className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ background: color }} />
-        <span className="recortar text-sm text-grafito">{nombre}</span>
-      </dt>
-      <dd className="shrink-0 text-right">
-        <span className="cifras text-sm font-semibold">{pesos(valor)}</span>
-        <span className="rotulo ml-2">{porcentaje(String(fraccion))}</span>
-      </dd>
-    </div>
+      <dl className="mt-4 grid grid-cols-1 gap-3 text-left sm:grid-cols-3">
+        <div className="rounded-xl border border-linea bg-papel p-3">
+          <dt className="rotulo flex items-center gap-1.5 text-grafito">
+            <span className="h-2 w-2 rounded-full" style={{ background: SERIE_2 }} />
+            Pasivo
+          </dt>
+          <dd className="cifras mt-1 text-base font-bold text-tinta">{pesos(pasivo)}</dd>
+          <span className="t-small text-gris">{pctPasivo.toFixed(1)}%</span>
+        </div>
+        <div className="rounded-xl border border-linea bg-papel p-3">
+          <dt className="rotulo flex items-center gap-1.5 text-grafito">
+            <span className="h-2 w-2 rounded-full" style={{ background: POSITIVO }} />
+            Patrimonio
+          </dt>
+          <dd className="cifras mt-1 text-base font-bold text-tinta">{pesos(patrimonio)}</dd>
+          <span className="t-small text-gris">{pctPatrim.toFixed(1)}%</span>
+        </div>
+        <div className="rounded-xl border border-linea bg-hoja p-3">
+          <dt className="rotulo text-tinta">Activo total</dt>
+          <dd className="cifras mt-1 text-base font-bold text-azul">{pesos(activo)}</dd>
+          <span className="t-small text-gris">100.0%</span>
+        </div>
+      </dl>
+    </figure>
   );
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
    4. DESGLOSE · barras horizontales de una sola medida
-      Un solo tono: la identidad la da la etiqueta de cada fila, no el color.
    ═════════════════════════════════════════════════════════════════════════ */
 export function BarrasDesglose({
   titulo,
@@ -363,7 +377,7 @@ export function BarrasDesglose({
 }
 
 /* ═════════════════════════════════════════════════════════════════════════
-   5. MEDIDOR · un indicador con su referencia
+   5. MEDIDOR · indicador claro con estado
    ═════════════════════════════════════════════════════════════════════════ */
 export function Medidor({
   nombre,
@@ -376,35 +390,25 @@ export function Medidor({
   nombre: string;
   valor: string;
   texto?: string;
-  /** 0 a 1: hasta dónde se llena la barra. */
   fraccion: number;
-  /** Marca de referencia, también 0 a 1. */
   referencia?: number;
-  /** Si "mayor" es mejor o peor, para decidir el color. */
   bueno?: "mayor" | "menor";
 }) {
   const f = Math.max(0, Math.min(1, fraccion));
   const sano = bueno === "mayor" ? f >= (referencia ?? 0.5) : f <= (referencia ?? 0.5);
   return (
     <div className="contener rounded-2xl border border-linea bg-papel p-4">
-      <Rotulo className="block">{nombre}</Rotulo>
-      <p className={clases("cifras cifra-flexible mt-1.5 text-xl font-bold leading-none",
-        sano ? "text-azul" : "text-ambar")}>
+      <div className="flex items-center justify-between">
+        <Rotulo className="block">{nombre}</Rotulo>
+        <span className={clases("inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium",
+          sano ? "bg-azul-suave text-azul-tinta" : "bg-ambar-suave text-ambar")}>
+          {sano ? "Normal" : "Atención"}
+        </span>
+      </div>
+      <p className={clases("cifras mt-2 text-2xl font-bold leading-none",
+        sano ? "text-tinta" : "text-ambar")}>
         {valor}
       </p>
-      <div className="relative mt-3 h-2 overflow-hidden rounded-full bg-hoja">
-        <div
-          className="h-full rounded-full transition-[width] duration-500"
-          style={{ width: `${f * 100}%`, background: sano ? "var(--azul-tinta)" : "var(--ambar)" }}
-        />
-        {referencia !== undefined && (
-          <span
-            aria-hidden
-            className="absolute top-0 h-full w-[2px] bg-tinta"
-            style={{ left: `${Math.max(0, Math.min(1, referencia)) * 100}%` }}
-          />
-        )}
-      </div>
       {texto && <p className="mt-2 text-xs text-grafito">{texto}</p>}
     </div>
   );

@@ -202,9 +202,10 @@ function Revision({
   onMarcar: (estado: "revisada" | "borrador" | "presentada", numero?: string, fecha?: string) => Promise<void>;
 }) {
   const [presentar, setPresentar] = useState(false);
+  const estaIncompleto = Boolean(res.incompleto || res.cifras.bloqueado);
   const neto = res.cifras.neto;
-  const paga = !esNegativo(neto) && neto !== "0";
-  const estado = ESTADO[decl.estado];
+  const paga = neto !== null && !esNegativo(neto) && neto !== "0";
+  const estado = estaIncompleto ? { texto: "Borrador incompleto", tono: "ambar" as const } : ESTADO[decl.estado];
   const obligado = res.obligacion?.obligado;
   return (
     <div className="space-y-10">
@@ -226,20 +227,64 @@ function Revision({
       {/* 1 · veredicto */}
       <section aria-label="Veredicto">
         <p className={clases("t-h1 text-balance", obligado === false ? "text-tinta" : "text-tinta")}>
-          {res.obligacion?.veredicto ?? "Falta información para saber si debe declarar"}
+          {estaIncompleto
+            ? "Borrador incompleto — Revise los datos para calcular el valor exacto"
+            : res.obligacion?.veredicto ?? "Falta información para saber si debe declarar"}
         </p>
       </section>
 
+      {/* Alerta de borrador incompleto con motivos exactos */}
+      {estaIncompleto && (
+        <section aria-label="Motivos de borrador incompleto" className="rounded-hoja border border-ambar/30 bg-ambar/10 p-5 space-y-3">
+          <div className="flex items-center gap-2 text-ambar font-semibold">
+            <TriangleAlert size={20} />
+            <h2 className="t-h2 text-tinta">Cálculo bloqueado por seguridad</h2>
+          </div>
+          <p className="t-body text-grafito">
+            Para evitar liquidar un impuesto o sanción incorrecto, la aplicación no calcula el valor a pagar hasta resolver las siguientes observaciones:
+          </p>
+          <ul className="list-disc pl-5 space-y-1 t-small text-tinta">
+            {(res.motivos_incompleto ?? []).map((m, i) => (
+              <li key={i}>{m}</li>
+            ))}
+          </ul>
+        </section>
+      )}
+
       {/* 2 · tres cifras */}
       <section aria-label="Cifras de la declaración" className="grid gap-4 sm:grid-cols-3">
-        <CifraGrande rotulo={paga ? "Paga" : neto === "0" ? "Ni paga ni le devuelven" : "Le devuelven"}
-          valor={paga ? pesos(neto) : neto === "0" ? "$ 0" : pesos(String(neto).replace("-", ""))} />
-        <CifraGrande rotulo="Ahorro frente a la propuesta de la DIAN" valor={pesos(res.cifras.ahorro)}
-          detalle={res.cifras.ahorro === "0" ? "La DIAN no dejó beneficios por fuera" : undefined} />
-        <CifraGrande rotulo="Vencimiento" valor={res.vencimiento.texto.split(" · ")[0]}
-          detalle={res.vencimiento.texto.split(" · ")[1]} alerta={!!res.vencimiento.vencida} />
+        <CifraGrande
+          rotulo={estaIncompleto ? "Impuesto a pagar" : paga ? "Paga" : neto === "0" ? "Ni paga ni le devuelven" : "Le devuelven"}
+          valor={
+            estaIncompleto
+              ? "Borrador incompleto"
+              : paga
+              ? pesos(neto!)
+              : neto === "0"
+              ? "$ 0"
+              : pesos(String(neto).replace("-", ""))
+          }
+          detalle={estaIncompleto ? "Resuelva las observaciones arriba para ver el valor" : undefined}
+        />
+        <CifraGrande
+          rotulo="Ahorro frente a la propuesta de la DIAN"
+          valor={estaIncompleto ? "Pendiente" : pesos(res.cifras.ahorro)}
+          detalle={
+            estaIncompleto
+              ? "Se calculará al completar los datos"
+              : res.cifras.ahorro === "0"
+              ? "La DIAN no dejó beneficios por fuera"
+              : undefined
+          }
+        />
+        <CifraGrande
+          rotulo="Vencimiento"
+          valor={res.vencimiento.texto.split(" · ")[0]}
+          detalle={res.vencimiento.texto.split(" · ")[1]}
+          alerta={!!res.vencimiento.vencida}
+        />
       </section>
-      {res.sancion && res.sancion.valor !== "0" && (
+      {!estaIncompleto && res.sancion && res.sancion.valor !== "0" && (
         <Aviso tono="rojo" titulo={`Sanción estimada por extemporaneidad: ${pesos(res.sancion.valor)}`}>
           {res.sancion.texto}
         </Aviso>

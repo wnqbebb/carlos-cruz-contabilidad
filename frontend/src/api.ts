@@ -159,6 +159,7 @@ export interface EstadoSesion {
   usuario: string | null;
   configurado: boolean;
   puede_crear?: boolean;
+  requiere_codigo_instalacion?: boolean;
   csrf?: string | null;
   totp?: boolean;
   reautenticacion_vigente?: boolean;
@@ -195,10 +196,10 @@ export const sesionApi = {
 export const acceso = {
   politica: (clave: string, usuario = "") =>
     pedir<EvaluacionClave>("/api/acceso/politica", { method: "POST", ...json({ clave, usuario }) }),
-  async crear(usuario: string, clave: string) {
+  async crear(usuario: string, clave: string, codigoInstalacion = "") {
     const r = await pedir<{ usuario: string; codigos: string[]; csrf: string }>("/api/acceso/primer-uso", {
       method: "POST",
-      ...json({ usuario, clave }),
+      ...json({ usuario, clave, codigo_instalacion: codigoInstalacion }),
     });
     fijarCsrf(r.csrf);
     return r;
@@ -390,6 +391,14 @@ export const renta = {
     pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}/cambio`, { method: "POST", ...json(cambio) }),
   marcar: (clienteId: string, anio: number, estado: "revisada" | "borrador" | "presentada", numero = "", fecha = "") =>
     pedir<DeclaracionRenta>(`/api/renta/${clienteId}/${anio}/estado`, { method: "POST", ...json({ estado, numero, fecha }) }),
+  subirUniversal(archivos: File[], anio = 2025) {
+    const fd = new FormData();
+    archivos.forEach((a) => fd.append("archivos", a));
+    return pedir<{ cliente_id: string; creado: boolean; razon_social: string; nit: string; anio: number }>(
+      `/api/renta/subir-universal${qs({ anio })}`,
+      { method: "POST", body: fd }
+    );
+  },
   recorte: (clienteId: string, anio: number, id: string) => `${BASE}/api/renta/${clienteId}/${anio}/recorte/${id}`,
   descarga: (clienteId: string, anio: number, que: "todo" | "pdf" | "excel" | "resumen") =>
     `${BASE}/api/renta/${clienteId}/${anio}/descargar/${que}`,

@@ -1,33 +1,26 @@
 # ─────────────────────────────────────────────────────────────────────────────
-#  CARLOS CRUZ · backend en Render
+#  CARLOS CRUZ · backend en Render (v2.4)
 #
-#  Render se usa porque el motor contable necesita un proceso SIEMPRE ENCENDIDO:
-#  guarda la sesión de trabajo en memoria (ver app/repositorio/sesiones.py) y
-#  procesa Excel grandes, dos cosas que no caben en una función serverless.
+#  Render se usa con Docker para incluir Tesseract OCR en español con versión
+#  fijada y librerías de procesamiento contable y tributario.
 #
 #  Despliegue:
-#    1. Subir el repositorio a GitHub.
-#    2. En Render: New → Blueprint → elegir el repositorio.
-#    3. Llenar las variables marcadas como sync:false con los valores de Supabase.
-#    4. Copiar la URL que asigna Render y ponerla en Vercel como VITE_API,
-#       y en CORS_ORIGENES de aquí la URL que asigna Vercel.
+#    1. En Render: New → Blueprint → elegir el repositorio (wnqbebb/carlos-cruz-contabilidad).
+#    2. Llenar las variables marcadas como sync:false.
+#    3. Asignar la URL del backend en frontend/vercel.json como destino de /api/(.*).
 # ─────────────────────────────────────────────────────────────────────────────
 services:
   - type: web
     name: carloscruz-api
-    runtime: python
+    env: docker
+    dockerfilePath: ./Dockerfile
     plan: free
     region: oregon
-    buildCommand: pip install -r backend/requirements.txt
-    startCommand: uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
     healthCheckPath: /api/salud
     envVars:
-      - key: PYTHON_VERSION
-        value: "3.12.7"
       - key: ALMACENAMIENTO
         value: supabase
-      # Supabase → Project Settings → Database → Connection string (URI).
-      # Use el puerto 6543 (pooler) y agregue ?sslmode=require
+      # Supabase → Project Settings → Database → Connection string (URI) puerto 6543
       - key: DATABASE_URL
         sync: false
       - key: SUPABASE_URL
@@ -38,6 +31,9 @@ services:
         sync: false
       - key: CLAVE_SESION
         generateValue: true
-      # URL del frontend en Vercel, separadas por coma si hay varias.
-      - key: CORS_ORIGENES
+      # Código de un solo uso para autorizar la creación de cuenta en la nube (Bloque 1.3)
+      - key: CC_CODIGO_INSTALACION
         sync: false
+      # URL del frontend en Vercel
+      - key: CORS_ORIGENES
+        value: https://carlos-cruz-contabilidad.vercel.app,http://localhost:5173,http://localhost:8000

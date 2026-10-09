@@ -4,6 +4,8 @@ import { Link, Navigate, useNavigate, useParams, useSearchParams } from "react-r
 import { analisis, clientes as api, trabajo as apiTrabajo } from "../api";
 import { Contabilidad } from "../componentes/Contabilidad";
 import { RentaCliente } from "../componentes/RentaCliente";
+import { EnLinea } from "../componentes/EnLinea";
+import { PanelEditarCliente } from "../componentes/PanelEditarCliente";
 import { Cabecera, useColorCliente, useMetaPagina } from "../componentes/Marco";
 import { clases, esNegativo, fecha, fechaLarga, pesos, periodoCorto, restar } from "../formato";
 import type {
@@ -100,6 +102,7 @@ export function Expediente() {
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
   const [confirmarBorrado, setConfirmarBorrado] = useState(false);
+  const [panelEditarAbierto, setPanelEditarAbierto] = useState(false);
 
   const antigua = params.get("vista");
   const pedida = params.get("seccion") as Seccion | null;
@@ -170,7 +173,11 @@ export function Expediente() {
   return (
     <div className="space-y-8">
       <Cabecera>
-        <CabeceraCliente cliente={cliente} />
+        <CabeceraCliente
+          cliente={cliente}
+          onEditar={() => setPanelEditarAbierto(true)}
+          onActualizar={setCliente}
+        />
         <div className="mt-6">
           <Pestanas<Seccion>
             valor={seccion}
@@ -326,12 +333,27 @@ export function Expediente() {
           onBorrado={() => navegar("/clientes", { replace: true })}
         />
       )}
+
+      <PanelEditarCliente
+        abierto={panelEditarAbierto}
+        onCerrar={() => setPanelEditarAbierto(false)}
+        cliente={cliente}
+        onGuardado={(actualizado) => setCliente(actualizado)}
+      />
     </div>
   );
 }
 
-/* ── cabecera: quién es el cliente. Se edita en «Editar ficha» (sección Datos). ── */
-function CabeceraCliente({ cliente }: { cliente: Cliente }) {
+/* ── cabecera: quién es el cliente. Edición directa o en panel lateral. ── */
+function CabeceraCliente({
+  cliente,
+  onEditar,
+  onActualizar,
+}: {
+  cliente: Cliente;
+  onEditar: () => void;
+  onActualizar: (actualizado: Cliente) => void;
+}) {
   const codigo = `${cliente.sigla || "Cliente"} — ${cliente.nit.slice(-3)}`;
   const desde = cliente.fecha_constitucion
     ? `Constituida ${fechaEsquina(cliente.fecha_constitucion)}`
@@ -340,7 +362,17 @@ function CabeceraCliente({ cliente }: { cliente: Cliente }) {
     <header className="relative pb-2">
       <div className="t-meta flex flex-wrap justify-between gap-3 text-gris">
         <span>{codigo}</span>
-        <span>{cliente.turno_dian ? `Turno DIAN — ${String(cliente.turno_dian).padStart(2, "0")}` : "Sin turno DIAN"}</span>
+        <div className="flex items-center gap-3">
+          <span>{cliente.turno_dian ? `Turno DIAN — ${String(cliente.turno_dian).padStart(2, "0")}` : "Sin turno DIAN"}</span>
+          <button
+            type="button"
+            onClick={onEditar}
+            className="inline-flex items-center gap-1.5 rounded-full border border-linea bg-hoja px-3 py-1 text-xs font-medium text-tinta hover:bg-hoja-2 transition-colors cursor-pointer"
+            title="Abrir panel de edición completa"
+          >
+            <PenLine size={13} strokeWidth={1.5} /> Editar cliente
+          </button>
+        </div>
       </div>
 
       <div className="mt-6 grid gap-8 escritorio:grid-cols-12 escritorio:items-center">
@@ -348,9 +380,20 @@ function CabeceraCliente({ cliente }: { cliente: Cliente }) {
           <EnlaceSubrayado a="/clientes">
             <ArrowLeft size={14} strokeWidth={1.5} aria-hidden /> Clientes
           </EnlaceSubrayado>
-          <h1 className="t-h1 mt-4 text-balance text-tinta">
-            {cliente.razon_social}
-          </h1>
+          <div className="mt-4">
+            <h1 className="t-h1 text-balance text-tinta">
+              <EnLinea
+                valor={cliente.razon_social}
+                etiqueta="Razón social"
+                onGuardar={async (nuevo) => {
+                  const act = await api.actualizar(cliente.id, { razon_social: nuevo });
+                  onActualizar(act);
+                }}
+              >
+                {cliente.razon_social}
+              </EnLinea>
+            </h1>
+          </div>
           <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-grafito">
             {cliente.sigla && <span className="t-body font-semibold text-tinta">{cliente.sigla}</span>}
             <span className="codigo text-[13px]">NIT {cliente.nit_formateado}</span>

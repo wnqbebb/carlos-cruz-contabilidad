@@ -20,12 +20,14 @@ export default function App() {
   const [estado, setEstado] = useState<"consultando" | "fuera" | "dentro">("consultando");
   const [configurado, setConfigurado] = useState(true);
   const [puedeCrear, setPuedeCrear] = useState(false);
+  const [requiereCodigoInstalacion, setRequiereCodigoInstalacion] = useState(false);
   useEffect(() => {
     sesionApi
       .estado()
       .then((e) => {
         setConfigurado(e.configurado);
         setPuedeCrear(!!e.puede_crear);
+        setRequiereCodigoInstalacion(!!e.requiere_codigo_instalacion);
         setEstado(e.activa ? "dentro" : "fuera");
       })
       .catch(() => setEstado("fuera"));
@@ -34,7 +36,14 @@ export default function App() {
     return () => window.removeEventListener("cc:sesion-vencida", vencida);
   }, []);
   if (estado === "consultando") return null;
-  if (estado === "fuera") return <Ingreso configurado={configurado} puedeCrear={puedeCrear} />;
+  if (estado === "fuera")
+    return (
+      <Ingreso
+        configurado={configurado}
+        puedeCrear={puedeCrear}
+        requiereCodigoInstalacion={requiereCodigoInstalacion}
+      />
+    );
   return <Aplicacion />;
 }
 

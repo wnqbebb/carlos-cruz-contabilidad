@@ -225,17 +225,108 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
                          "dian": comp["dian"][n], "optimizada": L[n], "explicacion": L.explicacion.get(n, "")})
     neto = L.neto
     faltantes = [b["soporte"] for b in beneficios if b["id"] in (datos.get("beneficios") or {})]
+
+    # ── Validación de confiabilidad (v2.4 Bloque 2.1) ──────────────────────
+    motivos_bloqueo: list[str] = []
+    TOLERANCIA_TOPES = Decimal(5000)
+
+    # 1. Comprobar validación de topes
+    for v in (datos.get("validacion") or []):
+        if v.get("estado") == "no_cuadra":
+            enc = Decimal(str(v.get("encabezado", 0)))
+            sm = Decimal(str(v.get("suma", 0)))
+            motivos_bloqueo.append(
+                f"La suma de {v.get('nombre', 'filas').lower()} (${sm:,.0f}) no cuadra con el Tope {v.get('tope')} del reporte (${enc:,.0f}). Diferencia: ${abs(enc - sm):,.0f}."
+            )
+
+    # 2. Comprobar ingresos clasificados de la exógena vs Tope 1
+    tope_1 = rep.topes.get(1)
+    ingresos_exogena = sum(
+        (c.linea.importe() for c in clas if c.incluida and c.categoria in (
+            "trabajo", "honorarios_compensacion", "no_laboral", "capital", "pensiones", "dividendos"
+        )), CERO
+    )
+    if tope_1 and Decimal(str(tope_1)) > 0:
+        t1_val = Decimal(str(tope_1))
+        if ingresos_exogena > t1_val + TOLERANCIA_TOPES:
+            motivos_bloqueo.append(
+                f"Los ingresos clasificados de la exógena (${ingresos_exogena:,.0f}) superan el Tope 1 de ingresos del reporte (${t1_val:,.0f}). Revise filas duplicadas o reclasifique."
+            )
+
+    # 3. Comprobar patrimonio de la exógena vs Tope 2
+    tope_2 = rep.topes.get(2)
+    patrimonio_exogena = sum(
+        (c.linea.importe() for c in clas if c.incluida and c.categoria == "patrimonio"), CERO
+    )
+    if tope_2 and Decimal(str(tope_2)) > 0:
+        t2_val = Decimal(str(tope_2))
+        if abs(patrimonio_exogena - t2_val) > TOLERANCIA_TOPES:
+            motivos_bloqueo.append(
+                f"El patrimonio bruto de la exógena (${patrimonio_exogena:,.0f}) difiere del Tope 2 del reporte (${t2_val:,.0f})."
+            )
+
+    # 4. Líneas con baja confianza o dudosas que afectan casillas
+    dudosas = [
+        c for c in clas if c.incluida and (c.linea.confianza < 0.6 or c.linea.encimada)
+        and not getattr(c.linea, "confirmada", False) and c.linea.importe() > Decimal(50000)
+    ]
+    if dudosas:
+        motivos_bloqueo.append(
+            f"Hay {len(dudosas)} fila(s) con lectura dudosa o baja confianza que afectan casillas y deben ser confirmadas."
+        )
+
+    # 5. Preguntas que cambian la cédula sin confirmar
+    respuestas_guardadas = dict(datos.get("respuestas") or {})
+    preguntas_pendientes = [
+        q for q in qs if q.id not in respuestas_guardadas and q.id.startswith("pagador:")
+    ]
+    if preguntas_pendientes:
+        motivos_bloqueo.append(
+            f"Falta confirmar {len(preguntas_pendientes)} pregunta(s) sobre el origen de los ingresos."
+        )
+
+    incompleto = bool(motivos_bloqueo)
+
+    if incompleto:
+        cifras = {
+            "bloqueado": True,
+            "incompleto": True,
+            "motivos": motivos_bloqueo,
+            "neto": neto if L.a_favor > 0 else None,
+            "a_pagar": None if L.a_pagar > 0 else CERO,
+            "a_favor": L.a_favor,
+            "ahorro": comp["ahorro"],
+            "dian_neto": comp["dian"].neto,
+        }
+        sancion_final = None
+        if oblig:
+            oblig = {**oblig, "veredicto": "Borrador incompleto"}
+    else:
+        cifras = {
+            "bloqueado": False,
+            "incompleto": False,
+            "motivos": [],
+            "neto": neto,
+            "a_pagar": L.a_pagar,
+            "a_favor": L.a_favor,
+            "ahorro": comp["ahorro"],
+            "dian_neto": comp["dian"].neto,
+        }
+        sancion_final = sancion
+
     return {
         "anio": anio,
         "obligacion": oblig,
-        "cifras": {"neto": neto, "a_pagar": L.a_pagar, "a_favor": L.a_favor, "ahorro": comp["ahorro"],
-                   "dian_neto": comp["dian"].neto},
+        "incompleto": incompleto,
+        "motivos_incompleto": motivos_bloqueo,
+        "cifras": cifras,
         "vencimiento": venc,
-        "sancion": sancion,
+        "sancion": sancion_final,
         "casillas": casillas,
         "diferencias": comp["diferencias"],
         "preguntas": [{"id": q.id, "texto": q.texto, "opciones": q.opciones, "defecto": q.defecto,
-                       "respuesta": respuestas.get(q.id), "detalle": q.detalle, "lineas": q.lineas} for q in qs],
+                       "respuesta": respuestas.get(q.id), "confirmada": q.id in respuestas_guardadas,
+                       "detalle": q.detalle, "lineas": q.lineas} for q in qs],
         "beneficios": [{**b, "valor": (datos.get("beneficios") or {}).get(b["id"])} for b in beneficios],
         "marcas": marcas,
         "lineas": [{**c.linea.a_dict(), "categoria": c.categoria, "categoria_texto": C.CATEGORIAS[c.categoria],
@@ -292,15 +383,63 @@ def cartera(anio: int, hoy: date | None = None) -> list[dict]:
         oblig = res.get("obligacion") or None
         venc = obligacion.estado_vencimiento(f["nit"], anio, hoy)
         cifras = res.get("cifras") or {}
+        incompleto = res.get("incompleto", False)
         out.append({
             "cliente_id": f["id"], "razon_social": f["razon_social"], "nit": f["nit"], "anio": anio,
-            "estado": f["estado"], "obligado": None if oblig is None else oblig.get("obligado"),
-            "veredicto": oblig.get("veredicto") if oblig else "Sin información",
-            "motivos": [m["nombre"] for m in (oblig or {}).get("motivos", []) if m.get("supera")],
+            "estado": f["estado"] if f["estado"] in ("presentada", "revisada") else ("incompleto" if incompleto else f["estado"]),
+            "incompleto": incompleto,
+            "obligado": None if oblig is None else oblig.get("obligado"),
+            "veredicto": "Borrador incompleto" if incompleto else (oblig.get("veredicto") if oblig else "Sin información"),
+            "motivos": res.get("motivos_incompleto") if incompleto else [m["nombre"] for m in (oblig or {}).get("motivos", []) if m.get("supera")],
             "vencimiento": venc.get("fecha"), "dias": venc.get("dias"), "vencimiento_texto": venc.get("texto"),
-            "neto": cifras.get("neto"), "ahorro": cifras.get("ahorro"),
+            "neto": None if incompleto else cifras.get("neto"),
+            "ahorro": None if incompleto else cifras.get("ahorro"),
         })
     return out
+
+
+def subir_universal(anio: int, archivos: list[tuple[str, bytes]], avisos_previos: list[str] | None = None) -> dict:
+    """Sube la exógena de cualquier persona: crea el contribuyente si no existe y abre su renta."""
+    P.obtener(anio)
+    leidos, errores = aislado.ejecutar("app.renta.documentos.leer_lote", archivos, tiempo=600)
+    avisos = list(avisos_previos or []) + errores
+    if not leidos:
+        raise ValueError("No se pudo extraer ningún dato de los archivos subidos. Verifique que sean legibles.")
+
+    # Detectar el contribuyente principal
+    rep_principal = next((l.reporte for l in leidos if l.reporte.numero_doc), leidos[0].reporte)
+    nit = "".join(ch for ch in str(rep_principal.numero_doc or "") if ch.isdigit())
+    nombre = (rep_principal.nombre or "").strip() or "CONTRIBUYENTE NUEVO"
+
+    cliente = repo_clientes.por_nit(nit) if nit else None
+    creado = False
+    if not cliente:
+        cliente_id = str(uuid.uuid4())
+        nuevo_cliente = {
+            "id": cliente_id,
+            "nit": nit or f"CC{uuid.uuid4().hex[:8]}",
+            "razon_social": nombre,
+            "tipo_persona": "natural",
+            "estado": "activo",
+            "etiquetas": ["renta"],
+            "regimen": "ordinario",
+            "responsable_iva": bool(rep_principal.responsable_iva),
+        }
+        cliente = repo_clientes.crear(nuevo_cliente)
+        creado = True
+
+    cliente_id = cliente["id"]
+    if cliente.get("tipo_persona") == "juridica":
+        raise RentaNoAplica("El documento corresponde a una persona jurídica, que declara en el formulario 110.")
+
+    subir(cliente_id, anio, archivos, avisos)
+    return {
+        "cliente_id": cliente_id,
+        "creado": creado,
+        "razon_social": cliente["razon_social"],
+        "nit": cliente["nit"],
+        "anio": anio,
+    }
 
 
 def tareas(hoy: date | None = None) -> list[dict]:

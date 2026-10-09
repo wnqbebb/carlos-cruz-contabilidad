@@ -218,8 +218,8 @@ def test_exportaciones(empresa):
     # hoja, igual que los balances y el inventario. Antes eran 18 hojas sueltas.
     assert {"Portada", "Estados financieros", "Balances", "Hoja de trabajo",
             "Libro mayor", "Inventario", "Ajustes", "Alertas",
-            "EF formato contador", "Saldos siguiente periodo"} <= hojas
-    assert len(hojas) <= 14, f"demasiadas hojas: {sorted(hojas)}"
+            "EF formato contador", "Cuentas T", "Saldos siguiente periodo"} <= hojas
+    assert len(hojas) <= 15, f"demasiadas hojas: {sorted(hojas)}"
 
     # Y dentro de esa hoja están de verdad los cuatro estados.
     celdas = [str(c.value) for fila in wb["Estados financieros"].iter_rows() for c in fila if c.value]
@@ -244,6 +244,8 @@ def test_excel_desde_un_periodo_guardado(empresa):
     En la base los importes se guardan como CADENA decimal (ver exactitud.py),
     así que el exportador tiene que aceptar las dos formas. Si no, el Excel de
     un periodo viejo saldría con las celdas vacías o como texto.
+    Ambos libros deben contener exactamente las mismas hojas, incluyendo
+    «EF formato contador» y «Cuentas T».
     """
     from app.exactitud import a_json
 
@@ -253,9 +255,10 @@ def test_excel_desde_un_periodo_guardado(empresa):
     libro_vivo = load_workbook(io.BytesIO(excel.libro_completo(res, empresa)))
     libro_base = load_workbook(io.BytesIO(excel.libro_completo(guardado, empresa)))
 
-    # La hoja del formato del contador necesita el mayor en memoria; el resto
-    # de hojas tienen que estar en los dos libros.
-    assert set(libro_base.sheetnames) | {"EF formato contador"} == set(libro_vivo.sheetnames)
+    # Ambos libros deben tener idénticas hojas
+    assert set(libro_base.sheetnames) == set(libro_vivo.sheetnames)
+    assert "EF formato contador" in libro_base.sheetnames
+    assert "Cuentas T" in libro_base.sheetnames
 
     vivo = libro_vivo["Estados financieros"]
     base = libro_base["Estados financieros"]

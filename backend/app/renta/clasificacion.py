@@ -176,6 +176,13 @@ def clave_pagador(entidad: str) -> str:
     return re.sub(r"[^A-Z0-9]", "", sin_tildes(entidad))[:24] or "SIN-NOMBRE"
 
 
+def es_entidad_financiera(entidad: str) -> bool:
+    T = sin_tildes(entidad).upper()
+    return any(k in T for k in ("BANCO", "BANCOLOMBIA", "DAVIVIENDA", "BBVA", "OCCIDENTE", "POPULAR",
+                                "COLPATRIA", "FALABELLA", "SERFINANZA", "PICHINCHA", "COOPERATIVA",
+                                "FIDUCIARIA", "FONDO DE EMPLEADOS", "COOP", "FINANCIERA"))
+
+
 def clasificar_todas(lineas: list[Linea], ajustes: dict[str, str] | None = None) -> list[Clasificada]:
     """`ajustes`: id de línea → categoría elegida por el contador (reclasificar con un clic)."""
     ajustes = ajustes or {}
@@ -185,12 +192,12 @@ def clasificar_todas(lineas: list[Linea], ajustes: dict[str, str] | None = None)
         if l.id in ajustes and ajustes[l.id] in CATEGORIAS:
             cat, motivo, conflicto = ajustes[l.id], "Reclasificada por el contador", False
         out.append(Clasificada(linea=l, categoria=cat, motivo=motivo, conflicto=conflicto,
-                               pagador=clave_pagador(l.entidad)))
+                                pagador=clave_pagador(l.entidad)))
     # Filas ilegibles de una entidad que en otras filas aparece pagando ingresos: se
     # asumen iguales a esas (se ve en pantalla y se reclasifica con un clic).
     ingresos_por_entidad: dict[str, str] = {}
     for c in out:
-        if c.categoria.startswith("ingreso_") and c.linea.entidad:
+        if c.categoria.startswith("ingreso_") and c.linea.entidad and not es_entidad_financiera(c.linea.entidad):
             ingresos_por_entidad.setdefault(c.pagador, c.categoria)
     # Una entidad que se repite en varias filas ilegibles suele ser un mismo pagador
     # (pagos por documentos soporte): se pregunta UNA vez por todo, con opción «no es ingreso».
@@ -204,7 +211,7 @@ def clasificar_todas(lineas: list[Linea], ajustes: dict[str, str] | None = None)
         if c.pagador in ingresos_por_entidad:
             c.categoria = ingresos_por_entidad[c.pagador]
             c.motivo = "Texto ilegible: igual que las otras filas de la misma entidad"
-        elif repetidas.get(c.pagador, 0) >= 3:
+        elif repetidas.get(c.pagador, 0) >= 3 and not es_entidad_financiera(c.linea.entidad):
             c.categoria = "ingreso_por_definir"
             c.motivo = "Texto ilegible; la misma entidad aparece en varias filas: confirme qué son"
         if not legible(c.linea.detalle):
@@ -234,8 +241,8 @@ def preguntas(clas: list[Clasificada], sugerencias_a_mano: list[str]) -> list[Pr
         if c.categoria == "ingreso_por_definir":
             grupos.setdefault(c.pagador, []).append(c)
     for clave, cs in sorted(grupos.items(), key=lambda kv: -sum(c.linea.importe() for c in kv[1])):
-        if clave == "SIN-NOMBRE" or not re.search(r"[A-Z]{4,}", sin_tildes(cs[0].linea.entidad)):
-            continue  # entidad ilegible: queda en el detalle (como ingreso de trabajo) para revisar ahí
+        if clave == "SIN-NOMBRE" or not re.search(r"[A-Z]{4,}", sin_tildes(cs[0].linea.entidad)) or es_entidad_financiera(cs[0].linea.entidad):
+            continue  # entidad ilegible o financiera: no se pregunta como ingreso laboral
         total = sum((c.linea.importe() for c in cs), CERO)
         entidad = cs[0].linea.entidad or "un mismo pagador"
         qs.append(Pregunta(
