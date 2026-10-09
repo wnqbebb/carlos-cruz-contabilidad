@@ -17,6 +17,18 @@ os.environ["CC_DATOS_APP"] = str(_TEMPORAL / "datos")
 os.environ["CC_TMP_SUBIDAS"] = str(_TEMPORAL / "subidas")
 os.environ["ALMACENAMIENTO"] = "local"
 os.environ.pop("DATABASE_URL", None)
+# v2.3 · Fase 6: sin tocar el almacén de credenciales de Windows, sin copias en segundo plano,
+# Argon2 liviano, cliente de pruebas tratado como el mismo equipo y límites holgados.
+os.environ["CC_SIN_LLAVERO"] = "1"
+os.environ["CC_MIGRAR_SECRETOS"] = "0"
+os.environ["CC_SIN_RESPALDO"] = "1"
+os.environ["CC_SIN_REGISTRO_LOCAL"] = "1"
+os.environ["CC_ARGON_RAPIDO"] = "1"
+os.environ["CC_HOSTS"] = "testserver"
+os.environ["CC_HOSTS_LOCALES"] = "testclient"
+os.environ["CC_LIMITE_GENERAL"] = "1000000"
+os.environ["CC_LIMITE_COSTOSAS"] = "1000000"
+os.environ["CC_AISLAR"] = "0"           # las pruebas de seguridad lo encienden donde lo prueban
 
 # Usuario de prueba (A2). Se fija aquí para que nunca se lean las credenciales
 # reales de backend/.env. Hash con pocas rondas: es solo para pruebas.
@@ -92,12 +104,13 @@ def cliente_api(base_limpia):
 
 
 def entrar(c) -> None:
-    """Inicia la sesión del contador de prueba en un cliente HTTP."""
+    """Inicia la sesión del contador de prueba en un cliente HTTP y fija su token CSRF."""
     from app import sesion
 
     sesion.olvidar_fallos()
     r = c.post("/api/sesion", json={"usuario": USUARIO_PRUEBA, "clave": CLAVE_PRUEBA})
     assert r.status_code == 200, r.text
+    c.headers[sesion.ENCABEZADO_CSRF] = r.json()["csrf"]
 
 
 @pytest.fixture

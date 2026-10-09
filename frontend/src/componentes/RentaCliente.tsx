@@ -1,11 +1,11 @@
 import { Check, Download, FileUp, TriangleAlert } from "lucide-react";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
-import { renta, type CambioRenta } from "../api";
+import { descargarConfirmando, renta, type CambioRenta } from "../api";
 import { clases, esNegativo, fecha, pesos } from "../formato";
 import type { BeneficioRenta, Cliente, DeclaracionRenta, LineaRenta, PreguntaRenta, ResultadoRenta } from "../tipos";
 import { InsigniaEstado, useAvisos } from "../ui";
 import { Procesando } from "./Procesando";
-import { Aviso, Boton, Cargando, Dialogo, Enlace, Insignia, Vacio, estiloCampo, estiloCampoAuto } from "./ui";
+import { Aviso, Boton, Cargando, Dialogo, Insignia, Vacio, estiloCampo, estiloCampoAuto } from "./ui";
 
 /**
  * Declaración de renta del cliente (v2.3 · Fase 5): tres pasos y nada más.
@@ -320,11 +320,12 @@ function Revision({
       <section aria-labelledby="titulo-descargue" className="space-y-4 border-t border-linea pt-8">
         <h2 id="titulo-descargue" className="t-h2 text-tinta">Descargue</h2>
         <div className="flex flex-wrap items-center gap-3">
-          <Enlace href={renta.descarga(cliente.id, decl.anio, "todo")} variante="solido">
+          {/* Descargar todo pide confirmar la contraseña (v2.3 · C8). */}
+          <Boton variante="solido" onClick={() => descargarConfirmando(renta.descarga(cliente.id, decl.anio, "todo"))}>
             <Download size={16} strokeWidth={1.5} aria-hidden />
             <span className="sm:hidden">Descargar todo</span>
             <span className="hidden sm:inline">Descargar borrador, papel de trabajo y resumen</span>
-          </Enlace>
+          </Boton>
           {decl.estado !== "presentada" && decl.estado !== "revisada" && (
             <Boton variante="fantasma" onClick={() => onMarcar("revisada")}>
               <Check size={16} strokeWidth={1.5} aria-hidden /> Marcar como revisada

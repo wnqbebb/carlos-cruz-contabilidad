@@ -56,10 +56,18 @@ analisis = Analysis(
         "bcrypt",
         # Declaración de renta (v2.3): lectura de fotos.
         "pytesseract",
+        # Seguridad (v2.3 · Fase 6)
+        "argon2",
+        "pyotp",
+        "segno",
+        "keyring.backends.Windows",
+        "cryptography.hazmat.primitives.ciphers.aead",
+        "defusedxml",
+        "psutil",
+        "pystray._win32",
         "cv2",
         "numpy",
         "rapidfuzz",
-        "crear_usuario",
         "app",
     ],
     hookspath=[],
@@ -80,7 +88,7 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,          # la consola muestra la dirección y los mensajes
+    console=False,         # v2.3: sin ventana negra; ícono en la bandeja del sistema (Abrir · Cerrar)
     icon=str(RAIZ / "empaquetar" / "carloscruz.ico")
         if (RAIZ / "empaquetar" / "carloscruz.ico").exists() else None,
 )

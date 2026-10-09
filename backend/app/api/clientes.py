@@ -1,12 +1,20 @@
 """Directorio de clientes: alta, edición, búsqueda e importación masiva."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, Body, File, HTTPException, Query, Request, UploadFile
+
+from .. import sesion
+from ..seguridad import archivos as seg_archivos
 from fastapi.responses import Response
 
 from ..importadores import clientes_excel
 from ..repositorio import bitacora
 from ..repositorio import clientes as repo
+
+
+def _ip(request: Request) -> str:
+    return request.client.host if request.client else "?"
+
 
 router = APIRouter(prefix="/api/clientes", tags=["clientes"])
 
@@ -38,7 +46,8 @@ def demostracion():
 
 
 @router.post("/demostracion/eliminar")
-def eliminar_demostracion():
+def eliminar_demostracion(request: Request):
+    sesion.exigir_reautenticacion(request)
     salida = repo.eliminar_demostracion()
     if salida["eliminados"]:
         bitacora.registrar("clientes_demo_eliminados", None, eliminados=salida["eliminados"],
@@ -67,6 +76,10 @@ async def importar(
         raise HTTPException(413, f"El archivo pesa más de {MAX_ARCHIVO // (1024 * 1024)} MB. Divídalo en partes.")
     if not contenido:
         raise HTTPException(400, "El archivo llegó vacío.")
+    try:
+        seg_archivos.validar(archivo.filename or "clientes.xlsx", contenido, (".xlsx", ".xlsm", ".xls", ".csv", ".txt"))
+    except seg_archivos.ArchivoRechazado as ex:
+        raise HTTPException(400, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
     try:
         informe = clientes_excel.importar(
             contenido, archivo.filename or "clientes.xlsx",
@@ -123,15 +136,16 @@ def actualizar(cliente_id: str, datos: dict = Body(...)):
 
 
 @router.delete("/{cliente_id}")
-def eliminar(cliente_id: str, definitivo: bool = Query(False)):
-    """Por defecto archiva. `definitivo=true` borra el cliente y toda su contabilidad."""
+def eliminar(request: Request, cliente_id: str, definitivo: bool = Query(False)):
+    """Por defecto archiva. `definitivo=true` borra el cliente y toda su contabilidad (pide la contraseña)."""
     try:
         if definitivo:
+            sesion.exigir_reautenticacion(request)
             ficha = repo.obtener(cliente_id)
             salida = repo.eliminar(cliente_id)
-            bitacora.registrar("cliente_eliminado", None, nit=ficha["nit"],
-                               razon_social=ficha["razon_social"],
-                               periodos=salida.get("periodos_borrados"))
+            # Ley 1581: del cliente borrado no queda su nombre ni su documento completo.
+            bitacora.registrar("cliente_eliminado", None, nit="****" + str(ficha["nit"])[-4:],
+                               periodos=salida.get("periodos_borrados"), ip=_ip(request))
             return salida
         cliente = repo.archivar(cliente_id)
         bitacora.registrar("cliente_archivado", cliente_id, razon_social=cliente["razon_social"])

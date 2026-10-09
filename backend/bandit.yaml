@@ -1,0 +1,6 @@
+# bandit: análisis estático del backend (v2.3 · Fase 6).
+# Se omiten solo los avisos revisados y justificados:
+#   B101 assert: se usan en validaciones internas, no como control de acceso.
+#   B404/B603: subprocess sin shell para Tesseract (pytesseract) y procesos aislados propios.
+#   B608: el SQL se arma con SQLAlchemy Core (parámetros enlazados), nunca con texto del usuario.
+skips: ["B101", "B404", "B603", "B608"]

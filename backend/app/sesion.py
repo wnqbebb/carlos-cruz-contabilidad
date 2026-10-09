@@ -1,116 +1,150 @@
-"""Inicio de sesión del contador (adición A2).
+"""Sesiones del contador (v2.3 · Fase 6, controles C5–C8).
 
-La aplicación tiene un solo usuario: el contador. Su nombre y el hash bcrypt de
-su contraseña viven en el archivo de configuración (`backend/.env`, o el que
-indique `CC_ENV`) como `CC_USUARIO` y `CC_CLAVE_HASH`. Se crean o se cambian con
+La cookie `cc_sesion` lleva un token aleatorio de 256 bits. En la base queda solo su hash
+(SHA-256) con el usuario, el token CSRF de la sesión, la última actividad y el vencimiento.
+Así, al cerrar sesión la cookie deja de servir, y «cerrar todas las sesiones» corta los
+demás navegadores al instante.
 
-    python backend/crear_usuario.py
+- Inactividad: 30 minutos. Absoluta: 12 horas. Al ingresar se crea una sesión nueva (rotación).
+- Reautenticación: las acciones delicadas exigen haber confirmado la contraseña hace menos
+  de 5 minutos (`exigir_reautenticacion`).
+- Intentos fallidos: 5 en 15 minutos, por equipo y por usuario, bloquean el ingreso.
 
-La sesión es una cookie firmada con HMAC-SHA256 usando `CLAVE_SESION`:
-HttpOnly (el JavaScript no la ve), SameSite=Lax y Secure cuando la conexión es
-HTTPS. No se guarda nada en el servidor: la firma basta para saber que la
-emitió esta aplicación y que no venció.
-
-Contra los intentos repetidos: 5 fallos en 15 minutos, desde el mismo equipo o
-para el mismo usuario, bloquean el ingreso hasta que pase la ventana.
+Para no consultar la base en cada petición, la validación se recuerda 15 segundos en
+memoria; cerrar una sesión la olvida en el acto.
 """
 from __future__ import annotations
 
-import base64
 import hashlib
-import hmac
-import json
-import logging
-import os
 import secrets
 import threading
 import time
+from datetime import datetime, timedelta, timezone
 
-import bcrypt
+from fastapi import HTTPException, Request
+from sqlalchemy import insert, select, update
 
-log = logging.getLogger("carloscruz.sesion")
+from .db import conexion, lectura
+from .esquema import sesiones_acceso as TS
 
 COOKIE = "cc_sesion"
-DURACION = 12 * 3600          # una jornada de trabajo
+ENCABEZADO_CSRF = "x-csrf"
+DURACION = 12 * 3600          # absoluta: una jornada de trabajo
+INACTIVIDAD = 30 * 60
+REAUTENTICACION = 5 * 60
 MAX_FALLOS = 5
 VENTANA = 15 * 60
-# Rutas de la API que no piden sesión: el estado del servidor y el propio ingreso.
-PUBLICAS = {"/api/salud", "/api/sesion"}
-CLAVE_DE_EJEMPLO = "cambie-esta-clave-por-una-larga-y-aleatoria"
+# Rutas de la API que no piden sesión: el estado del servidor, el ingreso, el primer uso y la recuperación.
+PUBLICAS = {"/api/salud", "/api/sesion", "/api/acceso/primer-uso", "/api/acceso/recuperar", "/api/acceso/politica"}
 
 _fallos: dict[str, list[float]] = {}
 _candado = threading.Lock()
-_clave_temporal = secrets.token_bytes(32)
-_avisado = False
+_memoria: dict[str, tuple[float, dict]] = {}
+RECUERDO = 15.0
 
 
-def usuario() -> str:
-    return (os.getenv("CC_USUARIO") or "").strip()
+def _hash(token: str) -> str:
+    return hashlib.sha256(token.encode("ascii", "ignore")).hexdigest()
 
 
-def configurado() -> bool:
-    return bool(usuario() and (os.getenv("CC_CLAVE_HASH") or "").strip())
+def _ahora() -> datetime:
+    return datetime.now(timezone.utc)
 
 
-def _clave() -> bytes:
-    """Clave de firma. Sin una clave propia, una al azar (las sesiones mueren al reiniciar)."""
-    global _avisado
-    valor = (os.getenv("CLAVE_SESION") or "").strip()
-    if len(valor) >= 32 and valor != CLAVE_DE_EJEMPLO:
-        return valor.encode("utf-8")
-    if not _avisado:
-        log.warning("CLAVE_SESION falta o es la de ejemplo: se usa una clave temporal. "
-                    "Ejecute python backend/crear_usuario.py para fijar una.")
-        _avisado = True
-    return _clave_temporal
-
-
-def hash_de(clave: str, rondas: int = 12) -> str:
-    return bcrypt.hashpw(clave.encode("utf-8"), bcrypt.gensalt(rounds=rondas)).decode("ascii")
-
-
-def verificar(nombre: str, clave: str) -> bool:
-    guardado = (os.getenv("CC_CLAVE_HASH") or "").strip().encode("ascii", "ignore")
-    if not configurado() or not guardado:
-        return False
-    mismo_usuario = hmac.compare_digest(nombre.strip().lower().encode(), usuario().lower().encode())
-    try:
-        clave_ok = bcrypt.checkpw(clave.encode("utf-8"), guardado)
-    except ValueError:  # hash mal copiado en el archivo de configuración
-        log.error("CC_CLAVE_HASH no es un hash bcrypt válido.")
-        return False
-    return mismo_usuario and clave_ok
-
-
-def _b64(datos: bytes) -> str:
-    return base64.urlsafe_b64encode(datos).decode("ascii").rstrip("=")
-
-
-def _desde_b64(texto: str) -> bytes:
-    return base64.urlsafe_b64decode(texto + "=" * (-len(texto) % 4))
-
-
-def emitir(nombre: str) -> str:
-    carga = _b64(json.dumps({"u": nombre, "exp": int(time.time()) + DURACION}).encode("utf-8"))
-    firma = _b64(hmac.new(_clave(), carga.encode("ascii"), hashlib.sha256).digest())
-    return f"{carga}.{firma}"
-
-
-def leer(cookie: str | None) -> str | None:
-    """Usuario de una cookie válida y vigente; None si no lo es."""
-    if not cookie or "." not in cookie:
+def _utc(d: datetime | None) -> datetime | None:
+    if d is None:
         return None
-    carga, firma = cookie.rsplit(".", 1)
-    esperada = _b64(hmac.new(_clave(), carga.encode("ascii"), hashlib.sha256).digest())
-    if not hmac.compare_digest(firma, esperada):
+    return d if d.tzinfo else d.replace(tzinfo=timezone.utc)
+
+
+def abrir(usuario_id: int, ip: str = "", agente: str = "") -> tuple[str, str]:
+    """Nueva sesión: (token para la cookie, token CSRF)."""
+    token = secrets.token_urlsafe(32)
+    csrf = secrets.token_urlsafe(32)
+    ahora = _ahora()
+    with conexion() as cn:
+        cn.execute(insert(TS).values(id=_hash(token), usuario_id=usuario_id, csrf=csrf, creada=ahora, ultima=ahora,
+                                     expira=ahora + timedelta(seconds=DURACION), reautenticada=ahora,
+                                     ip=ip[:60], agente=agente[:200], revocada=False))
+    return token, csrf
+
+
+def leer(token: str | None) -> dict | None:
+    """La sesión vigente de una cookie, o None. Renueva la última actividad."""
+    if not token or len(token) < 20:
         return None
-    try:
-        datos = json.loads(_desde_b64(carga))
-    except (ValueError, UnicodeDecodeError):
+    clave = _hash(token)
+    ahora_s = time.time()
+    with _candado:
+        guardada = _memoria.get(clave)
+    if guardada and ahora_s - guardada[0] < RECUERDO:
+        info = guardada[1]
+        if _utc(info["expira"]) > _ahora() and _ahora() - _utc(info["ultima"]) < timedelta(seconds=INACTIVIDAD):
+            return info
+    with lectura() as cn:
+        f = cn.execute(select(TS).where(TS.c.id == clave)).first()
+    if not f or f.revocada:
         return None
-    if int(datos.get("exp", 0)) < time.time() or str(datos.get("u", "")).lower() != usuario().lower():
+    ahora = _ahora()
+    if _utc(f.expira) <= ahora or ahora - _utc(f.ultima) >= timedelta(seconds=INACTIVIDAD):
         return None
-    return str(datos["u"])
+    info = dict(f._mapping)
+    if ahora - _utc(f.ultima) > timedelta(seconds=60):
+        with conexion() as cn:
+            cn.execute(update(TS).where(TS.c.id == clave).values(ultima=ahora))
+        info["ultima"] = ahora
+    with _candado:
+        _memoria[clave] = (ahora_s, info)
+    return info
+
+
+def cerrar(token: str | None) -> None:
+    if not token:
+        return
+    clave = _hash(token)
+    with conexion() as cn:
+        cn.execute(update(TS).where(TS.c.id == clave).values(revocada=True))
+    with _candado:
+        _memoria.pop(clave, None)
+
+
+def cerrar_todas(usuario_id: int, excepto: str | None = None) -> int:
+    with conexion() as cn:
+        cond = (TS.c.usuario_id == usuario_id) & (TS.c.revocada.is_(False))
+        if excepto:
+            cond = cond & (TS.c.id != excepto)
+        n = cn.execute(update(TS).where(cond).values(revocada=True)).rowcount
+    with _candado:
+        _memoria.clear()
+    return int(n or 0)
+
+
+def abiertas(usuario_id: int) -> list[dict]:
+    ahora = _ahora()
+    with lectura() as cn:
+        filas = cn.execute(select(TS.c.id, TS.c.creada, TS.c.ultima, TS.c.ip, TS.c.agente, TS.c.expira)
+                           .where(TS.c.usuario_id == usuario_id, TS.c.revocada.is_(False))).all()
+    return [dict(f._mapping) for f in filas
+            if _utc(f.expira) > ahora and ahora - _utc(f.ultima) < timedelta(seconds=INACTIVIDAD)]
+
+
+def marcar_reautenticada(sesion_id: str) -> None:
+    with conexion() as cn:
+        cn.execute(update(TS).where(TS.c.id == sesion_id).values(reautenticada=_ahora()))
+    with _candado:
+        for k in [k for k, (_, v) in _memoria.items() if v.get("id") == sesion_id]:
+            _memoria.pop(k, None)
+
+
+def exigir_reautenticacion(request: Request) -> None:
+    """Para acciones delicadas: 403 `reautenticar` si la contraseña no se confirmó hace poco."""
+    info = getattr(request.state, "sesion", None)
+    if not info:
+        raise HTTPException(401, {"codigo": "sin_sesion", "mensaje": "La sesión no está iniciada o venció."})
+    ultima = _utc(info.get("reautenticada"))
+    if not ultima or _ahora() - ultima > timedelta(seconds=REAUTENTICACION):
+        raise HTTPException(403, {"codigo": "reautenticar",
+                                  "mensaje": "Por seguridad, confirme su contraseña para continuar."})
 
 
 # ── intentos fallidos ───────────────────────────────────────────────────────
@@ -149,3 +183,4 @@ def olvidar_fallos() -> None:
     """Para las pruebas."""
     with _candado:
         _fallos.clear()
+        _memoria.clear()

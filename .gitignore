@@ -23,3 +23,7 @@ frontend/vite.config.ts.timestamp-*
 # Datos reales de clientes (archivos fuente, respaldos, capturas con NIT o cédulas).
 # Viven solo en este equipo; ver docs/PRIVADO.md.
 privado/
+
+# Herramientas descargadas por scripts/seguridad.bat (gitleaks)
+herramientas/
+*.tsbuildinfo

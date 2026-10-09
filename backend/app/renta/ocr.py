@@ -15,6 +15,7 @@ Nada de lo leído entra solo: todo pasa por la pantalla de verificación.
 """
 from __future__ import annotations
 
+import logging
 import os
 import re
 import shutil
@@ -35,6 +36,8 @@ except Exception:  # pragma: no cover
 
 # Dónde está el lector: `datos_app` en el equipo de desarrollo; dentro del .exe, sus recursos (CC_OCR).
 CARPETA_OCR = Path(os.environ.get("CC_OCR") or (RAIZ / "datos_app"))
+log = logging.getLogger("carloscruz.ocr")
+
 TESSDATA = CARPETA_OCR / "tessdata"
 RUTAS_TESSERACT = [
     Path(os.environ.get("CC_TESSERACT", "")),
@@ -166,8 +169,8 @@ def orientar(im) -> tuple["np.ndarray", int]:
             return _girar(im, giro), giro
         # Con poca confianza el OSD suele acertar el eje: se compara con su giro opuesto.
         candidatos = [giro, (giro + 180) % 360]
-    except Exception:
-        pass
+    except Exception as ex:  # el OSD no pudo decidir: se prueban los cuatro giros
+        log.debug("OSD sin resultado: %s", type(ex).__name__)
     mejor = max(candidatos, key=lambda g: _puntaje_orientacion(_girar(gris, g)))
     return _girar(im, mejor), mejor
 

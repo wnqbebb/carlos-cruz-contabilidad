@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { renta } from "../api";
 import { Cabecera } from "../componentes/Marco";
 import { Aviso, Cargando, Insignia, Vacio, estiloCampoAuto } from "../componentes/ui";
-import { clases, esNegativo, fecha, pesos } from "../formato";
+import { clases, documentoEnLista, esNegativo, fecha, pesos } from "../formato";
 import type { FilaCarteraRenta } from "../tipos";
 import { TituloPagina } from "../ui";
 
@@ -118,7 +118,7 @@ export function Renta() {
                       <Link to={`/clientes/${f.cliente_id}?seccion=renta`} className="font-medium text-tinta underline-offset-4 hover:underline">
                         {f.razon_social}
                       </Link>
-                      <span className="codigo block text-[12px] text-gris">{f.nit}</span>
+                      <span className="codigo block text-[12px] text-gris">{documentoEnLista(f.nit, "natural")}</span>
                     </td>
                     <td className="max-w-xs px-4 py-3 text-grafito">
                       {f.obligado === null ? "Sin información" : f.obligado ? "Sí" : "No"}

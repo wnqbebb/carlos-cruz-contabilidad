@@ -14,6 +14,7 @@ from decimal import Decimal
 
 from openpyxl import Workbook
 from openpyxl.styles import Alignment, Font, PatternFill
+from ..seguridad.archivos import blindar_libro
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -198,5 +199,6 @@ def papel_trabajo(v: dict) -> bytes:
     for fila in av.iter_rows(min_row=2):
         fila[0].alignment = Alignment(wrap_text=True)
     buf = io.BytesIO()
+    blindar_libro(wb)
     wb.save(buf)
     return buf.getvalue()

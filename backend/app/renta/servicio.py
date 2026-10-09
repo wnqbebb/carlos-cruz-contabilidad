@@ -17,6 +17,7 @@ from decimal import Decimal
 from ..repositorio import bitacora
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import renta as repo
+from ..seguridad import aislado
 from . import clasificacion as C
 from . import documentos, obligacion
 from . import parametros as P
@@ -45,18 +46,13 @@ def declaracion(cliente_id: str, anio: int) -> dict:
 
 
 # ── paso 1 ─────────────────────────────────────────────────────────────
-def subir(cliente_id: str, anio: int, archivos: list[tuple[str, bytes]]) -> dict:
+def subir(cliente_id: str, anio: int, archivos: list[tuple[str, bytes]], avisos_previos: list[str] | None = None) -> dict:
     cliente = _cliente(cliente_id)
     decl = declaracion(cliente_id, anio)
     datos = dict(decl["datos"])
-    leidos, errores = [], []
-    for nombre, contenido in archivos:
-        try:
-            leidos.append(documentos.leer_archivo(nombre, contenido))
-        except documentos.ocr.OcrNoDisponible as ex:
-            errores.append(f"«{nombre}»: {ex}")
-        except Exception as ex:  # un archivo dañado no detiene a los demás
-            errores.append(f"«{nombre}» no se pudo leer: {ex}")
+    # La lectura (OCR incluido) corre en un proceso aparte con tiempo y memoria limitados (C24).
+    leidos, errores = aislado.ejecutar("app.renta.documentos.leer_lote", archivos, tiempo=600)
+    errores = list(avisos_previos or []) + errores
     esperado = "".join(ch for ch in str(cliente.get("nit") or "") if ch.isdigit())
     grupos = documentos.agrupar_por_contribuyente(leidos, esperado)
     avisos = list(errores)

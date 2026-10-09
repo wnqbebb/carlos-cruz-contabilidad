@@ -29,6 +29,19 @@ class Leido:
     tipo: str = ""                                             # foto | pdf | excel
 
 
+def leer_lote(archivos: list[tuple[str, bytes]]) -> tuple[list[Leido], list[str]]:
+    """Lee varios archivos; uno dañado no detiene a los demás. Corre aislado (ver `seguridad/aislado.py`)."""
+    leidos, errores = [], []
+    for nombre, contenido in archivos:
+        try:
+            leidos.append(leer_archivo(nombre, contenido))
+        except ocr.OcrNoDisponible as ex:
+            errores.append(f"«{nombre}»: {ex}")
+        except Exception:
+            errores.append(f"«{nombre}» no se pudo leer. Revise que no esté dañado.")
+    return leidos, errores
+
+
 def leer_archivo(nombre: str, contenido: bytes) -> Leido:
     ext = Path(nombre).suffix.lower()
     if ext in IMAGENES:

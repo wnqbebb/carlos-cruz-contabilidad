@@ -211,6 +211,7 @@ def eliminar(cliente_id: str) -> dict:
         periodos_borrados = cn.execute(
             select(func.count()).select_from(TP).where(TP.c.cliente_id == cliente_id)
         ).scalar_one()
+        cn.execute(delete(TB).where(TB.c.cliente_id == cliente_id))
         cn.execute(delete(T).where(T.c.id == cliente_id))
         return {"ok": True, "razon_social": fila.razon_social, "periodos_borrados": int(periodos_borrados)}
 

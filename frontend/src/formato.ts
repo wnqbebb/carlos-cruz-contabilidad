@@ -275,3 +275,16 @@ export function razon(a: Importe, b: Importe, decimales = 4): string | null {
   const cuerpo = entero + (dec ? "." + dec : "");
   return negativo && redondeado !== 0n ? "-" + cuerpo : cuerpo;
 }
+
+/**
+ * Documento para mostrar en LISTAS (Ley 1581, v2.3 · C33): la cédula de una persona natural va
+ * enmascarada (****8740); el NIT de una empresa es público y se muestra completo. En la ficha
+ * del cliente se ve completo.
+ */
+export function documentoEnLista(doc: string, tipoPersona?: string | null, formateado?: string | null): string {
+  if (tipoPersona === "natural") {
+    const digitos = (doc || "").replace(/\D/g, "");
+    return digitos ? `****${digitos.slice(-4)}` : "";
+  }
+  return formateado || doc || "";
+}

@@ -122,8 +122,17 @@ def preparar() -> None:
     global _tablas_listas
     if _tablas_listas:
         return
-    metadatos.create_all(motor_db, checkfirst=True)
-    _columnas_nuevas()
+    try:
+        metadatos.create_all(motor_db, checkfirst=True)
+        _columnas_nuevas()
+    except Exception as ex:
+        # v2.3 · C31: con el rol de mínimo privilegio la aplicación no puede crear tablas ni
+        # columnas. Si falta algo, hay que aplicar las migraciones con el usuario administrador.
+        if "permission denied" not in str(ex).lower() and "insufficient" not in str(ex).lower():
+            raise
+        logging.getLogger("carloscruz.db").warning(
+            "Faltan tablas o columnas y este rol no puede crearlas: aplique supabase/migraciones/ "
+            "con el usuario administrador.")
     _tablas_listas = True
 
 
@@ -156,7 +165,8 @@ def _columnas_nuevas() -> None:
                 valor = col.default.arg
                 defecto = f" DEFAULT {int(valor) if isinstance(valor, bool) else repr(str(valor))}"
             nulo = " NOT NULL" if not col.nullable and defecto else ""
-            cn.execute(text(f'ALTER TABLE {nombre} ADD COLUMN {col.name} {tipo}{defecto}{nulo}'))
+            # Nombres y tipos salen del esquema propio (esquema.py), nunca de datos del usuario.
+            cn.execute(text(f'ALTER TABLE {nombre} ADD COLUMN {col.name} {tipo}{defecto}{nulo}'))  # nosemgrep: avoid-sqlalchemy-text
             log.info("Columna agregada: %s.%s", nombre, col.name)
 
 

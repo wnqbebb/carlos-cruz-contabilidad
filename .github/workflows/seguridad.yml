@@ -1,0 +1,46 @@
+name: seguridad
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 11 * * 1"   # cada lunes, por si aparece una vulnerabilidad nueva
+permissions:
+  contents: read
+jobs:
+  revision:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # gitleaks revisa todo el historial
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Dependencias (con hashes)
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --require-hashes -r backend/requirements.lock
+          python -m pip install pip-audit bandit semgrep
+      - name: pip-audit
+        run: pip-audit -r backend/requirements.txt
+      - name: npm audit
+        working-directory: frontend
+        run: |
+          npm ci
+          npm audit --audit-level=high
+      - name: bandit
+        run: bandit -q -r backend/app -c backend/bandit.yaml
+      - name: semgrep
+        run: semgrep scan --config p/python --config p/secrets --error --quiet backend/app
+      - name: gitleaks (historial completo)
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_CONFIG: .gitleaks.toml
+      - name: Pruebas
+        env:
+          CC_SIN_LLAVERO: "1"
+        run: python -m pytest backend/tests -q

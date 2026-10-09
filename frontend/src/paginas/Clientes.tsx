@@ -3,7 +3,7 @@ import { Cabecera } from "../componentes/Marco";
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { clientes as api, descargas } from "../api";
-import { clases, esNegativo, fecha, periodoCorto } from "../formato";
+import { clases, esNegativo, fecha, periodoCorto, documentoEnLista } from "../formato";
 import type { Cliente, InformeImportacionClientes, PaginaClientes } from "../tipos";
 import { Aviso, Boton, Cargando, Dialogo, Insignia, Rotulo } from "../componentes/ui";
 import { BotonSubirArchivo, usePuerta } from "../componentes/Subir";
@@ -318,7 +318,7 @@ function RejillaExpedientes({
               <EsferaCliente nit={c.nit} nombre={c.razon_social} tamano={56} />
               <div className="min-w-0">
                 <p className="t-body line-clamp-2 font-semibold text-tinta">{c.razon_social}</p>
-                <p className="codigo mt-1 text-[12px] text-gris">NIT {c.nit_formateado}</p>
+                <p className="codigo mt-1 text-[12px] text-gris">{c.tipo_persona === "natural" ? "C.C." : "NIT"} {documentoEnLista(c.nit, c.tipo_persona, c.nit_formateado)}</p>
               </div>
             </div>
             <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-linea pt-4">
@@ -461,7 +461,7 @@ function TablaClientes({
                       </button>
                     )}
                   </td>
-                  <td className="codigo border-b border-linea px-4 py-3 whitespace-nowrap text-grafito">{c.nit_formateado}</td>
+                  <td className="codigo border-b border-linea px-4 py-3 whitespace-nowrap text-grafito">{documentoEnLista(c.nit, c.tipo_persona, c.nit_formateado)}</td>
                   <td className="border-b border-linea px-4 py-3 text-grafito">{c.municipio || "—"}</td>
                   <td className="border-b border-linea px-4 py-3 text-right">
                     <Cifra valor={c.honorarios_mes} tamano="tabla" />

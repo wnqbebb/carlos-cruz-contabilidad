@@ -32,7 +32,11 @@ def test_la_subida_queda_en_disco_y_la_sesion_solo_guarda_la_ruta(cliente_api):
     s = sesiones.obtener(r["subida_id"])
     [ref] = s["archivos"]
     assert set(ref) == {"nombre", "ruta", "bytes"} and ref["bytes"] == len(ACTA)
-    assert Path(ref["ruta"]).read_bytes() == ACTA
+    # v2.3 · C25: en disco va cifrado y con nombre aleatorio; se descifra igual al original.
+    en_disco = Path(ref["ruta"]).read_bytes()
+    assert en_disco != ACTA and en_disco.startswith(b"CC1") and b"PK" not in en_disco[:40]
+    assert "acta" not in Path(ref["ruta"]).name
+    assert subidas.leer([ref]) == [("acta.docx", ACTA)]
     assert Path(ref["ruta"]).parent == subidas.carpeta() / r["subida_id"]
     # Al confirmar se usa el archivo del disco y la carpeta se borra.
     cliente_api.post(f"/api/subir/{r['subida_id']}/confirmar", json={

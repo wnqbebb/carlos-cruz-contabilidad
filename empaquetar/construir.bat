@@ -33,7 +33,7 @@ if errorlevel 1 (
   exit /b 1
 )
 pushd frontend
-call npm install --no-audit --no-fund
+call npm ci --no-audit --no-fund
 call npm run build
 popd
 if not exist "frontend\dist\index.html" (

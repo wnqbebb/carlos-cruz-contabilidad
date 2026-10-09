@@ -12,6 +12,7 @@ from openpyxl.worksheet.datavalidation import DataValidation
 from ..contabilidad.puc import puc
 from . import casos
 from ..modelos import Empresa
+from ..seguridad.archivos import blindar_libro
 
 AZUL = "1F4E79"
 
@@ -140,6 +141,7 @@ def construir(demo: bool = False, caso: str = "") -> bytes:
             for fila in datos_caso.get(nombre, []):
                 h.append(list(fila))
     buf = io.BytesIO()
+    blindar_libro(wb)
     wb.save(buf)
     return buf.getvalue()
 

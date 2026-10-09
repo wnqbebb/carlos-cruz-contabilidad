@@ -30,6 +30,8 @@ from ..repositorio import bitacora as repo_bitacora
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import sesiones
 from ..repositorio import subidas as repo_subidas
+from ..seguridad import aislado
+from ..seguridad import archivos as seg_archivos
 from ..utils import nit as unit
 from ..utils.numeros import NOMBRE_MES
 
@@ -68,7 +70,24 @@ async def _leer_subida(archivos: list[UploadFile]) -> list[tuple[str, bytes]]:
             "codigo": "subida_grande",
             "mensaje": f"Entre todos pesan más de {MAX_TOTAL // (1024 * 1024)} MB. Súbalos por partes.",
         })
+    validar_o_rechazar(datos, EXTENSIONES)
     return datos
+
+
+def validar_o_rechazar(datos: list[tuple[str, bytes]], permitidas: tuple[str, ...]) -> list[str]:
+    """Revisión de seguridad de cada archivo antes de abrirlo (v2.3 · C20–C23)."""
+    try:
+        return seg_archivos.validar_todos(datos, permitidas)
+    except seg_archivos.ArchivoRechazado as ex:
+        raise HTTPException(400, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
+
+
+def leer_aislado(ruta: str, *args):
+    """Lee en un proceso aparte, con tiempo y memoria limitados (v2.3 · C24)."""
+    try:
+        return aislado.ejecutar(ruta, *args)
+    except aislado.ArchivoNoProcesable as ex:
+        raise HTTPException(422, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
 
 
 def _parecidos(nombre: str, limite: int = 5) -> list[dict]:
@@ -172,7 +191,7 @@ async def subir(archivos: list[UploadFile] = File(...), cliente_id: str = Query(
         except repo_clientes.ErrorCliente as ex:
             raise HTTPException(404, str(ex)) from ex
 
-    lectura = clas.leer(datos, mapeador, empresa)
+    lectura = leer_aislado("app.importadores.clasificador.leer", datos, mapeador, empresa)
     clase = lectura.clase
 
     if clase == clas.DESCONOCIDO and lectura.ilegibles:
@@ -303,7 +322,7 @@ async def solo_identidad(archivos: list[UploadFile] = File(...)):
     No guarda nada: la usa el formulario de cliente nuevo para llenarse solo.
     """
     datos = await _leer_subida(archivos)
-    lectura = clas.leer(datos)
+    lectura = leer_aislado("app.importadores.clasificador.leer", datos)
     return a_json({
         "identidad": lectura.identidad.a_json(),
         "ficha": lectura.ficha().a_json(),
@@ -320,7 +339,7 @@ async def comparar_ficha(cliente_id: str, archivos: list[UploadFile] = File(...)
     except repo_clientes.ErrorCliente as ex:
         raise HTTPException(404, str(ex)) from ex
     datos = await _leer_subida(archivos)
-    ficha = clas.leer(datos).ficha()
+    ficha = leer_aislado("app.importadores.clasificador.leer", datos).ficha()
     j = ficha.a_json()
     cambios = []
     for campo, dato in j["campos"].items():

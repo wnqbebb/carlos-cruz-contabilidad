@@ -1,0 +1,19 @@
+#!/bin/sh
+# Carlos Cruz · antes de cada commit (v2.3 · Fase 6, control C35):
+# 1. Nada de la carpeta privado/ (datos reales de clientes) entra a git.
+# 2. gitleaks revisa lo que se va a guardar: claves, cadenas de conexión, cédulas y NIT.
+if git diff --cached --name-only | grep -E '^privado/' >/dev/null; then
+  echo "[BLOQUEADO] Hay archivos de privado/ en el commit. Esos datos nunca van a git." >&2
+  exit 1
+fi
+GITLEAKS="gitleaks"
+[ -x "herramientas/gitleaks/gitleaks.exe" ] && GITLEAKS="herramientas/gitleaks/gitleaks.exe"
+if command -v "$GITLEAKS" >/dev/null 2>&1 || [ -x "$GITLEAKS" ]; then
+  "$GITLEAKS" protect --staged --config .gitleaks.toml --redact --no-banner || {
+    echo "[BLOQUEADO] gitleaks encontró algo que no debe ir a git (ver arriba)." >&2
+    exit 1
+  }
+else
+  echo "[AVISO] gitleaks no está instalado: corra scripts/seguridad.bat una vez para descargarlo." >&2
+fi
+exit 0

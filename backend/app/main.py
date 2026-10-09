@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
@@ -9,12 +10,15 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from sqlalchemy.exc import DBAPIError
 
-from . import db, sesion
+from . import db
 from .api import ROUTERS
-from .config import CORS_ORIGENES, FRONTEND_DIST, LEMA, MARCA, VERSION
+from .config import CORS_ORIGENES, DATOS_APP, FRONTEND_DIST, LEMA, MARCA, VERSION, archivo_env
 from .repositorio import subidas as repo_subidas
+from .seguridad import cuentas, incidentes, respaldo, secretos
+from .seguridad import http as seguridad_http
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s · %(message)s")
+incidentes.instalar_filtro(None if os.getenv("CC_SIN_REGISTRO_LOCAL") == "1" else DATOS_APP / "registro")
 log = logging.getLogger("carloscruz")
 
 
@@ -29,14 +33,31 @@ async def ciclo_de_vida(_app: FastAPI):
     borradas = repo_subidas.limpiar()
     if borradas:
         log.info("Subidas vencidas borradas de la carpeta temporal: %s.", borradas)
+    # Secretos fuera de los archivos de texto (C30) y el usuario de la v2.2 a la tabla de usuarios.
+    env = archivo_env()
+    if env:
+        secretos.migrar_archivo(env)
+    try:
+        cuentas.asegurar_desde_entorno()
+        if env and cuentas.hay_usuario():
+            # El usuario ya está en la base (Argon2id): el hash de la v2.2 no se deja en el archivo.
+            secretos.quitar_lineas(env, ("CC_CLAVE_HASH",))
+    except Exception:
+        log.exception("No se pudo revisar el usuario")
+    respaldo.programar()
     yield
 
 
+# La documentación de la API no se publica (C15): solo con CC_DOCS=1 en desarrollo.
+_DOCS = os.getenv("CC_DOCS") == "1"
 app = FastAPI(
     title=f"{MARCA} — contabilidad",
     description=LEMA,
     version=VERSION,
     lifespan=ciclo_de_vida,
+    docs_url="/docs" if _DOCS else None,
+    redoc_url="/redoc" if _DOCS else None,
+    openapi_url="/openapi.json" if _DOCS else None,
 )
 
 
@@ -55,15 +76,9 @@ async def _error_de_base(_req: Request, ex: DBAPIError):
     return JSONResponse(status_code=500, content={"detail": {"codigo": "error_base",
                                                              "mensaje": "La base de datos rechazó la operación. Nada se guardó a medias."}})
 
-@app.middleware("http")
-async def _exigir_sesion(request: Request, siguiente):
-    """Toda la API pide sesión, salvo el estado del servidor y el ingreso (A2)."""
-    ruta = request.url.path
-    if (request.method != "OPTIONS" and ruta.startswith("/api/") and ruta.rstrip("/") not in sesion.PUBLICAS
-            and not sesion.leer(request.cookies.get(sesion.COOKIE))):
-        return JSONResponse(status_code=401, content={"detail": {
-            "codigo": "sin_sesion", "mensaje": "La sesión no está iniciada o venció. Ingrese de nuevo."}})
-    return await siguiente(request)
+# v2.3 · Fase 6: host, límite de solicitudes, sesión, CSRF y encabezados (ver seguridad/http.py).
+app.middleware("http")(seguridad_http.proteger)
+app.add_exception_handler(Exception, incidentes.manejar_inesperado)
 
 
 app.add_middleware(
@@ -92,7 +107,7 @@ INMUTABLE = {"Cache-Control": "public, max-age=31536000, immutable"}
 @app.get("/{ruta:path}", include_in_schema=False)
 def spa(ruta: str):
     # Una ruta de la API que no existe responde 404, no la página de la aplicación.
-    if ruta == "api" or ruta.startswith("api/"):
+    if ruta == "api" or ruta.startswith("api/") or ruta.strip("/") in ("docs", "redoc", "openapi.json"):
         return JSONResponse(status_code=404, content={"detail": {"codigo": "no_existe", "mensaje": "Eso no existe."}})
     indice = FRONTEND_DIST / "index.html"
     archivo = (FRONTEND_DIST / ruta).resolve() if ruta else None

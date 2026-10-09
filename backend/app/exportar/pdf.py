@@ -134,7 +134,8 @@ def generar(res: dict, empresa: Empresa, claves: list[str] | None = None) -> byt
     vertical, horizontal = letter, landscape(letter)
     margen = 1.5 * cm
     doc = BaseDocTemplate(buf, pagesize=vertical, leftMargin=margen, rightMargin=margen, topMargin=margen, bottomMargin=margen,
-                          title=f"Estados financieros {empresa.razon_social}", author=empresa.contador)
+                          title=f"Estados financieros {empresa.razon_social}", author=empresa.contador,
+                          creator="Carlos Cruz", producer="Carlos Cruz", subject="", keywords="")
 
     def pie(canvas, d):
         canvas.saveState()

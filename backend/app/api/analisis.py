@@ -1,10 +1,11 @@
 """Histórico por cliente, libro diario consultable, sugerencias y buscador global."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Body, HTTPException, Query
+from fastapi import APIRouter, Body, HTTPException, Query, Request
 from fastapi.responses import Response
 
 from ..contabilidad import libros
+from .. import sesion
 from ..exactitud import a_json
 from ..exportar import excel, pdf
 from ..inteligencia import sugerencias as sug
@@ -112,8 +113,9 @@ def versiones_del_periodo(periodo_id: str):
 
 
 @router.post("/versiones/{version_id}/restaurar")
-def restaurar_version(version_id: int):
-    """Devuelve el periodo al estado de esa versión. El estado actual queda como versión nueva."""
+def restaurar_version(request: Request, version_id: int):
+    """Devuelve el periodo al estado de esa versión. El estado actual queda como versión nueva (pide la contraseña)."""
+    sesion.exigir_reautenticacion(request)
     try:
         periodo = repo.restaurar_version(version_id)
     except repo.ErrorPeriodo as ex:

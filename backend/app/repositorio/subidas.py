@@ -15,11 +15,13 @@ from __future__ import annotations
 import logging
 import os
 import re
+import secrets
 import shutil
 import tempfile
 import time
 from pathlib import Path
 
+from ..seguridad import cifrado
 from .sesiones import VIDA
 
 log = logging.getLogger(__name__)
@@ -44,10 +46,15 @@ def guardar(subida_id: str, archivos: list[tuple[str, bytes]]) -> list[dict]:
     destino = carpeta() / subida_id
     destino.mkdir(parents=True, exist_ok=True)
     refs = []
-    for i, (nombre, contenido) in enumerate(archivos):
-        ruta = destino / f"{i:02d}__{_segura(nombre)}"
-        ruta.write_bytes(contenido)
-        refs.append({"nombre": nombre, "ruta": str(ruta), "bytes": len(contenido)})
+    for nombre, contenido in archivos:
+        # v2.3 · C25: nombre aleatorio (el original nunca es una ruta) y contenido cifrado (AES-256-GCM).
+        ruta = destino / f"{secrets.token_hex(12)}.cc"
+        ruta.write_bytes(cifrado.cifrar(contenido, contexto=b"subida"))
+        try:
+            os.chmod(ruta, 0o600)
+        except OSError:  # pragma: no cover
+            pass
+        refs.append({"nombre": _segura(nombre), "ruta": str(ruta), "bytes": len(contenido)})
     return refs
 
 
@@ -58,7 +65,10 @@ def leer(refs: list[dict]) -> list[tuple[str, bytes]]:
         ruta = Path(r["ruta"])
         if ruta.exists():
             os.utime(ruta.parent)  # usar la subida renueva su vida
-            salida.append((r["nombre"], ruta.read_bytes()))
+            try:
+                salida.append((r["nombre"], cifrado.descifrar(ruta.read_bytes(), contexto=b"subida")))
+            except cifrado.CifradoInvalido:
+                log.warning("Una subida temporal no se pudo descifrar y se ignoró.")
     return salida
 
 

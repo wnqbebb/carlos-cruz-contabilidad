@@ -32,6 +32,7 @@ from ..contabilidad.estados import resultados
 from ..contabilidad.mayor import CuentaMayor
 from ..modelos import Empresa
 from ..utils.numeros import CERO
+from ..seguridad.archivos import blindar_libro
 
 # ── paleta: los mismos tokens de la interfaz (frontend/src/styles/tokens.css) ──
 # H14: el Excel usaba índigo y verde del diseño viejo. En esta aplicación no
@@ -294,6 +295,7 @@ def reporte_suelto(rep: dict, empresa: Empresa) -> bytes:
     ws.title = rep["titulo"][:31].title()
     escribir_reporte(ws, rep, empresa)
     buf = io.BytesIO()
+    blindar_libro(wb)
     wb.save(buf)
     return buf.getvalue()
 
@@ -559,6 +561,7 @@ def saldos_xlsx(saldos: list[dict]) -> bytes:
     ws.title = "SALDOS_INICIALES"
     hoja_saldos(ws, saldos)
     buf = io.BytesIO()
+    blindar_libro(wb)
     wb.save(buf)
     return buf.getvalue()
 
@@ -1048,5 +1051,6 @@ def libro_completo(res: dict, empresa: Empresa) -> bytes:
         hoja.sheet_properties.tabColor = colores.get(hoja.title, "BFBFBF")
 
     buf = io.BytesIO()
+    blindar_libro(wb)
     wb.save(buf)
     return buf.getvalue()

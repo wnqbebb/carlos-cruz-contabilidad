@@ -61,6 +61,25 @@ def _cargar_env() -> None:
 
 _cargar_env()
 
+
+def archivo_env() -> Path | None:
+    """El archivo de configuración en uso (para mover sus secretos al almacén de Windows)."""
+    propio = (os.getenv("CC_ENV") or "").strip()
+    for ruta in ([Path(propio)] if propio else []) + [RAIZ / "backend" / ".env", RAIZ / ".env"]:
+        if ruta.exists():
+            return ruta
+    return None
+
+
+def _desde_almacen(nombre: str) -> str:
+    """Un secreto que ya no está en el archivo de texto: se lee del Administrador de credenciales."""
+    try:
+        from .seguridad import secretos
+
+        return secretos.leer(nombre) or ""
+    except Exception:
+        return ""
+
 MARCA = "Carlos Cruz"
 LEMA = "Contabilidad que cuadra."
 LEMA_LARGO = "Cuadramos sus cuentas; usted atiende su negocio."
@@ -74,15 +93,30 @@ SQLITE_URL = f"sqlite:///{SQLITE_ARCHIVO.as_posix()}"
 
 
 def _normalizar_postgres(url: str) -> str:
-    """Supabase entrega 'postgresql://'; SQLAlchemy necesita el driver psycopg explícito."""
+    """Supabase entrega 'postgresql://'; SQLAlchemy necesita el driver psycopg explícito.
+
+    v2.3 · C31: la conexión verifica el certificado del servidor (`sslmode=verify-full`). Supabase
+    firma con su propia autoridad: su certificado raíz público va en `data/seguridad/`.
+    """
+    from urllib.parse import parse_qsl, quote, urlencode, urlsplit, urlunsplit
+
     if url.startswith("postgres://"):
         url = "postgresql://" + url[len("postgres://"):]
     if url.startswith("postgresql://"):
         url = "postgresql+psycopg://" + url[len("postgresql://"):]
-    return url
+    if os.getenv("CC_SSL") == "require":  # solo para diagnosticar; no se usa en producción
+        return url
+    partes = urlsplit(url)
+    consulta = dict(parse_qsl(partes.query))
+    raiz = os.getenv("CC_SSL_RAIZ") or (str(DATA / "seguridad" / "supabase-ca-2021.crt")
+                                       if "supabase" in (partes.hostname or "") else "system")
+    consulta.update({"sslmode": "verify-full", "sslrootcert": raiz})
+    return urlunsplit((partes.scheme, partes.netloc, partes.path, urlencode(consulta, quote_via=quote), partes.fragment))
 
 
 _env_url = (os.getenv("DATABASE_URL") or "").strip()
+if not _env_url and (os.getenv("ALMACENAMIENTO") or "").strip().lower() != "local":
+    _env_url = _desde_almacen("DATABASE_URL")
 ALMACENAMIENTO = (os.getenv("ALMACENAMIENTO") or "").strip().lower() or ("supabase" if _env_url else "local")
 
 if ALMACENAMIENTO == "supabase" and _env_url:
@@ -95,7 +129,7 @@ else:
 
 SUPABASE_URL = (os.getenv("SUPABASE_URL") or "").strip().rstrip("/")
 SUPABASE_ANON_KEY = (os.getenv("SUPABASE_ANON_KEY") or "").strip()
-SUPABASE_SERVICE_KEY = (os.getenv("SUPABASE_SERVICE_KEY") or "").strip()
+SUPABASE_SERVICE_KEY = (os.getenv("SUPABASE_SERVICE_KEY") or (_desde_almacen("SUPABASE_SERVICE_KEY") if ALMACENAMIENTO != "local" else "")).strip()
 
 CORS_ORIGENES = [o.strip() for o in (os.getenv("CORS_ORIGENES") or "").split(",") if o.strip()] or [
     "http://localhost:5173",

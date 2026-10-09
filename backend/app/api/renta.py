@@ -8,20 +8,28 @@ import io
 import zipfile
 from datetime import date
 
-from fastapi import APIRouter, File, HTTPException, UploadFile
+from fastapi import APIRouter, File, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel
 
+import logging
+
+from .. import sesion
 from ..exactitud import a_json
+from ..repositorio import bitacora
+from ..seguridad import aislado, incidentes
+from ..seguridad import archivos as seg_archivos
 from ..exportar import renta as exportar
 from ..renta import parametros, servicio
 from ..repositorio import renta as repo
 from ..repositorio.clientes import ErrorCliente
 
 router = APIRouter(prefix="/api/renta", tags=["renta"])
+log = logging.getLogger("carloscruz.renta")
 
 TAMANO_MAXIMO = 25 * 1024 * 1024
 MAXIMO_ARCHIVOS = 20
+PERMITIDAS = (".png", ".jpg", ".jpeg", ".webp", ".bmp", ".tif", ".tiff", ".pdf", ".xlsx", ".xlsm", ".xls", ".csv")
 
 
 def _errores(fn):
@@ -33,8 +41,13 @@ def _errores(fn):
         raise HTTPException(409, {"codigo": "sin_parametros", "mensaje": str(ex)}) from ex
     except ErrorCliente as ex:
         raise HTTPException(404, {"codigo": "sin_cliente", "mensaje": str(ex)}) from ex
-    except (ValueError, KeyError) as ex:
-        raise HTTPException(422, {"codigo": "dato_invalido", "mensaje": str(ex).strip("'")}) from ex
+    except ValueError as ex:  # mensajes propios de la renta, escritos para el contador
+        raise HTTPException(422, {"codigo": "dato_invalido", "mensaje": str(ex)}) from ex
+    except (KeyError, TypeError, ArithmeticError) as ex:
+        codigo = incidentes.nuevo_codigo()
+        log.error("%s · renta", codigo, exc_info=ex)
+        raise HTTPException(422, {"codigo": "dato_invalido", "incidente": codigo,
+                                  "mensaje": f"Un dato no es válido. Código de incidente {codigo}."}) from ex
 
 
 def _anio(anio: int) -> int:
@@ -71,7 +84,14 @@ async def documentos(cliente_id: str, anio: int, archivos: list[UploadFile] = Fi
         if len(contenido) > TAMANO_MAXIMO:
             raise HTTPException(413, {"codigo": "muy_grande", "mensaje": f"«{a.filename}» pasa de 25 MB."})
         leidos.append((a.filename or "archivo", contenido))
-    return JSONResponse(a_json(_errores(lambda: servicio.subir(cliente_id, anio, leidos))))
+    try:
+        avisos = seg_archivos.validar_todos(leidos, PERMITIDAS)
+    except seg_archivos.ArchivoRechazado as ex:
+        raise HTTPException(400, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
+    try:
+        return JSONResponse(a_json(_errores(lambda: servicio.subir(cliente_id, anio, leidos, avisos))))
+    except aislado.ArchivoNoProcesable as ex:
+        raise HTTPException(422, {"codigo": ex.codigo, "mensaje": str(ex)}) from ex
 
 
 class Cambio(BaseModel):
@@ -120,8 +140,12 @@ def recorte(cliente_id: str, anio: int, recorte_id: str):
 
 
 @router.get("/{cliente_id}/{anio}/descargar/{que}")
-def descargar(cliente_id: str, anio: int, que: str):
+def descargar(request: Request, cliente_id: str, anio: int, que: str):
     _anio(anio)
+    if que == "todo":
+        sesion.exigir_reautenticacion(request)
+    bitacora.registrar("descarga", cliente_id, que=f"renta-{anio}-{que}",
+                       ip=request.client.host if request.client else "?")
     v = _errores(lambda: servicio.vista(cliente_id, anio))
     if not v.get("resultado"):
         raise HTTPException(409, {"codigo": "sin_datos", "mensaje": "Todavía no hay borrador: suba los documentos."})

@@ -418,3 +418,48 @@ renta_recortes = Table(
     Column("png", LargeBinary, nullable=False),
     Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
 )
+
+# ── 15. ACCESO (v2.3 · Fase 6) ─────────────────────────────────────────────
+# El usuario del contador, sus códigos de recuperación (solo el hash) y las
+# sesiones abiertas (solo el hash del token: la cookie sola no sirve para nada
+# si la sesión se cerró o venció en el servidor).
+usuarios = Table(
+    "usuarios",
+    metadatos,
+    Column("id", Serial, primary_key=True, autoincrement=True),
+    Column("usuario", Text, nullable=False, unique=True),
+    Column("hash", Text, nullable=False),
+    Column("totp_secreto", Text),          # cifrado con la clave de datos
+    Column("totp_pendiente", Text),        # mientras se escanea el código QR
+    Column("totp_activo", Boolean, nullable=False, default=False),
+    Column("clave_cambiada", DateTime(timezone=True)),
+    Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+)
+
+codigos_recuperacion = Table(
+    "codigos_recuperacion",
+    metadatos,
+    Column("id", Serial, primary_key=True, autoincrement=True),
+    Column("usuario_id", BigInteger().with_variant(Integer, "sqlite"), ForeignKey("usuarios.id", ondelete="CASCADE"),
+           nullable=False),
+    Column("hash", Text, nullable=False),
+    Column("usado", DateTime(timezone=True)),
+    Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+)
+
+sesiones_acceso = Table(
+    "sesiones_acceso",
+    metadatos,
+    Column("id", Text, primary_key=True),                      # sha256 del token de la cookie
+    Column("usuario_id", BigInteger().with_variant(Integer, "sqlite"), ForeignKey("usuarios.id", ondelete="CASCADE"),
+           nullable=False),
+    Column("csrf", Text, nullable=False),
+    Column("creada", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Column("ultima", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Column("expira", DateTime(timezone=True), nullable=False),
+    Column("reautenticada", DateTime(timezone=True)),
+    Column("ip", Text, default=""),
+    Column("agente", Text, default=""),
+    Column("revocada", Boolean, nullable=False, default=False),
+    Index("sesiones_usuario_idx", "usuario_id"),
+)

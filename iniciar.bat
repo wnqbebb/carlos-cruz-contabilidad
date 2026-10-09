@@ -18,12 +18,16 @@ if not exist ".venv\Scripts\python.exe" (
 )
 
 echo Verificando dependencias...
-".venv\Scripts\python.exe" -m pip install -q --disable-pip-version-check -r backend\requirements.txt
+rem v2.3 · C34: versiones fijas y verificadas con hash (backend\requirements.lock).
+".venv\Scripts\python.exe" -m pip install -q --disable-pip-version-check --require-hashes -r backend\requirements.lock
 if errorlevel 1 (
   echo [ERROR] No se pudieron instalar las dependencias. Revise la conexion a internet.
   pause
   exit /b 1
 )
+
+rem Revisión antes de cada commit (gitleaks y «nada de privado/»), si esto es una copia de git.
+if exist ".git" git config core.hooksPath .githooks >nul 2>nul
 
 if not exist "datos_app\tesseract\tesseract.exe" (
   echo Preparando el lector de fotos para la declaracion de renta...
@@ -60,7 +64,7 @@ if "%COMPILAR%"=="1" (
     )
   ) else (
     pushd frontend
-    if not exist "node_modules" call npm install --no-audit --no-fund
+    if not exist "node_modules" call npm ci --no-audit --no-fund
     call npm run build
     popd
   )

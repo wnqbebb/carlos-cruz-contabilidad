@@ -10,3 +10,9 @@
 *.woff binary
 *.woff2 binary
 *.db binary
+
+# Los .bat de Windows necesitan CRLF (cmd falla con etiquetas si solo hay LF).
+*.bat text eol=crlf
+# Los hooks y scripts de shell necesitan LF.
+.githooks/* text eol=lf
+*.sh text eol=lf

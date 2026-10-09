@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import calendar
+import logging
 from datetime import date, timedelta
 
 from fastapi import APIRouter, Body, File, HTTPException, Query, UploadFile
@@ -22,11 +23,14 @@ from ..repositorio import alias as repo_alias
 from ..repositorio import bitacora as repo_bitacora
 from ..repositorio import clientes as repo_clientes
 from ..repositorio import importaciones as repo_importaciones
+from ..seguridad import incidentes
+from .subir import leer_aislado, validar_o_rechazar
 from ..repositorio import periodos as repo_periodos
 from ..repositorio import sesiones
 from ..utils.numeros import parse_fecha
 
 router = APIRouter(prefix="/api", tags=["trabajo"])
+log = logging.getLogger("carloscruz.trabajo")
 
 XLSX = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 MAX_ARCHIVO = 25 * 1024 * 1024
@@ -135,7 +139,7 @@ def _origenes(dets, conversion) -> dict[str, list[str]]:
 def _importar(archivos: list[tuple[str, bytes]], cliente_id: str | None) -> dict:
     empresa, cliente = _empresa_base(cliente_id)
     mapeador = Mapeador(repo_alias.de_cliente(empresa.nit))
-    dets, conversion = detectar_conjunto(archivos, mapeador, empresa)
+    dets, conversion = leer_aislado("app.importadores.detector.detectar_conjunto", archivos, mapeador, empresa)
 
     # La plantilla puede traer datos de empresa que completan la ficha.
     for d in dets:
@@ -229,6 +233,7 @@ async def importar(archivos: list[UploadFile] = File(...), cliente_id: str = Que
         datos.append((nombre, contenido))
     if not datos:
         raise HTTPException(400, "No se recibió ningún archivo.")
+    validar_o_rechazar(datos, EXTENSIONES)
     return _importar(datos, cliente_id or None)
 
 
@@ -361,8 +366,11 @@ def calcular(peticion: dict = Body(...)):
     _saldos_de_apertura(paquete, alertas, cliente_id, empresa.periodo_desde)
     try:
         resultado = motor.calcular(paquete, empresa, config, decisiones, alertas, aud_nom, aud_ef)
-    except Exception as ex:  # se informa en español sin tumbar el servidor
-        raise HTTPException(500, f"No se pudo calcular: {ex}") from ex
+    except Exception as ex:  # se informa en español sin tumbar el servidor; el detalle va al registro
+        codigo = incidentes.nuevo_codigo()
+        log.error("%s · cálculo", codigo, exc_info=ex)
+        raise HTTPException(500, {"codigo": "incidente", "incidente": codigo, "mensaje":
+                                  f"No se pudo calcular este periodo. Código de incidente {codigo}."}) from ex
 
     sesiones.actualizar(peticion["sesion_id"], resultado=resultado, peticion=peticion,
                         empresa_calculo=empresa, cliente_id=cliente_id)
@@ -377,7 +385,10 @@ def calcular(peticion: dict = Body(...)):
             raise
         except Exception as ex:  # no se pierde el cálculo por un fallo de la base
             salida["guardado"] = False
-            salida["aviso_guardado"] = f"El cálculo salió bien pero no se pudo guardar en la base: {ex}"
+            codigo = incidentes.nuevo_codigo()
+            log.error("%s · guardar el cálculo", codigo, exc_info=ex)
+            salida["aviso_guardado"] = ("El cálculo salió bien pero no se pudo guardar en la base. "
+                                        f"Código de incidente {codigo}.")
     else:
         salida["guardado"] = False
 
@@ -415,7 +426,11 @@ def _calcular_por_periodos(s, peticion, cliente_id, empresa, paquete, alertas, a
         try:
             resultado = motor.calcular(sub, emp_i, config, decisiones, alertas_i, aud_nom, aud_ef)
         except Exception as ex:
-            raise HTTPException(500, f"No se pudo calcular {desde.isoformat()} a {hasta.isoformat()}: {ex}") from ex
+            codigo = incidentes.nuevo_codigo()
+            log.error("%s · cálculo por periodos", codigo, exc_info=ex)
+            raise HTTPException(500, {"codigo": "incidente", "incidente": codigo, "mensaje":
+                                      f"No se pudo calcular {desde.isoformat()} a {hasta.isoformat()}. "
+                                      f"Código de incidente {codigo}."}) from ex
         pet_i = {**peticion, "empresa": {**(peticion.get("empresa") or {}),
                                         "periodo_desde": desde.isoformat(), "periodo_hasta": hasta.isoformat()}}
         salida = _salida(resultado, origenes)

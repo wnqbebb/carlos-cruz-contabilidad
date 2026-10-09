@@ -45,6 +45,17 @@ ACCIONES = {
     "parametros_guardados": "Parámetros legales guardados",
     "demo_eliminada": "Clientes de demostración eliminados",
     "renta_documentos": "Documentos de renta leídos",
+    "ingreso": "Ingreso",
+    "reautenticacion_fallida": "Confirmación de contraseña fallida",
+    "recuperacion_fallida": "Recuperación de acceso fallida",
+    "acceso_creado": "Acceso creado",
+    "clave_cambiada": "Contraseña cambiada",
+    "clave_recuperada": "Contraseña recuperada con un código",
+    "codigos_regenerados": "Códigos de recuperación nuevos",
+    "totp_activado": "Verificación en dos pasos activada",
+    "totp_desactivado": "Verificación en dos pasos desactivada",
+    "sesiones_cerradas": "Sesiones cerradas",
+    "descarga": "Descarga",
     "renta_presentada": "Declaración de renta presentada",
 }
 

@@ -53,9 +53,30 @@ export class ErrorApi extends Error {
 const ESPERAS_REINTENTO = [800, 2000];
 const dormir = (ms: number) => new Promise((ok) => setTimeout(ok, ms));
 
-async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
+/* ── v2.3 · Fase 6: token CSRF de la sesión y confirmación de contraseña ──
+   Toda petición que modifica datos lleva el token de la sesión en `X-CSRF`.
+   Si el servidor pide confirmar la contraseña (acciones delicadas), se abre el
+   diálogo registrado con `alPedirContrasena` y, si el contador la confirma, la
+   petición se repite una vez. */
+let tokenCsrf: string | null = null;
+let pedirContrasena: (() => Promise<boolean>) | null = null;
+
+export function fijarCsrf(token: string | null | undefined) {
+  tokenCsrf = token ?? null;
+}
+
+export function alPedirContrasena(fn: (() => Promise<boolean>) | null) {
+  pedirContrasena = fn;
+}
+
+async function pedir<T>(ruta: string, opciones?: RequestInit, reintento = true): Promise<T> {
   // Solo las lecturas se repiten: repetir una escritura podría hacerla dos veces.
   const esLectura = !opciones?.method || opciones.method === "GET";
+  if (!esLectura && tokenCsrf) {
+    const encabezados = new Headers(opciones?.headers);
+    encabezados.set("X-CSRF", tokenCsrf);
+    opciones = { ...opciones, headers: encabezados };
+  }
   let r: Response | null = null;
   for (let intento = 0; ; intento++) {
     try {
@@ -92,6 +113,19 @@ async function pedir<T>(ruta: string, opciones?: RequestInit): Promise<T> {
     }
     // Sin sesión (venció o se cerró en otra pestaña): la aplicación vuelve a la pantalla de ingreso.
     if (r.status === 401 && codigo === "sin_sesion") window.dispatchEvent(new Event("cc:sesion-vencida"));
+    if (r.status === 403 && reintento) {
+      // La página guardaba un token viejo: se toma el de la sesión y se repite una vez.
+      if (codigo === "csrf") {
+        const e = await fetch(BASE + "/api/sesion").then((x) => x.json()).catch(() => null);
+        if (e?.csrf) {
+          fijarCsrf(e.csrf);
+          return pedir<T>(ruta, opciones, false);
+        }
+      }
+      if (codigo === "reautenticar" && pedirContrasena && (await pedirContrasena())) {
+        return pedir<T>(ruta, opciones, false);
+      }
+    }
     throw new ErrorApi(detalle, r.status, codigo, datos);
   }
   if (r.status === 204) return undefined as T;
@@ -124,13 +158,75 @@ export interface EstadoSesion {
   activa: boolean;
   usuario: string | null;
   configurado: boolean;
+  puede_crear?: boolean;
+  csrf?: string | null;
+  totp?: boolean;
+  reautenticacion_vigente?: boolean;
+}
+export interface EvaluacionClave {
+  valida: boolean;
+  problemas: string[];
+  puntaje: number;
+}
+export interface EstadoAcceso {
+  usuario: string;
+  totp_activo: boolean;
+  codigos_restantes: number;
+  sesiones: number;
+  fallidos_24h: number;
 }
 export const sesionApi = {
-  estado: () => pedir<EstadoSesion>("/api/sesion"),
-  entrar: (usuario: string, clave: string) =>
-    pedir<EstadoSesion>("/api/sesion", { method: "POST", ...json({ usuario, clave }) }),
+  async estado() {
+    const e = await pedir<EstadoSesion>("/api/sesion");
+    fijarCsrf(e.csrf);
+    return e;
+  },
+  async entrar(usuario: string, clave: string, codigo = "") {
+    const e = await pedir<EstadoSesion>("/api/sesion", { method: "POST", ...json({ usuario, clave, codigo }) });
+    fijarCsrf(e.csrf);
+    return e;
+  },
   salir: () => pedir<EstadoSesion>("/api/sesion/salir", { method: "POST" }),
+  reautenticar: (clave: string, codigo = "") =>
+    pedir<{ ok: boolean }>("/api/sesion/reautenticar", { method: "POST", ...json({ clave, codigo }) }, false),
 };
+
+/* ── la cuenta del contador (v2.3 · Fase 6) ────────────────────────────── */
+export const acceso = {
+  politica: (clave: string, usuario = "") =>
+    pedir<EvaluacionClave>("/api/acceso/politica", { method: "POST", ...json({ clave, usuario }) }),
+  async crear(usuario: string, clave: string) {
+    const r = await pedir<{ usuario: string; codigos: string[]; csrf: string }>("/api/acceso/primer-uso", {
+      method: "POST",
+      ...json({ usuario, clave }),
+    });
+    fijarCsrf(r.csrf);
+    return r;
+  },
+  recuperar: (usuario: string, codigo: string, nueva: string) =>
+    pedir<{ ok: boolean; codigos_restantes: number }>("/api/acceso/recuperar", {
+      method: "POST",
+      ...json({ usuario, codigo, nueva }),
+    }),
+  estado: () => pedir<EstadoAcceso>("/api/acceso/estado"),
+  cambiarClave: (actual: string, nueva: string) =>
+    pedir<{ ok: boolean; sesiones_cerradas: number }>("/api/acceso/clave", { method: "POST", ...json({ actual, nueva }) }),
+  nuevosCodigos: () => pedir<{ codigos: string[] }>("/api/acceso/codigos", { method: "POST" }),
+  iniciarTotp: () => pedir<{ qr: string; secreto: string }>("/api/acceso/totp/iniciar", { method: "POST" }),
+  confirmarTotp: (codigo: string) =>
+    pedir<{ codigos: string[] }>("/api/acceso/totp/confirmar", { method: "POST", ...json({ codigo }) }),
+  desactivarTotp: () => pedir<{ ok: boolean }>("/api/acceso/totp/desactivar", { method: "POST" }),
+  cerrarOtrasSesiones: () => pedir<{ cerradas: number }>("/api/acceso/sesiones/cerrar-todas", { method: "POST" }),
+};
+
+/** Descargas que piden confirmar la contraseña: se confirma antes de abrir el enlace. */
+export async function descargarConfirmando(url: string) {
+  const e = await sesionApi.estado();
+  if (!e.reautenticacion_vigente) {
+    if (!pedirContrasena || !(await pedirContrasena())) return;
+  }
+  window.location.href = url;
+}
 
 /* ── directorio de clientes ────────────────────────────────────────────── */
 export const clientes = {

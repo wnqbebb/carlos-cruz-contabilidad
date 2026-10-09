@@ -18,3 +18,13 @@ bcrypt>=4.2          # contraseña del contador (inicio de sesión)
 pytesseract>=0.3.13   # lectura de fotos de reportes de renta (OCR)
 opencv-python-headless>=4.10  # enderezar, aplanar y recortar las fotos
 numpy>=1.26
+# Seguridad (v2.3 · Fase 6)
+argon2-cffi>=23.1     # contraseñas con Argon2id
+pyotp>=2.9            # verificación en dos pasos (TOTP)
+segno>=1.6            # código QR para activar los dos pasos
+keyring>=25.0         # secretos en el Administrador de credenciales de Windows
+cryptography>=43.0    # AES-256-GCM para archivos y copias de seguridad
+defusedxml>=0.7       # XML seguro (openpyxl lo usa si está instalado)
+psutil>=6.0           # límite de memoria al leer archivos en un proceso aparte
+Pillow>=10.4          # límites de imágenes
+pystray>=0.19         # ícono en la bandeja del sistema (ejecutable)

@@ -142,7 +142,7 @@ export function EsqueletoFicha() {
   );
 }
 
-/* ── error: hoja con borde rojo, mensaje humano, detalle plegable ───────── */
+/* ── error: hoja con borde rojo y mensaje humano ──────────────────────── */
 export function EstadoError({
   titulo,
   mensaje = "Puede ser la conexión o el servidor. Lo que ya estaba guardado no se perdió.",
@@ -151,7 +151,7 @@ export function EstadoError({
 }: {
   titulo: string;
   mensaje?: ReactNode;
-  /** Texto técnico (mensaje del servidor). Plegado por defecto. */
+  /** Lo que respondió el servidor: siempre un mensaje humano, a lo sumo con código de incidente. */
   detalle?: string;
   onReintentar?: () => void;
 }) {
@@ -162,14 +162,9 @@ export function EstadoError({
         <div className="min-w-0 flex-1">
           <h2 className="t-h2 text-tinta">{titulo}</h2>
           <p className="t-body mt-2 text-grafito">{mensaje}</p>
-          {detalle && (
-            <details className="mt-4">
-              <summary className="t-meta cursor-pointer select-none text-gris">Detalle técnico</summary>
-              <pre className="codigo mt-3 overflow-x-auto whitespace-pre-wrap rounded-chip bg-hoja-2 p-3 text-[12px] text-grafito">
-                {detalle}
-              </pre>
-            </details>
-          )}
+          {/* v2.3 · C16: el servidor ya responde en lenguaje humano (y con código de incidente si
+              algo falló de su lado). Nada técnico se muestra en pantalla. */}
+          {detalle && <p className="t-small mt-3 text-grafito">{detalle}</p>}
           {onReintentar && (
             <div className="mt-6">
               <BotonPrimario onClick={onReintentar} icono={<RotateCcw size={16} strokeWidth={1.5} aria-hidden />}>

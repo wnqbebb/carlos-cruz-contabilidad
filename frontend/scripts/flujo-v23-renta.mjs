@@ -93,7 +93,7 @@ if (casoA) {
 // 3 · Descargue (1 clic)
 const [descarga] = await Promise.all([
   p.waitForEvent("download"),
-  p.getByRole("link", { name: /Descargar borrador, papel de trabajo y resumen/ }).click(),
+  p.getByRole("button", { name: /Descargar borrador, papel de trabajo y resumen/ }).click(),
 ]);
 clics += 1;
 const nombre = descarga.suggestedFilename();

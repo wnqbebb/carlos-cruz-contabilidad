@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useSearchParams } from "react-router-dom";
 import { animarPantalla, gsap, salirPantalla } from "./animacion";
+import { ProveedorReautenticacion } from "./componentes/Acceso";
 import { Marco } from "./componentes/Marco";
 import { Preloader } from "./componentes/Preloader";
 import { Puerta } from "./componentes/Subir";
@@ -18,11 +19,13 @@ import { BotonFantasma, BotonPrimario, ProveedorAvisos } from "./ui";
 export default function App() {
   const [estado, setEstado] = useState<"consultando" | "fuera" | "dentro">("consultando");
   const [configurado, setConfigurado] = useState(true);
+  const [puedeCrear, setPuedeCrear] = useState(false);
   useEffect(() => {
     sesionApi
       .estado()
       .then((e) => {
         setConfigurado(e.configurado);
+        setPuedeCrear(!!e.puede_crear);
         setEstado(e.activa ? "dentro" : "fuera");
       })
       .catch(() => setEstado("fuera"));
@@ -31,7 +34,7 @@ export default function App() {
     return () => window.removeEventListener("cc:sesion-vencida", vencida);
   }, []);
   if (estado === "consultando") return null;
-  if (estado === "fuera") return <Ingreso configurado={configurado} />;
+  if (estado === "fuera") return <Ingreso configurado={configurado} puedeCrear={puedeCrear} />;
   return <Aplicacion />;
 }
 
@@ -42,11 +45,13 @@ function Aplicacion() {
         {/* `Puerta` envuelve toda la aplicación: así se puede soltar un archivo
             sobre cualquier pantalla y el botón «Subir archivo» funciona desde
             donde sea (spec v2.2 · Fase 3). */}
-        <Puerta>
-          <Marco>
-            <Contenido />
-          </Marco>
-        </Puerta>
+        <ProveedorReautenticacion>
+          <Puerta>
+            <Marco>
+              <Contenido />
+            </Marco>
+          </Puerta>
+        </ProveedorReautenticacion>
         <Preloader />
       </ProveedorAvisos>
     </BrowserRouter>

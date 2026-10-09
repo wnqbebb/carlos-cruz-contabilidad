@@ -6,19 +6,8 @@
     <meta name="theme-color" content="#e8e4dc" />
     <meta name="description" content="Carlos Cruz — contabilidad que cuadra. Balance, estados financieros, nómina e inventario de todos sus clientes, con precisión decimal exacta." />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <!-- Modo claro, oscuro o el del sistema (8.4), ANTES de pintar: así no
-         hay un destello claro al abrir en oscuro. Lo mismo hace src/tema.ts. -->
-    <script>
-      (function () {
-        try {
-          var p = localStorage.getItem("cc-tema") || "sistema";
-          var oscuro = p === "oscuro" || (p === "sistema" && matchMedia("(prefers-color-scheme: dark)").matches);
-          document.documentElement.setAttribute("data-tema", oscuro ? "oscuro" : "claro");
-        } catch (e) {
-          document.documentElement.setAttribute("data-tema", "claro");
-        }
-      })();
-    </script>
+    <!-- Modo claro u oscuro antes de pintar: en un archivo aparte (la CSP prohíbe scripts en línea). -->
+    <script src="/tema-inicial.js"></script>
 
     <title>Carlos Cruz · Contabilidad que cuadra</title>
   </head>
