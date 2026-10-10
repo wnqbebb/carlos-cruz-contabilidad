@@ -16,6 +16,7 @@ NOMBRES_FORMATO = {
     "libro_diario": "Libro diario (partida doble)",
     "balance": "Balance de prueba o saldos por cuenta",
     "auxiliares": "Registros auxiliares (ventas, compras, gastos, cartera…)",
+    "facturas_dian": "Facturas electrónicas de la DIAN (emitidas y recibidas)",
     "desconocido": "Formato no reconocido",
 }
 

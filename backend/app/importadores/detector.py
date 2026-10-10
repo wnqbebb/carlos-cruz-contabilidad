@@ -7,7 +7,8 @@ from decimal import Decimal
 from ..contabilidad.puc import Mapeador
 from ..modelos import Alerta, Empresa
 from ..utils.numeros import CERO, normalizar, pesos
-from . import aportes, auxiliares, balance, cuenta_t, estados_existentes, hoja_trabajo, libro_diario, nomina, plantilla
+from . import (aportes, auxiliares, balance, cuenta_t, estados_existentes, facturas_dian, hoja_trabajo, libro_diario,
+               nomina, plantilla)
 from .base import Deteccion
 from .lector import Hoja, leer_archivo
 
@@ -22,6 +23,9 @@ def detectar_hoja(h: Hoja, id_: str, mapeador: Mapeador, empresa: Empresa) -> De
         return Deteccion(id_, h.archivo, h.nombre, "plantilla", False, "Hoja de referencia de la plantilla (no contiene datos)")
     if plantilla.nombre_hoja(h):
         return plantilla.importar(h, id_)
+    fe = facturas_dian.detectar(h)
+    if fe is not None:
+        return facturas_dian.importar(h, fe, id_, empresa)
     if estados_existentes.detectar(h):
         return estados_existentes.importar(h, id_, empresa)
     r = nomina.detectar(h)
