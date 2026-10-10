@@ -16,6 +16,13 @@ test("J4 · editar nombre, datos y socios, y comprobar tras recargar", async ({ 
   await expect(page.getByRole("heading", { level: 1 })).toContainText("COMPLETO DOS");
   expect(Date.now() - t0).toBeLessThan(10_000);
 
+  // Como en la v2.2: honorarios y periodicidad también se editan en la cabecera.
+  await r.clic(page.getByRole("button", { name: "Editar honorarios mensuales" }));
+  const honorarios = page.getByRole("textbox", { name: "Honorarios mensuales" });
+  await honorarios.fill("450000");
+  await honorarios.press("Enter");
+  await expect(page.getByText("$ 450.000").first()).toBeVisible();
+
   await r.clic(page.getByRole("button", { name: "Editar cliente" }));
   const panel = page.getByRole("dialog", { name: "Editar cliente" });
   await panel.getByLabel("Municipio").fill("Buga");
@@ -32,6 +39,7 @@ test("J4 · editar nombre, datos y socios, y comprobar tras recargar", async ({ 
 
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toContainText("COMPLETO DOS");
+  await expect(page.getByText("$ 450.000").first()).toBeVisible();
   await page.getByRole("button", { name: "Editar cliente" }).click();
   await expect(panel.getByLabel("Municipio")).toHaveValue("Buga");
   await expect(panel.getByLabel("Teléfono")).toHaveValue("3001234567");

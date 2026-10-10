@@ -355,6 +355,9 @@ function CabeceraCliente({
   onActualizar: (actualizado: Cliente) => void;
 }) {
   const codigo = `${cliente.sigla || "Cliente"} — ${cliente.nit.slice(-3)}`;
+  const guardarCampo = (campo: keyof Cliente) => async (v: string) => {
+    onActualizar(await api.actualizar(cliente.id, { [campo]: v } as Partial<Cliente>));
+  };
   const desde = cliente.fecha_constitucion
     ? `Constituida ${fechaEsquina(cliente.fecha_constitucion)}`
     : `Ficha desde ${fechaEsquina(cliente.creado)}`;
@@ -394,10 +397,19 @@ function CabeceraCliente({
               </EnLinea>
             </h1>
           </div>
+          {/* Rescate H8: como en la v2.2, sigla y municipio se editan ahí mismo. */}
           <p className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 text-grafito">
-            {cliente.sigla && <span className="t-body font-semibold text-tinta">{cliente.sigla}</span>}
+            <span className="t-body font-semibold text-tinta">
+              <EnLinea valor={cliente.sigla ?? ""} etiqueta="Sigla" onGuardar={guardarCampo("sigla")}>
+                {cliente.sigla || <span className="font-normal text-gris">Agregar sigla</span>}
+              </EnLinea>
+            </span>
             <span className="codigo text-[13px]">NIT {cliente.nit_formateado}</span>
-            {cliente.municipio && <span className="t-body">{cliente.municipio}</span>}
+            <span className="t-body">
+              <EnLinea valor={cliente.municipio ?? ""} etiqueta="Municipio" onGuardar={guardarCampo("municipio")}>
+                {cliente.municipio || <span className="text-gris">Agregar municipio</span>}
+              </EnLinea>
+            </span>
             <InsigniaEstado estado={cliente.estado} />
           </p>
 
@@ -410,8 +422,27 @@ function CabeceraCliente({
 
       <div className="t-meta mt-6 hidden flex-wrap items-center justify-between gap-3 text-gris sm:flex">
         <span>{desde}</span>
-        <span>
-          Honorarios — {pesos(cliente.honorarios_mes)} · {cliente.periodicidad}
+        <span className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <span className="inline-flex items-center gap-1">
+            Honorarios —{" "}
+            <EnLinea
+              valor={String(cliente.honorarios_mes ?? "0").replace(/\.0+$/, "")}
+              etiqueta="Honorarios mensuales"
+              tipo="numero"
+              formatear={(v) => pesos(v)}
+              onGuardar={(v) => guardarCampo("honorarios_mes")(v || "0")}
+            />
+          </span>
+          <span className="inline-flex items-center gap-1">
+            Periodicidad —{" "}
+            <EnLinea
+              valor={cliente.periodicidad}
+              etiqueta="Periodicidad"
+              opciones={["mensual", "bimestral", "trimestral", "cuatrimestral", "anual"].map((v) => ({ valor: v, texto: v[0].toUpperCase() + v.slice(1) }))}
+              formatear={(v) => v[0].toUpperCase() + v.slice(1)}
+              onGuardar={guardarCampo("periodicidad")}
+            />
+          </span>
         </span>
       </div>
     </header>

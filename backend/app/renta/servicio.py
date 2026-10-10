@@ -355,7 +355,10 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
     dudosas = [
         c for c in clas if c.incluida
         and C.CAMPO_POR_CATEGORIA.get(c.categoria) is not None
-        and (c.linea.confianza < 0.6 or c.linea.encimada or (c.linea.tope is not None and not c.linea.validada))
+        # Un Excel o PDF del portal trae el dato exacto (confianza 1): no se pide confirmar solo porque
+        # el archivo no traiga el encabezado de topes con qué cuadrarlo (rescate).
+        and (c.linea.confianza < 0.6 or c.linea.encimada
+             or (c.linea.tope is not None and not c.linea.validada and c.linea.confianza < 1.0))
         and not getattr(c.linea, "confirmada", False) and c.linea.importe() > Decimal(50000)
     ]
     if dudosas:
@@ -374,7 +377,9 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
         )
 
     total_lineas = len(rep.lineas)
-    dudosas_total = sum(1 for l in rep.lineas if (l.confianza < 0.6 or l.encimada or (l.tope is not None and not l.validada)) and not getattr(l, "confirmada", False))
+    dudosas_total = sum(1 for l in rep.lineas if (l.confianza < 0.6 or l.encimada
+                                                  or (l.tope is not None and not l.validada and l.confianza < 1.0))
+                        and not getattr(l, "confirmada", False))
     porcentaje_por_verificar = round((dudosas_total / total_lineas), 2) if total_lineas > 0 else 0.0
     ofrecer_digitar_esencial = bool(porcentaje_por_verificar >= 0.30 or dudosas_total >= 5)
 

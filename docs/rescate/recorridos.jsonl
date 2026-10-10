@@ -8,3 +8,7 @@
 {"id":"J7","nombre":"Renta con foto legible","segundos":41.8,"clics":6,"url":"http://127.0.0.1:8010/clientes/adad079f-7407-4bca-a5d2-79d364180663?seccion=renta","cuando":"2026-10-10T03:37:39.463Z"}
 {"id":"J8","nombre":"Renta con fotos difíciles","segundos":60.7,"clics":2,"url":"http://127.0.0.1:8010/clientes/79adff17-bf79-41d9-b7e3-6dc5eefe1515?seccion=renta","cuando":"2026-10-10T03:38:40.817Z","incompleto":false}
 {"id":"J9","nombre":"Renta de una persona nueva","segundos":3.8,"clics":0,"url":"http://127.0.0.1:8010/clientes","cuando":"2026-10-10T03:38:45.284Z"}
+{"id":"J1","nombre":"Entrar","segundos":4.7,"clics":2,"url":"http://127.0.0.1:8010/","cuando":"2026-10-10T03:41:17.659Z"}
+{"id":"J2a","nombre":"Subir contabilidad (caso completo)","segundos":5.9,"clics":2,"url":"http://127.0.0.1:8010/clientes/0f6e5d80-822a-4b4b-9f0c-65e3fd45614e?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:41:25.265Z"}
+{"id":"J2b","nombre":"Subir facturas electrónicas DIAN","segundos":5.5,"clics":2,"url":"http://127.0.0.1:8010/clientes/793ace12-dfb3-4a45-b03e-7533529db5d7?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:41:31.436Z"}
+{"id":"J4","nombre":"Editar el cliente","segundos":4.5,"clics":5,"url":"http://127.0.0.1:8010/clientes/0f6e5d80-822a-4b4b-9f0c-65e3fd45614e","cuando":"2026-10-10T03:41:36.673Z"}

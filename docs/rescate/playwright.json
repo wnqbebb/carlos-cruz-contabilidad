@@ -3,7 +3,10 @@
     "argv": [
       "C:\\Program Files\\nodejs\\node.exe",
       "C:\\Users\\Admin\\Documents\\DON CARLOS\\carlos-cruz-contabilidad\\frontend\\node_modules\\@playwright\\test\\cli.js",
-      "test"
+      "test",
+      "e2e/j1-entrar.spec.ts",
+      "e2e/j2-subir.spec.ts",
+      "e2e/j4-cliente.spec.ts"
     ],
     "configFile": "C:\\Users\\Admin\\Documents\\DON CARLOS\\carlos-cruz-contabilidad\\frontend\\playwright.config.ts",
     "rootDir": "C:/Users/Admin/Documents/DON CARLOS/carlos-cruz-contabilidad/frontend/e2e",
@@ -109,12 +112,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5193,
+                  "duration": 5274,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:35:57.542Z",
+                  "startTime": "2026-10-10T03:41:12.534Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -151,12 +154,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6567,
+                  "duration": 6714,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:36:04.030Z",
+                  "startTime": "2026-10-10T03:41:18.960Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -185,12 +188,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6195,
+                  "duration": 6128,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:36:10.778Z",
+                  "startTime": "2026-10-10T03:41:25.848Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -201,48 +204,6 @@
           "id": "396e24f6e4b98931a09d-a55bf1374c9c59c57d04",
           "file": "j2-subir.spec.ts",
           "line": 31,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "j3-navegar.spec.ts",
-      "file": "j3-navegar.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "J3 · cambiar de mes conserva la vista",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 240000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "recorridos",
-              "projectName": "recorridos",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 6789,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-10T03:36:17.051Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "b4bed748ea8b5ff4081e-746a4e99557df8880378",
-          "file": "j3-navegar.spec.ts",
-          "line": 8,
           "column": 1
         }
       ]
@@ -269,12 +230,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 4989,
+                  "duration": 5247,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:36:23.910Z",
+                  "startTime": "2026-10-10T03:41:32.034Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -288,223 +249,13 @@
           "column": 1
         }
       ]
-    },
-    {
-      "title": "j5-editar-valores.spec.ts",
-      "file": "j5-editar-valores.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "J5 · editar movimientos y saldos dentro de la aplicación",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 240000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "recorridos",
-              "projectName": "recorridos",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 11141,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-10T03:36:28.965Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "62f4586ab72fb93d908d-0098e6a1bee3d0cf29e2",
-          "file": "j5-editar-valores.spec.ts",
-          "line": 28,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "j6-descargar.spec.ts",
-      "file": "j6-descargar.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "J6 · Excel completo, PDF, libros y datos para editar",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 240000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "recorridos",
-              "projectName": "recorridos",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 17276,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-10T03:36:40.163Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "93e7cc533b1291dcfe6e-7f78d946457b6a0ea125",
-          "file": "j6-descargar.spec.ts",
-          "line": 36,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "j7-renta-foto.spec.ts",
-      "file": "j7-renta-foto.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "J7 · renta de la Contribuyente A desde la foto hasta el ZIP",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 240000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "recorridos",
-              "projectName": "recorridos",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 42259,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-10T03:36:57.516Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "abde6d137f3f09b399e3-8e8d85f099bb843edbae",
-          "file": "j7-renta-foto.spec.ts",
-          "line": 34,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "j8-renta-fotos-dificiles.spec.ts",
-      "file": "j8-renta-fotos-dificiles.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "J8 · tres fotos difíciles: sin cifras falsas y digitar lo esencial",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 240000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "recorridos",
-              "projectName": "recorridos",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 61477,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-10T03:37:39.847Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "a30c322f0bc9a17f8b92-633983f8bad972b0b85e",
-          "file": "j8-renta-fotos-dificiles.spec.ts",
-          "line": 11,
-          "column": 1
-        }
-      ]
-    },
-    {
-      "title": "j9-renta-persona-nueva.spec.ts",
-      "file": "j9-renta-persona-nueva.spec.ts",
-      "column": 0,
-      "line": 0,
-      "specs": [
-        {
-          "title": "J9 · exógena de una persona nueva: borrador y fuera de los clientes contables",
-          "ok": true,
-          "tags": [],
-          "tests": [
-            {
-              "timeout": 240000,
-              "annotations": [],
-              "expectedStatus": "passed",
-              "projectId": "recorridos",
-              "projectName": "recorridos",
-              "results": [
-                {
-                  "workerIndex": 1,
-                  "parallelIndex": 0,
-                  "status": "passed",
-                  "duration": 4254,
-                  "errors": [],
-                  "stdout": [],
-                  "stderr": [],
-                  "retry": 0,
-                  "startTime": "2026-10-10T03:38:41.375Z",
-                  "annotations": [],
-                  "attachments": []
-                }
-              ],
-              "status": "expected"
-            }
-          ],
-          "id": "7990c6410899ad5c833d-d8619fe3710b6ded9592",
-          "file": "j9-renta-persona-nueva.spec.ts",
-          "line": 9,
-          "column": 1
-        }
-      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-10T03:35:31.134Z",
-    "duration": 195143.649,
-    "expected": 10,
+    "startTime": "2026-10-10T03:40:45.959Z",
+    "duration": 51770.856,
+    "expected": 4,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

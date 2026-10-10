@@ -59,6 +59,8 @@ export function Renta() {
     }
   };
 
+  const [mostrar, setMostrar] = useState(POR_TANDA);
+  useEffect(() => setMostrar(POR_TANDA), [q, estado, orden, anio]);
   const visibles = useMemo(() => {
     const t = q.trim().toLowerCase();
     const lista = (filas ?? []).filter((f) => (!estado || f.estado === estado) &&
@@ -192,7 +194,7 @@ export function Renta() {
               </tr>
             </thead>
             <tbody className="divide-y divide-linea">
-              {visibles.map((f) => {
+              {visibles.slice(0, mostrar).map((f) => {
                 const e = ESTADOS[f.estado];
                 const vencida = f.dias !== null && f.dias < 0 && f.estado !== "presentada";
                 return (
@@ -225,11 +227,25 @@ export function Renta() {
               })}
             </tbody>
           </table>
+          {visibles.length > mostrar && (
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-linea px-4 py-3">
+              <span className="t-small text-grafito">
+                Se ven {mostrar} de {visibles.length}. Use la búsqueda para ir directo a una persona.
+              </span>
+              <button type="button" onClick={() => setMostrar((n) => n + POR_TANDA)}
+                className="t-small text-azul-tinta underline underline-offset-4">
+                Mostrar {Math.min(POR_TANDA, visibles.length - mostrar)} más
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>
   );
 }
+
+// Rescate (10.000 personas): la tabla se dibuja por tandas; dibujarlas todas a la vez congelaba el celular.
+const POR_TANDA = 200;
 
 function Encabezado({ texto, orden, actual, onOrden, derecha }: {
   texto: string; orden: Orden; actual: Orden; onOrden: (o: Orden) => void; derecha?: boolean;

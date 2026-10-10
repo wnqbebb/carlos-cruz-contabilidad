@@ -279,3 +279,12 @@ def test_facturas_dian_en_la_renta_alimentan_el_negocio(cliente_api):
     caja = next(p for p in res["pendientes"] if p["tipo"] == "negocio")
     assert "Facturación" in caja["comparacion"]
     assert len(res["lineas"]) == 23          # la exógena sigue intacta
+
+
+def test_exogena_en_excel_no_pide_confirmar_filas(cliente_api):
+    """Un Excel trae el dato exacto: no se pide «confirmar filas» aunque no traiga los topes."""
+    from demo.fotos_ficticias import exogena_persona_nueva
+
+    cid = _cliente_natural(cliente_api, nit="10000009", nombre="PERSONA NUEVA FICTICIA")
+    res = _subir(cliente_api, cid, "exogena.xlsx", exogena_persona_nueva())["resultado"]
+    assert not any(p["tipo"] == "confirmar_filas" for p in res["pendientes"])
