@@ -141,3 +141,21 @@ def test_cerrar_un_periodo_guardado_sin_sesion_de_trabajo(cliente_api):
     periodos = cliente_api.get(f"/api/clientes/{imp['cliente_id']}/periodos").json()
     assert periodos["periodos"][0]["estado"] == "cerrado" and periodos["cierres"]
     assert cliente_api.post(f"/api/periodos/{pid}/cerrar").status_code == 409
+
+
+def test_tablero_se_guarda_en_memoria_y_se_rehace_al_escribir(cliente_api, monkeypatch):
+    """Rescate (10.000 clientes): el tablero no se rearma en cada visita, solo cuando algo cambió."""
+    from app.api import analisis
+    from app.inteligencia import tablero as T
+
+    llamadas = []
+    original = T.armar
+    monkeypatch.setattr(T, "armar", lambda *a, **k: llamadas.append(1) or original(*a, **k))
+    analisis._tablero_cache.clear()
+    antes = cliente_api.get("/api/tablero").json()["indicadores"]["clientes_activos"]
+    cliente_api.get("/api/tablero")
+    assert len(llamadas) == 1
+    cliente_api.post("/api/clientes", json={"nit": "900777111", "razon_social": "NUEVO SAS"})
+    datos = cliente_api.get("/api/tablero").json()
+    assert len(llamadas) == 2
+    assert datos["indicadores"]["clientes_activos"] == antes + 1   # el cambio se ve de inmediato

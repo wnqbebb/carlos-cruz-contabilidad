@@ -184,8 +184,21 @@ def tablero():
     H13: los agregados de la cartera por mes (cerrados, abiertos, sin
     contabilizar) y los clientes al día o atrasados se cuentan aquí; la
     pantalla ya no los deduce.
+
+    Rescate (10.000 clientes): armarlo recorre toda la cartera (≈2 s en un equipo normal, mucho más
+    en la nube gratuita). Se guarda en memoria y se rehace solo si algo se escribió o cambió el día.
     """
-    return tablero_cartera.armar()
+    from datetime import date as _date
+
+    from .. import db
+
+    clave = (db.escrituras(), _date.today().isoformat())
+    if _tablero_cache.get("clave") != clave:
+        _tablero_cache.update(clave=clave, datos=tablero_cartera.armar())
+    return _tablero_cache["datos"]
+
+
+_tablero_cache: dict = {}
 
 
 @router.post("/tareas/{clave}/posponer")

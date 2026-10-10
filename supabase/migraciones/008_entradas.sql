@@ -20,6 +20,20 @@ create table if not exists periodo_entradas (
 );
 create index if not exists periodo_entradas_cliente_idx on periodo_entradas (cliente_id);
 
+-- Libro diario de cada periodo en UN bloque comprimido (la tabla movimientos era el 58 % de la base).
+create table if not exists periodo_diarios (
+  periodo_id   uuid primary key references periodos(id) on delete cascade,
+  cliente_id   uuid not null references clientes(id) on delete cascade,
+  contenido    bytea not null,          -- zlib(JSON) de las líneas
+  filas        integer not null default 0,
+  desde        date,
+  hasta        date,
+  actualizado  timestamptz not null default now()
+);
+create index if not exists periodo_diarios_cliente_idx on periodo_diarios (cliente_id, desde);
+alter table periodo_diarios enable row level security;
+revoke all on periodo_diarios from anon, authenticated;
+
 -- Una versión del historial guarda solo la entrada: pocos KB en vez de copiar todo.
 alter table historial_periodos add column if not exists entrada bytea;
 
@@ -29,8 +43,10 @@ revoke all on periodo_entradas from anon, authenticated;
 do $$
 begin
   if exists (select 1 from pg_roles where rolname = 'carloscruz_app') then
-    grant select, insert, update, delete on periodo_entradas to carloscruz_app;
+    grant select, insert, update, delete on periodo_entradas, periodo_diarios to carloscruz_app;
     drop policy if exists app_todo on periodo_entradas;
     create policy app_todo on periodo_entradas for all to carloscruz_app using (true) with check (true);
+    drop policy if exists app_todo on periodo_diarios;
+    create policy app_todo on periodo_diarios for all to carloscruz_app using (true) with check (true);
   end if;
 end $$;

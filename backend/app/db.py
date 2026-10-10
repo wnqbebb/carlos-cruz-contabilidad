@@ -170,12 +170,23 @@ def _columnas_nuevas() -> None:
             log.info("Columna agregada: %s.%s", nombre, col.name)
 
 
+# Cuántas transacciones de escritura se han confirmado en este proceso. Lo que se arma leyendo
+# TODA la cartera (el tablero) se guarda en memoria y solo se rehace cuando esto cambia.
+_escrituras = 0
+
+
+def escrituras() -> int:
+    return _escrituras
+
+
 @contextmanager
 def conexion() -> Iterator[Connection]:
     """Conexión con transacción: confirma al salir bien, revierte si hay error."""
+    global _escrituras
     con_reintentos(preparar)
     with con_reintentos(motor_db.connect) as cn, cn.begin():
         yield cn
+    _escrituras += 1
 
 
 @contextmanager

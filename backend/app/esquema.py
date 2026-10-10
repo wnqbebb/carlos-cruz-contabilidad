@@ -37,6 +37,7 @@ from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.types import BigInteger, TypeDecorator
 
 metadatos = MetaData()
+_CUANTOS: dict[int, Decimal] = {}
 
 
 class Dinero(TypeDecorator):
@@ -57,7 +58,8 @@ class Dinero(TypeDecorator):
 
     @property
     def _cuanto(self) -> Decimal:
-        return Decimal(1).scaleb(-self.escala)
+        # Se calcula una vez por escala: se llama por cada importe leído (140.000 en el tablero).
+        return _CUANTOS.setdefault(self.escala, Decimal(1).scaleb(-self.escala))
 
     def _numerico(self) -> Numeric:
         return Numeric(20, self.escala, asdecimal=True)
@@ -392,6 +394,24 @@ periodo_entradas = Table(
     Column("bytes", Integer, nullable=False, default=0),
     Column("actualizado", DateTime(timezone=True), nullable=False, server_default=AHORA),
     Index("periodo_entradas_cliente_idx", "cliente_id"),
+)
+
+# ── 13c. LIBRO DIARIO COMPRIMIDO DE CADA PERIODO (rescate) ──────────────────
+# Con 10.000 clientes, la tabla `movimientos` (una fila por línea) era el 58 % de la base:
+# 548 MB de 940 MB con solo 3 meses por cliente. El libro diario de un periodo se lee siempre
+# junto, así que se guarda en un solo bloque comprimido: unas 15 veces menos espacio.
+# `movimientos` queda para los periodos guardados antes del rescate.
+periodo_diarios = Table(
+    "periodo_diarios",
+    metadatos,
+    Column("periodo_id", Id, ForeignKey("periodos.id", ondelete="CASCADE"), primary_key=True),
+    Column("cliente_id", Id, ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False),
+    Column("contenido", LargeBinary, nullable=False),
+    Column("filas", Integer, nullable=False, default=0),
+    Column("desde", Date),
+    Column("hasta", Date),
+    Column("actualizado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Index("periodo_diarios_cliente_idx", "cliente_id", "desde"),
 )
 
 # ── 14. DECLARACIÓN DE RENTA (v2.3 · Fase 5) ────────────────────────────────

@@ -42,7 +42,7 @@ def test_el_resultado_rearmado_es_identico_al_calculado(cliente_api, caso, nit):
     with db.lectura() as cn:
         payload = cn.execute(select(TR.c.payload).where(TR.c.periodo_id == pid)).scalar()
         bytes_entrada = cn.execute(select(TE.c.bytes).where(TE.c.periodo_id == pid)).scalar()
-    assert payload.get("_derivados_fuera") is True and "reportes" not in payload
+    assert payload.get("_derivados_fuera") is True and "reportes" not in payload and "inventario" not in payload
     assert bytes_entrada and bytes_entrada < 60_000
     repo._cache_resultado.clear()
     rearmado = cliente_api.get(f"/api/periodos/{pid}/resultado").json()["resultado"]
@@ -91,3 +91,35 @@ def test_descargas_de_un_periodo_ligero_traen_todo(cliente_api):
     assert r.status_code == 200 and len(r.content) > 20_000
     r = cliente_api.get(f"/api/periodos/{pid}/pdf")
     assert r.status_code == 200 and r.content[:4] == b"%PDF"
+
+
+def test_libro_diario_viejo_fila_por_fila_se_compacta_igual(cliente_api):
+    """Periodos guardados antes del rescate (una fila por línea) pasan a un bloque comprimido
+    y el libro diario consultable queda idéntico."""
+    from sqlalchemy import delete, insert
+
+    from app.esquema import movimientos as TM
+    from app.esquema import periodo_diarios as TD
+    from app.utils.numeros import D, parse_fecha
+
+    c, calculado = _caso(cliente_api, "completo", "900100158")
+    pid = calculado["periodo"]["id"]
+    antes = cliente_api.get(f"/api/clientes/{c['id']}/movimientos?por_pagina=2000").json()
+    assert antes["total"] > 10
+    # Simula la base vieja: las líneas como filas sueltas y sin bloque.
+    lineas = repo.movimientos_de_periodo(pid)
+    with db.conexion() as cn:
+        cn.execute(delete(TD).where(TD.c.periodo_id == pid))
+        cn.execute(insert(TM), [{**{k: v for k, v in m.items()}, "cliente_id": c["id"], "periodo_id": pid,
+                                 "fecha": parse_fecha(m["fecha"]), "debito": D(m["debito"]), "credito": D(m["credito"]),
+                                 "base_retencion": None if m["base_retencion"] is None else D(m["base_retencion"])}
+                                for m in lineas])
+    viejo = cliente_api.get(f"/api/clientes/{c['id']}/movimientos?por_pagina=2000").json()
+    assert viejo == antes
+    assert repo.compactar_diarios() == 1
+    assert repo.compactar_diarios() == 0
+    with db.lectura() as cn:
+        assert cn.execute(select(func.count()).select_from(TM)).scalar_one() == 0
+    assert cliente_api.get(f"/api/clientes/{c['id']}/movimientos?por_pagina=2000").json() == antes
+    filtrado = cliente_api.get(f"/api/clientes/{c['id']}/movimientos?cuenta=11&por_pagina=5").json()
+    assert all(m["cuenta"].startswith("11") for m in filtrado["movimientos"]) and len(filtrado["movimientos"]) <= 5

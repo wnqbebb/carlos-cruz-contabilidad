@@ -52,7 +52,7 @@ select n.id, (800000000 + n.i)::text, '0', c.razon_social || ' ' || n.i, c.sigla
        c.honorarios_mes, c.periodicidad, 'activo',
        case when n.i % 3 = 0 then array['solo_renta','renta']::text[] else array['Carga']::text[] end,
        '', c.capital_autorizado, c.capital_pagado, c.numero_acciones, false,
-       lower(c.buscable || ' ' || n.i || ' ' || (800000000 + n.i))
+       upper(c.buscable || ' ' || n.i || ' ' || (800000000 + n.i))
 from nuevos n join clientes c on c.id = n.origen;
 
 create temp table mapa as

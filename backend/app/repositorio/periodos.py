@@ -22,6 +22,7 @@ from ..db import conexion, lectura
 from ..esquema import cierres as TC
 from ..esquema import historial_periodos as TH
 from ..esquema import movimientos as TM
+from ..esquema import periodo_diarios as TD
 from ..esquema import periodo_entradas as TE
 from ..esquema import periodos as TP
 from ..esquema import resultados as TR
@@ -104,6 +105,7 @@ def _instantanea(cn, periodo_id: str, motivo: str) -> int | None:
     cie = cn.execute(select(TC.c.fecha_corte, TC.c.saldos, TC.c.cuentas)
                      .where(TC.c.periodo_id == periodo_id)).first()
     n_movs = cn.execute(select(func.count()).select_from(TM).where(TM.c.periodo_id == periodo_id)).scalar_one()
+    n_movs += int(cn.execute(select(TD.c.filas).where(TD.c.periodo_id == periodo_id)).scalar() or 0)
     if not res and not n_movs and not cie and not ent:
         return None   # nada que preservar
 
@@ -111,8 +113,7 @@ def _instantanea(cn, periodo_id: str, motivo: str) -> int | None:
         # Con la entrada basta: el resultado y el libro diario se rearman al restaurar (pocos KB por versión).
         movimientos = []
     else:
-        movs = cn.execute(select(TM).where(TM.c.periodo_id == periodo_id).order_by(TM.c.id)).all()
-        movimientos = [{k: _json_llano(v) for k, v in dict(m._mapping).items()} for m in movs]
+        movimientos = [{k: _json_llano(v) for k, v in m.items()} for m in _diario(cn, periodo_id)]
     periodo = {k: _json_llano(v) for k, v in dict(fila._mapping).items()}
     periodo["_movimientos_n"] = int(n_movs)   # para listar versiones sin abrir el JSON
     cierre = None
@@ -223,16 +224,7 @@ def restaurar_version(version_id: int) -> dict:
                 payload=v.resultado, peticion=v.peticion or {},
             ))
 
-        cn.execute(delete(TM).where(TM.c.periodo_id == periodo_id))
-        for m in movs_version:
-            datos = {k: m.get(k) for k in (
-                "fecha", "cuenta", "nombre_cuenta", "debito", "credito", "comprobante",
-                "tipo", "tercero_id", "tercero_nombre", "descripcion", "origen", "base_retencion")}
-            datos["fecha"] = parse_fecha(datos.get("fecha"))
-            datos["debito"] = D(datos.get("debito"))
-            datos["credito"] = D(datos.get("credito"))
-            datos["base_retencion"] = None if datos.get("base_retencion") in (None, "") else D(datos["base_retencion"])
-            cn.execute(insert(TM).values(cliente_id=str(v.cliente_id), periodo_id=periodo_id, **datos))
+        _escribir_diario(cn, str(v.cliente_id), periodo_id, movs_version)
 
         cn.execute(delete(TC).where(TC.c.periodo_id == periodo_id))
         if v.cierre:
@@ -423,7 +415,7 @@ def resultado(periodo_id: str) -> dict | None:
             datos = entrada(periodo_id)
             if datos:
                 completo = E.salida(E.recalcular(datos), datos.get("origenes") or {})
-                payload = {**completo, **{k: v for k, v in payload.items() if k not in E.DERIVADOS}}
+                payload = {**completo, **{k: v for k, v in payload.items() if k in E.CONSERVAR}}
                 payload.pop("_derivados_fuera", None)
                 _cache_resultado[periodo_id] = (creado, payload)
                 while len(_cache_resultado) > _CACHE_MAX:
@@ -432,87 +424,141 @@ def resultado(periodo_id: str) -> dict | None:
 
 
 # ── movimientos ─────────────────────────────────────────────────────────────
+CAMPOS_DIARIO = ("fecha", "cuenta", "nombre_cuenta", "debito", "credito", "comprobante", "tipo",
+                 "tercero_id", "tercero_nombre", "descripcion", "origen", "base_retencion")
+
+
+def _fila_diario(m: dict) -> dict | None:
+    """Una línea del libro diario, limpia y en texto (importes exactos, fecha ISO)."""
+    cuenta = str(m.get("cuenta") or "").strip()
+    if not cuenta:
+        return None
+    fecha = parse_fecha(m.get("fecha"))
+    base = m.get("base_retencion")
+    return {
+        "fecha": fecha.isoformat() if fecha else None,
+        "cuenta": cuenta,
+        "nombre_cuenta": str(m.get("nombre_cuenta") or "")[:300],
+        "debito": _dos(m.get("debito")), "credito": _dos(m.get("credito")),
+        "comprobante": str(m.get("comprobante") or "")[:80],
+        "tipo": str(m.get("tipo") or "")[:40],
+        "tercero_id": str(m.get("tercero_id") or "")[:40],
+        "tercero_nombre": str(m.get("tercero_nombre") or "")[:200],
+        "descripcion": str(m.get("descripcion") or "")[:500],
+        "origen": str(m.get("origen") or "")[:200],
+        "base_retencion": None if base in (None, "") else _dos(base),
+    }
+
+
+def _dos(v) -> str:
+    """Importe con dos decimales exactos, igual que NUMERIC(20,2) de la tabla de filas."""
+    return format(D(v).quantize(Decimal("0.01")), "f")
+
+
+def _escribir_diario(cn, cliente_id: str, periodo_id: str, movs: Iterable[dict]) -> int:
+    """Reemplaza el libro diario del periodo por UN bloque comprimido (y borra las filas viejas)."""
+    import json
+    import zlib
+
+    filas = [f for f in (_fila_diario(m) for m in movs or []) if f]
+    cn.execute(delete(TM).where(TM.c.periodo_id == periodo_id))
+    cn.execute(delete(TD).where(TD.c.periodo_id == periodo_id))
+    if filas:
+        fechas = [f["fecha"] for f in filas if f["fecha"]]
+        crudo = json.dumps(filas, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
+        cn.execute(insert(TD).values(
+            periodo_id=periodo_id, cliente_id=cliente_id, contenido=zlib.compress(crudo, 9), filas=len(filas),
+            desde=parse_fecha(min(fechas)) if fechas else None, hasta=parse_fecha(max(fechas)) if fechas else None))
+    return len(filas)
+
+
+def _diario(cn, periodo_id: str) -> list[dict]:
+    """El libro diario de un periodo: del bloque comprimido o, si es de antes del rescate, de las filas."""
+    import json
+    import zlib
+
+    contenido = cn.execute(select(TD.c.contenido).where(TD.c.periodo_id == periodo_id)).scalar()
+    if contenido:
+        return json.loads(zlib.decompress(bytes(contenido)).decode("utf-8"))
+    filas = cn.execute(select(TM).where(TM.c.periodo_id == periodo_id).order_by(TM.c.id.asc())).all()
+    salida = []
+    for f in filas:
+        d = dict(f._mapping)
+        salida.append({k: _json_llano(d.get(k)) for k in CAMPOS_DIARIO})
+    return salida
+
+
 def guardar_movimientos(cliente_id: str, periodo_id: str, movs: Iterable[dict], lote: int = 1000) -> int:
-    """Reemplaza los movimientos del periodo. Inserta por lotes para no reventar memoria."""
+    """Reemplaza el libro diario del periodo. Se guarda comprimido en un solo bloque."""
     with conexion() as cn:
-        cn.execute(delete(TM).where(TM.c.periodo_id == periodo_id))
-        buffer: list[dict] = []
-        total = 0
-        for m in movs or []:
-            cuenta = str(m.get("cuenta") or "").strip()
-            if not cuenta:
-                continue
-            buffer.append({
-                "cliente_id": cliente_id, "periodo_id": periodo_id,
-                "fecha": parse_fecha(m.get("fecha")),
-                "cuenta": cuenta,
-                "nombre_cuenta": str(m.get("nombre_cuenta") or "")[:300],
-                "debito": D(m.get("debito")), "credito": D(m.get("credito")),
-                "comprobante": str(m.get("comprobante") or "")[:80],
-                "tipo": str(m.get("tipo") or "")[:40],
-                "tercero_id": str(m.get("tercero_id") or "")[:40],
-                "tercero_nombre": str(m.get("tercero_nombre") or "")[:200],
-                "descripcion": str(m.get("descripcion") or "")[:500],
-                "origen": str(m.get("origen") or "")[:200],
-                "base_retencion": None if m.get("base_retencion") in (None, "") else D(m.get("base_retencion")),
-            })
-            if len(buffer) >= lote:
-                cn.execute(insert(TM), buffer)
-                total += len(buffer)
-                buffer = []
-        if buffer:
-            cn.execute(insert(TM), buffer)
-            total += len(buffer)
-    return total
+        return _escribir_diario(cn, cliente_id, periodo_id, movs)
+
+
+def compactar_diarios(limite: int = 500) -> int:
+    """Pasa los periodos guardados fila por fila (antes del rescate) a bloques comprimidos.
+
+    Se puede llamar muchas veces: cada llamada compacta hasta `limite` periodos. Devuelve cuántos.
+    """
+    with lectura() as cn:
+        pendientes = cn.execute(select(TM.c.periodo_id, TM.c.cliente_id).where(TM.c.periodo_id.is_not(None))
+                                .group_by(TM.c.periodo_id, TM.c.cliente_id).limit(limite)).all()
+    for pid, cid in pendientes:
+        with conexion() as cn:
+            movs = _diario(cn, str(pid))
+            _escribir_diario(cn, str(cid), str(pid), movs)
+    return len(pendientes)
 
 
 def movimientos(cliente_id: str, cuenta: str = "", desde: date | None = None,
                 hasta: date | None = None, pagina: int = 1, por_pagina: int = 200,
                 periodo_id: str = "") -> dict:
-    """Libro diario consultable por cuenta y fecha, siempre paginado."""
+    """Libro diario consultable por cuenta y fecha, siempre paginado.
+
+    Lee los bloques comprimidos de los periodos que tocan el rango (y las filas de los periodos
+    de antes del rescate), filtra y suma en Python con Decimal (regla de exactitud).
+    """
     por_pagina = max(1, min(int(por_pagina or 200), 2000))
     pagina = max(1, int(pagina or 1))
-    filtros = [TM.c.cliente_id == cliente_id]
-    if cuenta:
-        filtros.append(TM.c.cuenta.like(f"{cuenta}%"))
-    if desde:
-        filtros.append(TM.c.fecha >= desde)
-    if hasta:
-        filtros.append(TM.c.fecha <= hasta)
+    consulta = select(TP.c.id, TP.c.desde).where(TP.c.cliente_id == cliente_id)
     if periodo_id:
-        filtros.append(TM.c.periodo_id == periodo_id)
-    donde = and_(*filtros)
+        consulta = consulta.where(TP.c.id == periodo_id)
+    if desde:
+        consulta = consulta.where(TP.c.hasta >= desde)
+    if hasta:
+        consulta = consulta.where(TP.c.desde <= hasta)
+    lineas: list[dict] = []
     with lectura() as cn:
-        total = int(cn.execute(select(func.count()).select_from(TM).where(donde)).scalar_one())
-        # Las sumas se hacen en Python con Decimal: en SQLite el dinero es texto y
-        # SUM() lo convierte a float (la regla de exactitud lo prohíbe).
-        importes = cn.execute(select(TM.c.debito, TM.c.credito).where(donde)).all()
-        sumas = (sum((D(a) for a, _ in importes), Decimal("0")), sum((D(b) for _, b in importes), Decimal("0")))
-        filas = cn.execute(
-            select(TM).where(donde)
-            .order_by(TM.c.fecha.asc().nullslast(), TM.c.id.asc())
-            .limit(por_pagina).offset((pagina - 1) * por_pagina)
-        ).all()
-    lineas = []
-    for f in filas:
-        d = dict(f._mapping)
-        d["id"] = int(d["id"])
-        d["cliente_id"] = str(d["cliente_id"])
-        d["periodo_id"] = str(d["periodo_id"]) if d["periodo_id"] else None
-        for k, v in list(d.items()):
-            if isinstance(v, Decimal):
-                d[k] = format(v, "f")
-            elif isinstance(v, (date, datetime)):
-                d[k] = v.isoformat()
-        lineas.append(d)
+        for pid, _ in cn.execute(consulta.order_by(TP.c.desde.asc())).all():
+            for m in _diario(cn, str(pid)):
+                m["periodo_id"] = str(pid)
+                lineas.append(m)
+        # Movimientos sueltos sin periodo (muy viejos): se siguen mostrando.
+        for f in cn.execute(select(TM).where(and_(TM.c.cliente_id == cliente_id, TM.c.periodo_id.is_(None)))).all():
+            d = dict(f._mapping)
+            lineas.append({**{k: _json_llano(d.get(k)) for k in CAMPOS_DIARIO}, "periodo_id": None})
+    if cuenta:
+        lineas = [m for m in lineas if str(m.get("cuenta") or "").startswith(cuenta)]
+    if desde:
+        lineas = [m for m in lineas if m.get("fecha") and m["fecha"] >= desde.isoformat()]
+    if hasta:
+        lineas = [m for m in lineas if m.get("fecha") and m["fecha"] <= hasta.isoformat()]
+    # Orden estable: por fecha (sin fecha al final) y, dentro del día, como se registró.
+    lineas.sort(key=lambda m: (m.get("fecha") is None, m.get("fecha") or ""))
+    total = len(lineas)
+    suma_d = sum((D(m.get("debito")) for m in lineas), Decimal("0"))
+    suma_c = sum((D(m.get("credito")) for m in lineas), Decimal("0"))
+    inicio = (pagina - 1) * por_pagina
+    pagina_lineas = []
+    for i, m in enumerate(lineas[inicio:inicio + por_pagina], start=inicio + 1):
+        pagina_lineas.append({**m, "id": i, "cliente_id": cliente_id})
     return {
         "total": total,
         "pagina": pagina,
         "por_pagina": por_pagina,
         "paginas": max(1, -(-total // por_pagina)),
-        "suma_debito": _txt(sumas[0]) or "0",
-        "suma_credito": _txt(sumas[1]) or "0",
-        "movimientos": lineas,
+        "suma_debito": _dos(suma_d),
+        "suma_credito": _dos(suma_c),
+        "movimientos": pagina_lineas,
     }
 
 
@@ -528,8 +574,7 @@ def poner_nota(periodo_id: str, nota: str) -> dict:
 def movimientos_de_periodo(periodo_id: str) -> list[dict]:
     """Todo el libro diario guardado de un periodo, en el orden en que se registró."""
     with lectura() as cn:
-        filas = cn.execute(select(TM).where(TM.c.periodo_id == periodo_id).order_by(TM.c.id.asc())).all()
-    return [dict(f._mapping) for f in filas]
+        return _diario(cn, periodo_id)
 
 
 # ── cierres ─────────────────────────────────────────────────────────────────

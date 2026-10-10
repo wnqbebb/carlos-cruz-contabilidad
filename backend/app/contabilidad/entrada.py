@@ -160,8 +160,13 @@ def salida(resultado: dict, origenes: dict[str, list[str]]) -> dict:
     return out
 
 
+# Lo único que se guarda del resultado: lo que leen el tablero y las sugerencias sin abrir el
+# periodo. Todo lo demás (reportes, inventario, nómina, ajustes, notas…) se rearma desde la entrada.
+CONSERVAR = ("empresa", "resumen", "alertas", "origenes")
+
+
 def ligera(salida_json: dict) -> dict:
-    """La salida sin lo que se recalcula (≈85 % del peso). Es lo que se guarda en la base."""
-    out = {k: v for k, v in salida_json.items() if k not in DERIVADOS}
+    """La salida reducida a lo que se consulta sin abrir el periodo (≈1 KB). Es lo que se guarda."""
+    out = {k: v for k, v in salida_json.items() if k in CONSERVAR}
     out["_derivados_fuera"] = True
     return out
