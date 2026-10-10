@@ -126,9 +126,11 @@ def obtener(cliente_id: str):
 @router.patch("/{cliente_id}")
 def actualizar(cliente_id: str, datos: dict = Body(...)):
     try:
-        if "socios" in datos:
-            repo.guardar_socios(cliente_id, datos.pop("socios") or [])
+        socios = datos.pop("socios", None)
+        # Primero la ficha (valida NIT, nombre…); los socios solo se reemplazan si la ficha pasó.
         repo.actualizar(cliente_id, datos)
+        if socios is not None:
+            repo.guardar_socios(cliente_id, socios or [])
         cliente = repo.obtener(cliente_id)
         bitacora.registrar("cliente_editado", cliente_id,
                            campos=sorted(k for k in datos if not k.startswith("_")))

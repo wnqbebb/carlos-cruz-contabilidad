@@ -389,3 +389,15 @@ def test_determinismo_casos_a_b_d():
     s1 = obligacion.sancion_extemporaneidad(D("0"), D("75000000"), D("0"), date(2026, 8, 27), date(2026, 10, 9), 2025)
     s2 = obligacion.sancion_extemporaneidad(D("0"), D("75000000"), D("0"), date(2026, 8, 27), date(2026, 10, 9), 2025)
     assert s1["valor"] == s2["valor"]
+
+
+def test_caso_c_sin_cedula_legible_nunca_falla():
+    """H2 (rescate): sin número de documento, el provisional siempre es un NIT válido y único."""
+    from app.utils import nit as unit
+
+    vistos = set()
+    for _ in range(500):
+        doc = servicio.documento_provisional()
+        assert doc.startswith("0000") and len(doc) == 12 and unit.valido(doc)
+        vistos.add(doc)
+    assert len(vistos) > 490

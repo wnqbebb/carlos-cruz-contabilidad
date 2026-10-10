@@ -145,6 +145,6 @@ def estado_almacenamiento() -> dict:
     return {
         "modo": ALMACENAMIENTO,
         "es_postgres": ES_POSTGRES,
-        "supabase_configurado": bool(SUPABASE_URL and _env_url),
+        "supabase_configurado": bool(_env_url),
         "proyecto": SUPABASE_URL.replace("https://", "").split(".")[0] if SUPABASE_URL else "",
     }

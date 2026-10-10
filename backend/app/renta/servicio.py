@@ -10,6 +10,7 @@ Todo lo que el contador decide se guarda en `datos` y cada cambio deja una versi
 """
 from __future__ import annotations
 
+import secrets
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -494,6 +495,16 @@ def digitar_esencial(cliente_id: str, anio: int, entrada: dict) -> dict:
     return recalcular(cliente_id, anio, datos, motivo="digitar_esencial", estado="borrador")
 
 
+def documento_provisional() -> str:
+    """Número provisional cuando el reporte no deja leer la cédula.
+
+    Antes era «CC» + 8 letras y números al azar: si salían menos de 5 dígitos el NIT no era
+    válido y la creación fallaba de vez en cuando. Ahora son 12 dígitos que empiezan por «0000»
+    (ninguna cédula ni NIT real empieza así) y el cliente queda marcado «documento_pendiente».
+    """
+    return "0000" + "".join(secrets.choice("0123456789") for _ in range(8))
+
+
 def subir_universal(anio: int, archivos: list[tuple[str, bytes]], avisos_previos: list[str] | None = None) -> dict:
     """Sube la exógena de cualquier persona: crea el contribuyente si no existe y abre su renta."""
     P.obtener(anio)
@@ -513,11 +524,11 @@ def subir_universal(anio: int, archivos: list[tuple[str, bytes]], avisos_previos
         cliente_id = str(uuid.uuid4())
         nuevo_cliente = {
             "id": cliente_id,
-            "nit": nit or f"CC{uuid.uuid4().hex[:8]}",
+            "nit": nit or documento_provisional(),
             "razon_social": nombre,
             "tipo_persona": "natural",
             "estado": "activo",
-            "etiquetas": ["renta", "solo_renta"],
+            "etiquetas": ["renta", "solo_renta"] + ([] if nit else ["documento_pendiente"]),
             "regimen": "ordinario",
             "responsable_iva": bool(rep_principal.responsable_iva),
         }

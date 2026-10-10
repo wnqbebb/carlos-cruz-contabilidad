@@ -33,7 +33,16 @@ def test_lo_publico_no_pide_sesion(cliente_sin_sesion):
     assert cliente_sin_sesion.get("/api/salud").json().keys() == {"ok", "version"}
     estado = cliente_sin_sesion.get("/api/sesion").json()
     assert estado["activa"] is False and estado["configurado"] is True and estado["csrf"] is None
-    assert cliente_sin_sesion.get("/").status_code in (200, 404)
+
+
+def test_la_pagina_principal_no_pide_sesion(cliente_sin_sesion):
+    """Sin `frontend/dist` el servidor responde 503 a propósito: eso no es un fallo de la sesión."""
+    from app.config import FRONTEND_DIST
+
+    if not (FRONTEND_DIST / "index.html").exists():
+        pytest.skip("Falta la interfaz compilada (frontend/dist). Corra «npm run build» en frontend/ "
+                    "para probar que la página principal abre sin sesión.")
+    assert cliente_sin_sesion.get("/").status_code == 200
 
 
 def test_entrar_usar_y_salir_la_cookie_vieja_ya_no_sirve(cliente_sin_sesion):

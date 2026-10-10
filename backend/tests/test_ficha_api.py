@@ -128,3 +128,25 @@ def test_las_columnas_nuevas_se_agregan_solas_a_una_base_vieja():
     db._tablas_listas = False
     db.preparar()
     assert "nota" in {c["name"] for c in inspect(db.motor_db).get_columns("periodos")}
+
+
+def test_panel_lateral_guarda_socios_con_todos_sus_campos(cliente_api):
+    """Rescate H3: el panel manda los campos reales del socio y vuelven iguales al recargar."""
+    a = cliente_api.post("/api/clientes", json={"nit": "900777111", "razon_social": "UNO"}).json()
+    socio = {"nombre": "Ana Ruiz", "cedula": "20333444", "cargo": "Gerente", "acciones": "400",
+             "participacion": "0.4", "comprometido": "4000000", "pagado": "3000000"}
+    r = cliente_api.patch(f"/api/clientes/{a['id']}", json={"municipio": "Buga", "socios": [socio]})
+    assert r.status_code == 200, r.text
+    ficha = cliente_api.get(f"/api/clientes/{a['id']}").json()
+    assert ficha["municipio"] == "Buga"
+    s = ficha["socios"][0]
+    assert (s["nombre"], s["cedula"], s["cargo"]) == ("Ana Ruiz", "20333444", "Gerente")
+    assert Decimal(s["participacion"]) == Decimal("0.4") and Decimal(s["pagado"]) == Decimal("3000000")
+
+
+def test_ficha_invalida_no_borra_los_socios(cliente_api):
+    a = cliente_api.post("/api/clientes", json={"nit": "900777111", "razon_social": "UNO",
+                                                "socios": [{"nombre": "Ana Ruiz"}]}).json()
+    r = cliente_api.patch(f"/api/clientes/{a['id']}", json={"razon_social": "", "socios": []})
+    assert r.status_code == 400
+    assert len(cliente_api.get(f"/api/clientes/{a['id']}").json()["socios"]) == 1

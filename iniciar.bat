@@ -46,8 +46,7 @@ set "COMPILAR=0"
 if not exist "frontend\dist\index.html" set "COMPILAR=1"
 where node >nul 2>nul
 if not errorlevel 1 (
-  node frontend\scripts
-ecesita-build.mjs
+  node frontend\scripts\necesita-build.mjs
   if errorlevel 1 set "COMPILAR=1"
 )
 if "%COMPILAR%"=="1" (

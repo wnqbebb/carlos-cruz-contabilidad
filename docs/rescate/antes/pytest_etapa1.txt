@@ -1,0 +1,25 @@
+SKIPPED [1] tests\test_exactitud.py:181: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:35: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:48: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:59: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:69: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:89: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:108: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:168: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:271: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:315: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_fanant.py:330: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_ficha.py:39: Los documentos reales de FANANT no están en esta copia (viven en privado/, fuera de git).
+SKIPPED [1] tests\test_ficha.py:71: Los documentos reales de FANANT no están en esta copia (viven en privado/, fuera de git).
+SKIPPED [1] tests\test_ficha.py:82: Los documentos reales de FANANT no están en esta copia (viven en privado/, fuera de git).
+SKIPPED [1] tests\test_historial.py:199: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_pdf_y_casos.py:119: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_renta_casos_aceptacion.py:93: Sin imagen real 4.png
+SKIPPED [1] tests\test_renta_casos_aceptacion.py:129: Sin imágenes reales de Caso B
+SKIPPED [1] tests\test_renta_ocr.py:86: Caso B: sin la carpeta privado/renta/imagenes (fotos reales fuera de git)
+SKIPPED [1] tests\test_renta_ocr.py:123: Caso A (foto real): sin privado/renta/imagenes/4.png
+SKIPPED [1] tests\test_subir.py:68: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_subir.py:75: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_subir.py:84: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+SKIPPED [1] tests\test_subir.py:179: Faltan los archivos reales de FANANT en privado/ (no se versionan; ver docs/PRIVADO.md). Esta prueba se salta.
+338 passed, 25 skipped, 1 warning in 120.72s (0:02:00)

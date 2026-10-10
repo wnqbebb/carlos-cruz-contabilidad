@@ -492,3 +492,16 @@ def test_escribir_un_registro_nunca_frena_al_servidor(monkeypatch):
         incidentes.detener_escritores()
         for h in list(lg.handlers):
             lg.removeHandler(h)
+
+
+def test_clave_de_datos_de_la_nube_es_estable(monkeypatch):
+    """Rescate H1: en Render la clave viene del entorno (texto libre generado por Render) y no cambia."""
+    from app.seguridad import cifrado, secretos
+
+    monkeypatch.setenv("CC_CLAVE_DATOS", "Zx9+generado/por=render")
+    k1 = secretos.clave_datos()
+    assert len(k1) == 32 and secretos.clave_datos() == k1
+    caja = cifrado.cifrar(b"hola", contexto=b"prueba")
+    assert cifrado.descifrar(caja, contexto=b"prueba") == b"hola"
+    monkeypatch.setenv("CC_CLAVE_DATOS", "ab" * 32)
+    assert secretos.clave_datos() == bytes.fromhex("ab" * 32)

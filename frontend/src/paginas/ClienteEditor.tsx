@@ -20,7 +20,7 @@ import { EnlaceSubrayado } from "../ui";
  *   qué campos cambiarían (nada se guarda sin confirmar).
  */
 
-type Borrador = Partial<Cliente> & { socios?: Socio[] };
+export type Borrador = Partial<Cliente> & { socios?: Socio[] };
 
 const VACIO: Borrador = {
   nit: "", razon_social: "", sigla: "", tipo_persona: "juridica", regimen: "responsable_iva", grupo_niif: 3,
@@ -562,7 +562,7 @@ function Grupo({ rotulo, titulo, children }: { rotulo: string; titulo: string; c
   );
 }
 
-function MasDatos({ datos, set }: { datos: Borrador; set: <K extends keyof Borrador>(c: K, v: Borrador[K]) => void }) {
+export function MasDatos({ datos, set }: { datos: Borrador; set: <K extends keyof Borrador>(c: K, v: Borrador[K]) => void }) {
   const s = set as (c: keyof Borrador, v: never) => void;
   return (
     <>
@@ -680,7 +680,7 @@ function MasDatos({ datos, set }: { datos: Borrador; set: <K extends keyof Borra
   );
 }
 
-function EditorSocios({ socios, onCambio }: { socios: Socio[]; onCambio: (s: Socio[]) => void }) {
+export function EditorSocios({ socios, onCambio }: { socios: Socio[]; onCambio: (s: Socio[]) => void }) {
   const nuevo = (): Socio => ({ nombre: "", cedula: "", cargo: "", acciones: "0", participacion: "0", comprometido: "0", pagado: "0" });
   const cambiar = (i: number, campo: keyof Socio, valor: string) =>
     onCambio(socios.map((s, j) => (i === j ? { ...s, [campo]: valor } : s)));
@@ -699,10 +699,17 @@ function EditorSocios({ socios, onCambio }: { socios: Socio[]; onCambio: (s: Soc
           {socios.map((s, i) => (
             <div key={i} className="grid gap-3 rounded-control border border-linea p-3 sm:grid-cols-2 lg:grid-cols-6">
               <Campo etiqueta="Nombre" className="lg:col-span-2">
-                <input value={s.nombre} onChange={(e) => cambiar(i, "nombre", e.target.value)} className={estiloCampo} />
+                <input value={s.nombre} aria-label={`Nombre del socio ${i + 1}`} onChange={(e) => cambiar(i, "nombre", e.target.value)} className={estiloCampo} />
               </Campo>
               <Campo etiqueta="Cédula">
                 <input value={s.cedula} onChange={(e) => cambiar(i, "cedula", e.target.value)} className={clases(estiloCampo, "cifras")} />
+              </Campo>
+              <Campo etiqueta="Cargo">
+                <input value={s.cargo} onChange={(e) => cambiar(i, "cargo", e.target.value)} className={estiloCampo} />
+              </Campo>
+              <Campo etiqueta="Participación" ayuda="Fracción: 0.5 = 50 %">
+                <input value={s.participacion} onChange={(e) => cambiar(i, "participacion", e.target.value)} inputMode="decimal"
+                  className={clases(estiloCampo, "cifras")} />
               </Campo>
               <Campo etiqueta="Acciones">
                 <input value={s.acciones} onChange={(e) => cambiar(i, "acciones", e.target.value)} inputMode="decimal"

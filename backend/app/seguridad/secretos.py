@@ -137,9 +137,19 @@ def obtener_o_crear(nombre: str, generar=lambda: secrets.token_hex(32)) -> str:
 
 def clave_datos() -> bytes:
     """Clave AES-256 para cifrar archivos y copias. Se genera sola la primera vez."""
-    propia = os.getenv("CC_CLAVE_DATOS")
-    if propia and len(propia) == 64:
-        return bytes.fromhex(propia)
+    propia = (os.getenv("CC_CLAVE_DATOS") or "").strip()
+    if propia:
+        # 64 hexadecimales = la clave tal cual. Cualquier otro texto (p. ej. el que genera Render
+        # con `generateValue`) se convierte en 32 bytes con SHA-256: en la nube el disco se borra
+        # en cada reinicio, así que la clave TIENE que venir del entorno o los datos cifrados se pierden.
+        try:
+            if len(propia) == 64:
+                return bytes.fromhex(propia)
+        except ValueError:
+            pass
+        import hashlib
+
+        return hashlib.sha256(propia.encode("utf-8")).digest()
     return bytes.fromhex(obtener_o_crear("CLAVE_DATOS"))
 
 

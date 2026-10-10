@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
-import { X, Save, Undo2, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { X, Save } from "lucide-react";
 import { clientes as api } from "../api";
-import { Aviso, Boton, Campo, estiloCampo, estiloCampoAuto } from "./ui";
+import { Aviso, Campo, estiloCampo } from "./ui";
 import { BotonPrimario, BotonFantasma, useAvisos } from "../ui";
-import type { Cliente, Socio } from "../tipos";
+import { clases } from "../formato";
+import { digitoVerificacion, EditorSocios, MasDatos, type Borrador } from "../paginas/ClienteEditor";
+import type { Cliente } from "../tipos";
 
 interface Props {
   abierto: boolean;
@@ -12,314 +14,100 @@ interface Props {
   onGuardado: (actualizado: Cliente) => void;
 }
 
+/**
+ * Panel lateral del expediente: la ficha COMPLETA y los socios, sin salir de la página.
+ *
+ * Usa los mismos bloques que la página «Editar ficha» (MasDatos y EditorSocios), así los dos
+ * caminos guardan exactamente los mismos campos. Rescate H3: antes el panel mandaba socios con
+ * campos que no existen (identificacion, porcentaje, aporte) y la cédula y el porcentaje se perdían.
+ */
 export function PanelEditarCliente({ abierto, onCerrar, cliente, onGuardado }: Props) {
   const avisar = useAvisos();
-  const [datos, setDatos] = useState<Partial<Cliente>>({});
-  const [socios, setSocios] = useState<Socio[]>([]);
+  const [datos, setDatos] = useState<Borrador>({});
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
     if (abierto) {
-      setDatos({
-        razon_social: cliente.razon_social || "",
-        sigla: cliente.sigla || "",
-        nit: cliente.nit || "",
-        dv: cliente.dv || "",
-        tipo_persona: cliente.tipo_persona || "juridica",
-        regimen: cliente.regimen || "responsable_iva",
-        municipio: cliente.municipio || "",
-        departamento: cliente.departamento || "",
-        direccion: cliente.direccion || "",
-        telefono: cliente.telefono || "",
-        email: cliente.email || "",
-        honorarios_mes: cliente.honorarios_mes || "0",
-        periodicidad: cliente.periodicidad || "mensual",
-        responsable_iva: cliente.responsable_iva ?? true,
-        notas: cliente.notas || "",
-      });
-      setSocios(cliente.socios ? [...cliente.socios] : []);
+      setDatos({ ...cliente, socios: cliente.socios ? cliente.socios.map((s) => ({ ...s })) : [] });
       setError("");
     }
   }, [abierto, cliente]);
 
+  const dv = useMemo(() => digitoVerificacion(String(datos.nit ?? "")), [datos.nit]);
+
   if (!abierto) return null;
 
-  const setCampo = (campo: keyof Cliente, valor: any) => {
-    setDatos((prev) => ({ ...prev, [campo]: valor }));
-  };
+  const set = <K extends keyof Borrador>(campo: K, valor: Borrador[K]) => setDatos((d) => ({ ...d, [campo]: valor }));
 
   const guardar = async (e: React.FormEvent) => {
     e.preventDefault();
     setGuardando(true);
     setError("");
     try {
-      const previo = { ...cliente };
-      const cuerpo = { ...datos, socios };
-      const actualizado = await api.actualizar(cliente.id, cuerpo);
+      const cuerpo: Record<string, unknown> = { ...datos };
+      for (const k of ["id", "dv", "creado", "actualizado", "ultimo_periodo", "archivos_de_muestra", "buscable"]) delete cuerpo[k];
+      if (String(cliente.nit) === String(datos.nit ?? "").replace(/\D/g, "")) delete cuerpo.nit;
+      const actualizado = await api.actualizar(cliente.id, cuerpo as Partial<Cliente>);
       onGuardado(actualizado);
       onCerrar();
-      avisar("Ficha del cliente actualizada exitosamente.");
+      avisar("Ficha del cliente guardada.");
     } catch (ex) {
-      setError((ex as Error).message || "No se pudo actualizar la ficha.");
+      setError((ex as Error).message || "No se pudo guardar la ficha.");
     } finally {
       setGuardando(false);
     }
   };
 
-  const agregarSocio = () => {
-    setSocios([
-      ...socios,
-      {
-        id: Date.now(),
-        nombre: "",
-        identificacion: "",
-        tipo_identificacion: "CC",
-        porcentaje: "0",
-        acciones: 0,
-        aporte: "0",
-        es_rep_legal: false,
-      },
-    ]);
-  };
-
-  const actualizarSocio = (index: number, campo: keyof Socio, valor: any) => {
-    const copia = [...socios];
-    copia[index] = { ...copia[index], [campo]: valor };
-    setSocios(copia);
-  };
-
-  const eliminarSocio = (index: number) => {
-    setSocios(socios.filter((_, i) => i !== index));
-  };
-
   return (
     <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm transition-opacity">
-      <div className="flex h-full w-full max-w-2xl flex-col bg-lienzo shadow-2xl overflow-hidden border-l border-linea animate-in slide-in-from-right duration-200">
-        {/* Cabecera del panel */}
-        <div className="flex items-center justify-between border-b border-linea px-6 py-4 bg-hoja">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label="Editar cliente"
+        className="flex h-full w-full max-w-3xl flex-col overflow-hidden border-l border-linea bg-lienzo shadow-2xl"
+      >
+        <div className="flex items-center justify-between border-b border-linea bg-hoja px-6 py-4">
           <div>
             <h2 className="t-h2 text-tinta">Editar cliente</h2>
-            <p className="t-small text-grafito">Modifique los datos de la ficha sin salir del expediente</p>
+            <p className="t-small text-grafito">Todos los datos de la ficha y los socios, sin salir del expediente.</p>
           </div>
           <button
             type="button"
             onClick={onCerrar}
-            className="rounded-full p-2 text-grafito hover:bg-hoja-2 hover:text-tinta transition-colors"
+            className="rounded-full p-2 text-grafito transition-colors hover:bg-hoja-2 hover:text-tinta"
             aria-label="Cerrar panel"
           >
             <X size={20} />
           </button>
         </div>
 
-        {/* Contenido scrolleable */}
-        <form onSubmit={guardar} className="flex-1 overflow-y-auto p-6 space-y-6">
+        <form onSubmit={guardar} className="flex-1 space-y-6 overflow-y-auto p-6">
           {error && <Aviso tono="rojo" onCerrar={() => setError("")}>{error}</Aviso>}
 
-          {/* 1. Identificación */}
-          <section className="space-y-4">
-            <h3 className="t-meta text-gris uppercase tracking-wider">Identificación</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div className="sm:col-span-2">
-                <Campo etiqueta="Razón social o nombre completo">
-                  <input
-                    value={datos.razon_social || ""}
-                    onChange={(e) => setCampo("razon_social", e.target.value)}
-                    required
-                    className={estiloCampo}
-                  />
-                </Campo>
-              </div>
-              <Campo etiqueta="Sigla o nombre corto">
-                <input
-                  value={datos.sigla || ""}
-                  onChange={(e) => setCampo("sigla", e.target.value)}
-                  className={estiloCampo}
-                />
-              </Campo>
-              <Campo etiqueta="NIT o Cédula">
-                <input
-                  value={datos.nit || ""}
-                  onChange={(e) => setCampo("nit", e.target.value)}
-                  required
-                  className={estiloCampo}
-                />
-              </Campo>
-              <Campo etiqueta="Tipo de persona">
-                <select
-                  value={datos.tipo_persona || "juridica"}
-                  onChange={(e) => setCampo("tipo_persona", e.target.value)}
-                  className={estiloCampoAuto}
-                >
-                  <option value="juridica">Persona jurídica</option>
-                  <option value="natural">Persona natural</option>
-                </select>
-              </Campo>
-              <Campo etiqueta="Régimen tributario">
-                <select
-                  value={datos.regimen || "responsable_iva"}
-                  onChange={(e) => setCampo("regimen", e.target.value)}
-                  className={estiloCampoAuto}
-                >
-                  <option value="responsable_iva">Responsable de IVA</option>
-                  <option value="no_responsable_iva">No responsable de IVA</option>
-                  <option value="gran_contribuyente">Gran contribuyente</option>
-                  <option value="simple">Régimen Simple</option>
-                  <option value="especial">Régimen Especial (ESAL)</option>
-                </select>
-              </Campo>
-            </div>
-          </section>
-
-          {/* 2. Ubicación y Contacto */}
-          <section className="space-y-4 pt-4 border-t border-linea">
-            <h3 className="t-meta text-gris uppercase tracking-wider">Ubicación y Contacto</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Campo etiqueta="Municipio">
-                <input
-                  value={datos.municipio || ""}
-                  onChange={(e) => setCampo("municipio", e.target.value)}
-                  className={estiloCampo}
-                />
-              </Campo>
-              <Campo etiqueta="Departamento">
-                <input
-                  value={datos.departamento || ""}
-                  onChange={(e) => setCampo("departamento", e.target.value)}
-                  className={estiloCampo}
-                />
-              </Campo>
-              <div className="sm:col-span-2">
-                <Campo etiqueta="Dirección">
-                  <input
-                    value={datos.direccion || ""}
-                    onChange={(e) => setCampo("direccion", e.target.value)}
-                    className={estiloCampo}
-                  />
-                </Campo>
-              </div>
-              <Campo etiqueta="Teléfono">
-                <input
-                  value={datos.telefono || ""}
-                  onChange={(e) => setCampo("telefono", e.target.value)}
-                  className={estiloCampo}
-                />
-              </Campo>
-              <Campo etiqueta="Correo electrónico">
-                <input
-                  type="email"
-                  value={datos.email || ""}
-                  onChange={(e) => setCampo("email", e.target.value)}
-                  className={estiloCampo}
-                />
-              </Campo>
-            </div>
-          </section>
-
-          {/* 3. Honorarios */}
-          <section className="space-y-4 pt-4 border-t border-linea">
-            <h3 className="t-meta text-gris uppercase tracking-wider">Honorarios contables</h3>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <Campo etiqueta="Honorarios acordados">
-                <input
-                  type="number"
-                  value={datos.honorarios_mes || "0"}
-                  onChange={(e) => setCampo("honorarios_mes", e.target.value)}
-                  className={estiloCampo}
-                />
-              </Campo>
-              <Campo etiqueta="Periodicidad">
-                <select
-                  value={datos.periodicidad || "mensual"}
-                  onChange={(e) => setCampo("periodicidad", e.target.value)}
-                  className={estiloCampoAuto}
-                >
-                  <option value="mensual">Mensual</option>
-                  <option value="bimestral">Bimestral</option>
-                  <option value="trimestral">Trimestral</option>
-                  <option value="cuatrimestral">Cuatrimestral</option>
-                  <option value="anual">Anual</option>
-                </select>
-              </Campo>
-            </div>
-          </section>
-
-          {/* 4. Socios */}
-          <section className="space-y-4 pt-4 border-t border-linea">
-            <div className="flex items-center justify-between">
-              <h3 className="t-meta text-gris uppercase tracking-wider">Socios o accionistas</h3>
-              <button
-                type="button"
-                onClick={agregarSocio}
-                className="inline-flex items-center gap-1 text-xs font-semibold text-azul hover:underline"
-              >
-                <Plus size={14} /> Agregar socio
-              </button>
-            </div>
-            {socios.length === 0 ? (
-              <p className="t-small text-gris italic">No hay socios registrados en esta ficha.</p>
-            ) : (
-              <div className="space-y-3">
-                {socios.map((socio, idx) => (
-                  <div key={socio.id || idx} className="rounded-hoja border border-linea bg-hoja p-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="t-small font-medium text-tinta">Socio #{idx + 1}</span>
-                      <button
-                        type="button"
-                        onClick={() => eliminarSocio(idx)}
-                        className="text-rojo hover:opacity-75"
-                        title="Quitar socio"
-                      >
-                        <Trash2 size={15} />
-                      </button>
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <input
-                        placeholder="Nombre completo"
-                        value={socio.nombre}
-                        onChange={(e) => actualizarSocio(idx, "nombre", e.target.value)}
-                        className={estiloCampo}
-                      />
-                      <input
-                        placeholder="Identificación / Cédula"
-                        value={socio.identificacion}
-                        onChange={(e) => actualizarSocio(idx, "identificacion", e.target.value)}
-                        className={estiloCampo}
-                      />
-                      <input
-                        placeholder="Porcentaje (%)"
-                        value={socio.porcentaje}
-                        onChange={(e) => actualizarSocio(idx, "porcentaje", e.target.value)}
-                        className={estiloCampo}
-                      />
-                      <input
-                        placeholder="Aporte ($)"
-                        value={socio.aporte}
-                        onChange={(e) => actualizarSocio(idx, "aporte", e.target.value)}
-                        className={estiloCampo}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </section>
-
-          {/* 5. Notas */}
-          <section className="space-y-4 pt-4 border-t border-linea">
-            <h3 className="t-meta text-gris uppercase tracking-wider">Notas del contador</h3>
-            <Campo etiqueta="Anotaciones privadas">
-              <textarea
-                rows={3}
-                value={datos.notas || ""}
-                onChange={(e) => setCampo("notas", e.target.value)}
-                placeholder="Observaciones sobre la empresa, acuerdos especiales, etc."
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <Campo etiqueta="Razón social o nombre completo" className="sm:col-span-2">
+              <input
+                value={datos.razon_social ?? ""}
+                onChange={(e) => set("razon_social", e.target.value)}
+                required
                 className={estiloCampo}
+              />
+            </Campo>
+            <Campo etiqueta="NIT o cédula" ayuda={dv ? `Dígito de verificación: ${dv}` : undefined}>
+              <input
+                value={datos.nit ?? ""}
+                onChange={(e) => set("nit", e.target.value)}
+                required
+                inputMode="numeric"
+                className={clases(estiloCampo, "cifras")}
               />
             </Campo>
           </section>
 
-          {/* Barra de botones inferior */}
+          <MasDatos datos={datos} set={set} />
+          <EditorSocios socios={datos.socios ?? []} onCambio={(s) => set("socios", s)} />
+
           <div className="sticky bottom-0 -mx-6 -mb-6 flex items-center justify-end gap-3 border-t border-linea bg-hoja px-6 py-4">
             <BotonFantasma type="button" onClick={onCerrar}>Cancelar</BotonFantasma>
             <BotonPrimario type="submit" cargando={guardando}>
