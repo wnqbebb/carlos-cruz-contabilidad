@@ -30,9 +30,9 @@ son **ficticios**: no se usó ninguna foto ni archivo real de clientes.
 | Pantalla | Respuesta | Tiempo (1.ª vez) |
 |---|---|---|
 | Lista de clientes (página 1) | 200 | 0,03 s |
-| Lista ordenada por utilidad | 200 | 0,70 s |
+| Lista ordenada por utilidad | 200 | 0,76 s |
 | Buscar «panader» / por NIT | 200 | 0,01–0,07 s |
-| Tablero del contador | 200 | 1,8 s (después, desde memoria hasta el siguiente cambio) |
+| Tablero del contador (todos los clientes contables) | 200 | 3,1 s la primera vez; 0,02 s después, desde memoria hasta el siguiente cambio |
 | Cartera de renta | 200 | 0,09 s (la pantalla dibuja por tandas de 200) |
 | Ficha / periodos de un cliente | 200 | < 0,02 s |
 | Resultado de un periodo (rearmado desde la entrada) | 200 | 0,03 s |
@@ -63,7 +63,82 @@ personas sí caben de sobra.
 
 ## 5. Salida real de las verificaciones
 
-(Se completa al final con las salidas pegadas.)
+```
+$ cd backend && python -m pytest -q                       (SQLite)
+367 passed, 25 skipped, 1 warning in 86.68s (0:01:26)
+
+$ CC_PRUEBAS_POSTGRES=postgresql://…/pruebas python -m pytest -q   (Postgres 16)
+367 passed, 25 skipped, 77 warnings in 98.59s (0:01:38)
+
+$ npx tsc --noEmit
+(sin errores)
+
+$ npm run build   (cola; ahora corre tsc primero)
+✓ built in 9.28s
+
+$ npm run lint:diseno
+lint:diseno ✓  sin infracciones en src/ (56 archivos revisados)
+
+$ npx playwright test
+  ok  1 [acceso] › J1 · crear el acceso o ingresar y llegar al Tablero (4.8s)
+  ok  2 [recorridos] › J2 · subir la plantilla del caso completo → resultado en pantalla (6.4s)
+  ok  3 [recorridos] › J2 · subir las facturas electrónicas de la DIAN → ventas y compras organizadas solas (6.0s)
+  ok  4 [recorridos] › J3 · cambiar de mes conserva la vista (6.9s)
+  ok  5 [recorridos] › J4 · editar nombre, datos y socios, y comprobar tras recargar (5.4s)
+  ok  6 [recorridos] › J5 · editar movimientos y saldos dentro de la aplicación (11.1s)
+  ok  7 [recorridos] › J6 · Excel completo, PDF, libros y datos para editar (11.9s)
+  ok  8 [recorridos] › J7 · renta de la Contribuyente A desde la foto hasta el ZIP (42.9s)
+  ok  9 [recorridos] › J8 · tres fotos difíciles: sin cifras falsas y digitar lo esencial (1.0m)
+  ok 10 [recorridos] › J9 · exógena de una persona nueva: borrador y fuera de los clientes contables (4.2s)
+  10 passed (3.1m)
+
+$ python backend/scripts/prueba_carga.py --solo-medir     (10.000 clientes × 3 periodos, Postgres 16)
+{"base_mb": 329.2, … "clientes": 10000, "periodos": 30077}
+Lista de clientes (página 1)             200    0.03 s  mediana   0.03 s
+Lista ordenada por utilidad              200    0.76 s  mediana   0.76 s
+Buscar «panader»                         200    0.03 s  mediana   0.01 s
+Buscar por NIT                           200    0.01 s  mediana   0.01 s
+Tablero del contador                     200    3.12 s  mediana   0.02 s
+Cartera de renta 2025                    200    0.14 s  mediana   0.13 s
+Ficha de un cliente                      200    0.01 s  mediana   0.01 s
+Periodos de un cliente                   200    0.01 s  mediana   0.01 s
+Resultado de un periodo (rearmado)       200    0.03 s  mediana   0.03 s
+
+$ curl -si https://carloscruz-api.onrender.com/api/salud
+HTTP/1.1 404 Not Found
+x-render-routing: no-server
+$ curl -si https://carlos-cruz-contabilidad.vercel.app/api/salud
+HTTP/1.1 404 Not Found
+```
+La nube **todavía no funciona**: falta crear el servicio en Render (§6).
+
+### Tiempos y clics de cada recorrido (navegador real, servidor local)
+Los clics cuentan botones pulsados; escribir en un campo no cuenta.
+
+| Recorrido | Tiempo | Clics |
+|---|---|---|
+| J1 Entrar | 4,7 s | 2 |
+| J2 Subir contabilidad (caso completo) | 5,7 s | 2 |
+| J2 Subir facturas DIAN | 5,6 s | 2 |
+| J3 Navegar entre meses | 6,1 s | 2 |
+| J4 Editar el cliente (nombre en < 10 s, honorarios, panel, socios, recarga) | 4,5 s | 5 |
+| J5 Editar valores del periodo | 10,7 s | 8 |
+| J6 Descargar (Excel, PDF, libros, datos para editar) | 16,5 s | 4 |
+| J7 Renta con foto legible, hasta el ZIP | 41,8 s | 6 |
+| J8 Renta con fotos difíciles | 60,7 s | 2 |
+| J9 Renta de una persona nueva | 3,8 s | 0 (soltar el archivo) |
+
+Capturas: `docs/rescate/capturas/` (recorridos) y `docs/rescate/diseno/` (claro y oscuro, 1440 y 390 px).
+
+### Otras fallas encontradas y corregidas por el camino
+- Lector aislado: avisaba «el lector se detuvo» con archivos buenos si el proceso terminaba justo entre dos
+  revisiones (pasaba con el equipo ocupado; en la nube gratuita, a menudo).
+- El cargador de demostración fallaba con 403 desde la v2.3 (no mandaba el token CSRF).
+- El tablero solo miraba los primeros 5.000 clientes y contaba como «atrasados» a quienes solo vienen por la renta.
+- «Digitar lo esencial» traía fijas cifras de un contribuyente real (saldo a favor y patrimonio anterior).
+- Una exógena en Excel pedía «confirmar filas» aunque trae el dato exacto.
+- `iniciar.bat` tenía una línea partida (`node frontend\scripts` + `ecesita-build.mjs`).
+- Celular: el selector del mes quedaba de 30 px y sin texto.
 
 ## 6. Lo que falta y por qué
 

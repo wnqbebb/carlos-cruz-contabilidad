@@ -118,7 +118,7 @@ def _preguntas_pendientes() -> dict[str, dict]:
 
 def armar(hoy: date | None = None) -> dict:
     hoy = hoy or date.today()
-    fichas = repo_clientes.activos(limite=5000)
+    fichas = repo_clientes.activos()
     ids = [c["id"] for c in fichas]
     historias = repo_periodos.series_de_varios(ids)
     cierres = repo_periodos.cierres_de_varios(ids)

@@ -441,11 +441,19 @@ def sugerencias_busqueda(q: str, limite: int = 8) -> list[dict]:
     ]
 
 
-def activos(limite: int = 5000) -> list[dict]:
-    """Todos los clientes activos (para el tablero), en una consulta."""
+def activos(limite: int = 100_000, incluir_solo_renta: bool = False) -> list[dict]:
+    """Todos los clientes CONTABLES activos (para el tablero), en una consulta.
+
+    Rescate: el límite era 5.000 y con 10.000 clientes la mitad quedaba fuera del tablero sin aviso.
+    Los contribuyentes que solo vienen por la renta no son clientes contables: no cuentan aquí.
+    """
+    filtros = [T.c.estado == "activo"]
+    if not incluir_solo_renta:
+        filtros.append(~_etiquetas_pg().any("solo_renta") if ES_POSTGRES
+                       else ~T.c.etiquetas.cast(Text).like('%"solo_renta"%'))
     with lectura() as cn:
-        filas = cn.execute(select(T).where(T.c.estado == "activo").order_by(T.c.razon_social)
-                           .limit(max(1, int(limite or 5000)))).all()
+        filas = cn.execute(select(T).where(and_(*filtros)).order_by(T.c.razon_social)
+                           .limit(max(1, int(limite or 100_000)))).all()
     return [_a_dict(f) for f in filas]
 
 

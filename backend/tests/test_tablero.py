@@ -159,3 +159,17 @@ def test_tablero_se_guarda_en_memoria_y_se_rehace_al_escribir(cliente_api, monke
     datos = cliente_api.get("/api/tablero").json()
     assert len(llamadas) == 2
     assert datos["indicadores"]["clientes_activos"] == antes + 1   # el cambio se ve de inmediato
+
+
+def test_el_tablero_no_cuenta_a_quien_solo_viene_por_la_renta(cliente_api):
+    """J9 / rescate: una persona que solo viene por la renta no es un cliente contable atrasado."""
+    from app.api import analisis
+
+    cliente_api.post("/api/clientes", json={"nit": "900777111", "razon_social": "CONTABLE SAS"})
+    cliente_api.post("/api/clientes", json={"nit": "10000009", "razon_social": "SOLO RENTA", "tipo_persona": "natural",
+                                           "etiquetas": ["renta", "solo_renta"]})
+    analisis._tablero_cache.clear()
+    datos = cliente_api.get("/api/tablero").json()
+    assert datos["indicadores"]["clientes_activos"] == 1
+    assert not any("SOLO RENTA" in (t.get("razon_social") or "") and t.get("codigo") == "SIN_PERIODOS"
+                   for t in datos["tareas"])

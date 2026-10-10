@@ -1,9 +1,9 @@
 {
   "tamano": {
-    "base_mb": 329.1,
+    "base_mb": 329.2,
     "tablas_mb": {
       "periodo_entradas": 135.0,
-      "resultados": 73.1,
+      "resultados": 73.2,
       "periodo_diarios": 61.6,
       "cierres": 29.4,
       "clientes": 10.8,
@@ -29,15 +29,15 @@
       "ruta": "/api/clientes?por_pagina=50&orden=utilidad&descendente=true",
       "estado": 200,
       "kb": 66,
-      "primera_s": 0.7,
-      "mediana_s": 0.63
+      "primera_s": 0.76,
+      "mediana_s": 0.76
     },
     {
       "pantalla": "Buscar «panader»",
       "ruta": "/api/buscar?q=panader",
       "estado": 200,
       "kb": 1,
-      "primera_s": 0.01,
+      "primera_s": 0.03,
       "mediana_s": 0.01
     },
     {
@@ -52,17 +52,17 @@
       "pantalla": "Tablero del contador",
       "ruta": "/api/tablero",
       "estado": 200,
-      "kb": 59,
-      "primera_s": 1.79,
-      "mediana_s": 1.74
+      "kb": 58,
+      "primera_s": 3.12,
+      "mediana_s": 0.02
     },
     {
       "pantalla": "Cartera de renta 2025",
       "ruta": "/api/renta/cartera?anio=2025",
       "estado": 200,
       "kb": 701,
-      "primera_s": 0.09,
-      "mediana_s": 0.09
+      "primera_s": 0.14,
+      "mediana_s": 0.13
     },
     {
       "pantalla": "Ficha de un cliente",
@@ -70,15 +70,15 @@
       "estado": 200,
       "kb": 1,
       "primera_s": 0.01,
-      "mediana_s": 0.0
+      "mediana_s": 0.01
     },
     {
       "pantalla": "Periodos de un cliente",
       "ruta": "/api/clientes/25666c6e-113a-4896-9e5f-f12e3eb39989/periodos",
       "estado": 200,
       "kb": 15,
-      "primera_s": 0.0,
-      "mediana_s": 0.02
+      "primera_s": 0.01,
+      "mediana_s": 0.01
     },
     {
       "pantalla": "Resultado de un periodo (rearmado)",
@@ -86,7 +86,7 @@
       "estado": 200,
       "kb": 78,
       "primera_s": 0.03,
-      "mediana_s": 0.02
+      "mediana_s": 0.03
     }
   ]
 }

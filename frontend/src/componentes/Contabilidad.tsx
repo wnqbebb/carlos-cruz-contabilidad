@@ -261,7 +261,8 @@ export function Contabilidad({
       {/* ── barra pegajosa: periodo, estado y el botón principal ───────── */}
       <div className="no-imprimir sticky top-[68px] z-20 escritorio:top-[80px]">
         <div className="material-cristal flex flex-wrap items-center gap-2 rounded-hoja px-2 py-2 sm:gap-3 sm:px-3">
-          <div className="flex min-w-0 flex-1 items-center gap-1 sm:flex-none">
+          {/* En el celular el mes va en su propia fila: antes el selector quedaba de 30 px y sin texto. */}
+          <div className="flex min-w-0 flex-1 basis-full items-center gap-1 sm:flex-none sm:basis-auto">
             <Boton
               variante="fantasma"
               tamano="sm"
