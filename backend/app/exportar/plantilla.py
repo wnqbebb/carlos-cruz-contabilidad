@@ -61,18 +61,72 @@ def _encabezar(ws, titulos: list[str]) -> None:
     ws.freeze_panes = "A2"
 
 
-def construir(demo: bool = False, caso: str = "") -> bytes:
+TIPO_INV_ETIQUETA = {"inventario_inicial": "Inventario inicial", "compra": "Compra", "venta": "Venta",
+                     "devolucion_compra": "Devolución compra", "devolucion_venta": "Devolución venta", "ajuste": "Ajuste"}
+
+
+def _n(v):
+    """Importe de texto exacto → número para Excel (Decimal: openpyxl lo escribe sin redondear)."""
+    from decimal import Decimal
+
+    if v in (None, ""):
+        return None
+    try:
+        return Decimal(str(v))
+    except ArithmeticError:
+        return v
+
+
+def con_datos(paquete: dict, empresa: dict) -> bytes:
+    """«Descargar datos para editar»: la plantilla oficial llena con los datos ACTUALES del periodo.
+
+    El contador la edita en Excel y la vuelve a subir: la aplicación reconoce el mismo cliente y
+    periodo (hoja EMPRESA) y pregunta si actualizarlo.
+    """
+    def mov(m):
+        return [m.get("fecha"), m.get("comprobante"), (m.get("tipo") or "").capitalize(), m.get("cuenta"),
+                m.get("nombre_cuenta"), m.get("tercero_id"), m.get("tercero_nombre"), m.get("descripcion"),
+                _n(m.get("debito")) or None, _n(m.get("credito")) or None, _n(m.get("base_retencion"))]
+
+    datos = {
+        "_meta": {"periodo": (empresa.get("periodo_desde"), empresa.get("periodo_hasta")),
+                  "empresa": empresa.get("razon_social", ""), "nit": empresa.get("nit", ""), "nombre": "",
+                  "descripcion": "", "editar": True, "empresa_dict": empresa},
+        "SALDOS_INICIALES": [[s.get("cuenta"), s.get("nombre_cuenta"), _n(s.get("debito")) or None,
+                              _n(s.get("credito")) or None] for s in paquete.get("saldos_iniciales") or []],
+        "MOVIMIENTOS": [mov(m) for m in paquete.get("movimientos") or []],
+        "AJUSTES": [mov(m) for m in paquete.get("ajustes_manuales") or []],
+        "INVENTARIO_MOVS": [[i.get("fecha"), i.get("documento"), i.get("codigo"), i.get("descripcion"),
+                             i.get("laboratorio"), i.get("lote"), i.get("vencimiento"),
+                             TIPO_INV_ETIQUETA.get(i.get("tipo"), i.get("tipo")), _n(i.get("cantidad")),
+                             _n(i.get("costo_unitario")), _n(i.get("precio_venta"))]
+                            for i in paquete.get("inventario_movs") or []],
+        "INVENTARIO_FISICO": [[c.get("codigo"), _n(c.get("cantidad")), c.get("fecha")]
+                              for c in paquete.get("inventario_fisico") or []],
+        "ACTIVOS_FIJOS": [[a.get("descripcion"), a.get("cuenta"), a.get("fecha_compra"), _n(a.get("costo")),
+                           a.get("vida_util_meses"), _n(a.get("valor_residual")), a.get("metodo")]
+                          for a in paquete.get("activos_fijos") or []],
+        "NOMINA": [[f"{e.get('año')}-{int(e.get('mes')):02d}-01" if e.get("mes") and e.get("año") else e.get("mes"),
+                    e.get("nombre"), e.get("cedula"), e.get("cargo"), _n(e.get("salario_basico")),
+                    _n(e.get("valor_hora")), _n(e.get("horas")), _n(e.get("dias")),
+                    {"si": "SI", "no": "NO"}.get(e.get("aux_transporte"), "AUTO"), _n(e.get("horas_extra")),
+                    _n(e.get("comisiones")), e.get("clase_riesgo")] for e in paquete.get("empleados") or []],
+    }
+    return construir(datos=datos)
+
+
+def construir(demo: bool = False, caso: str = "", datos: dict | None = None) -> bytes:
     """Genera la plantilla de carga, vacía o con uno de los casos de ejemplo.
 
     `caso` puede ser "completo", "mediocre" o "basico" (ver `casos.py`).
     `demo=True` sin caso equivale a "completo", por compatibilidad.
     """
-    datos_caso = casos.obtener(caso) if (caso or demo) else None
-    demo = bool(datos_caso)
+    datos_caso = datos or (casos.obtener(caso) if (caso or demo) else None)
+    demo = bool(datos_caso) and not (datos_caso.get("_meta") or {}).get("editar")
     meta = (datos_caso or {}).get("_meta", {})
     # La plantilla en blanco va VACÍA: antes venía con los datos reales de un
     # cliente, que acababan en el archivo de cualquier otro.
-    emp = Empresa()
+    emp = Empresa.desde_dict(meta["empresa_dict"]) if meta.get("empresa_dict") else Empresa()
     wb = Workbook()
     ws = wb.active
     ws.title = "INSTRUCCIONES"
