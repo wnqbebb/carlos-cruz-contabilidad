@@ -20,6 +20,7 @@ from ..repositorio import clientes as repo_clientes
 from ..repositorio import renta as repo
 from ..seguridad import aislado
 from . import clasificacion as C
+from . import completar as K
 from . import documentos, obligacion
 from . import parametros as P
 from .calculo import CERO, comparar
@@ -47,10 +48,56 @@ def declaracion(cliente_id: str, anio: int) -> dict:
 
 
 # ── paso 1 ─────────────────────────────────────────────────────────────
+def separar_facturas(archivos: list[tuple[str, bytes]], nit: str) -> tuple[dict, list[tuple[str, bytes]]]:
+    """Separa los Excel de facturas electrónicas de la DIAN y suma sus ventas y compras."""
+    from ..importadores import facturas_dian as FE
+    from ..importadores.lector import leer_archivo
+    from ..modelos import Empresa
+
+    total = {"ventas_base": CERO, "ventas_iva": CERO, "compras_base": CERO, "compras_iva": CERO, "archivos": []}
+    resto = []
+    for nombre, contenido in archivos:
+        if not nombre.lower().endswith((".xlsx", ".xlsm", ".xls", ".csv")):
+            resto.append((nombre, contenido))
+            continue
+        try:
+            hojas = leer_archivo(contenido, nombre)
+        except Exception:
+            resto.append((nombre, contenido))
+            continue
+        encontradas = False
+        for h in hojas:
+            pos = FE.detectar(h)
+            if pos is None:
+                continue
+            encontradas = True
+            r = FE.importar(h, pos, "renta", Empresa(nit=nit)).resumen
+            for k in ("ventas_base", "ventas_iva", "compras_base", "compras_iva"):
+                total[k] += Decimal(str(r.get(k) or 0))
+        if encontradas:
+            total["archivos"].append(nombre)
+        else:
+            resto.append((nombre, contenido))
+    return (total if total["archivos"] else {}), resto
+
+
+
 def subir(cliente_id: str, anio: int, archivos: list[tuple[str, bytes]], avisos_previos: list[str] | None = None) -> dict:
     cliente = _cliente(cliente_id)
     decl = declaracion(cliente_id, anio)
     datos = dict(decl["datos"])
+    # Rescate: los Excel de facturas electrónicas de la DIAN no son exógena: sus ventas y compras
+    # alimentan «ingresos del negocio» y el 1 % de compras con factura electrónica.
+    facturas, archivos = separar_facturas(archivos, cliente.get("nit") or "")
+    if facturas:
+        previas = datos.get("facturas") or {}
+        datos["facturas"] = {k: str(Decimal(str(previas.get(k) or 0)) + Decimal(str(facturas.get(k) or 0)))
+                             for k in ("ventas_base", "ventas_iva", "compras_base", "compras_iva")}
+        datos["facturas"]["archivos"] = sorted(set((previas.get("archivos") or []) + facturas["archivos"]))
+        if not archivos:
+            bitacora.registrar("renta_documentos", cliente_id, anio=anio, archivos=len(facturas["archivos"]),
+                               lineas=0, tipos=["facturas_dian"])
+            return recalcular(cliente_id, anio, datos, motivo="facturas", estado="borrador")
     # La lectura (OCR incluido) corre en un proceso aparte con tiempo y memoria limitados (C24).
     leidos, errores = aislado.ejecutar("app.renta.documentos.leer_lote", archivos, tiempo=600)
     errores = list(avisos_previos or []) + errores
@@ -162,6 +209,30 @@ def actualizar(cliente_id: str, anio: int, cambio: dict) -> dict:
         datos["manuales"] = [m for m in datos.get("manuales", []) if m["id"] != cambio["id"]]
     elif tipo == "anios_declarando":
         datos["anios_declarando"] = int(cambio["valor"])
+    elif tipo == "negocio":
+        # «Lo que solo usted sabe»: los ingresos y costos REALES del negocio (o que no tiene negocio).
+        if cambio.get("sin_negocio"):
+            datos["negocio"] = {"sin_negocio": True}
+        else:
+            ingresos = Decimal(str(cambio.get("ingresos") or "0"))
+            costos = Decimal(str(cambio.get("costos") or "0"))
+            if ingresos < 0 or costos < 0:
+                raise ValueError("Los ingresos y los costos no pueden ser negativos.")
+            datos["negocio"] = {"ingresos": str(ingresos), "costos": str(costos), "nota": str(cambio.get("nota") or "")}
+    elif tipo == "ajuste_casilla":
+        n = int(cambio["casilla"])
+        if n not in K.CASILLA_A_CAMPO:
+            raise ValueError(f"La casilla {n} se calcula con otras casillas: ajuste la casilla de donde sale.")
+        nota = str(cambio.get("nota") or "").strip()
+        if not nota:
+            raise ValueError("Escriba una nota que explique el ajuste: queda en el papel de trabajo.")
+        try:
+            valor = Decimal(str(cambio.get("valor")))
+        except ArithmeticError:
+            raise ValueError("El valor del ajuste debe ser un número, por ejemplo 65400000.") from None
+        datos.setdefault("ajustes_casilla", {})[str(n)] = {"valor": str(valor), "nota": nota}
+    elif tipo == "quitar_ajuste_casilla":
+        (datos.get("ajustes_casilla") or {}).pop(str(int(cambio["casilla"])), None)
     else:
         raise ValueError("Cambio desconocido.")
     return recalcular(cliente_id, anio, datos, motivo=tipo or "cambio")
@@ -195,8 +266,17 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
         respuestas.setdefault(q.id, q.defecto)
         if q.id == "saldo_favor" and "saldo_favor_valor" not in respuestas:
             respuestas["saldo_favor_valor"] = q.detalle
-    opt, dian, origen = C.construir(clas, respuestas, datos.get("beneficios") or {}, datos.get("manuales") or [],
+    negocio = datos.get("negocio")
+    manuales = list(datos.get("manuales") or []) + K.manuales_negocio(negocio)
+    opt, dian, origen = C.construir(clas, respuestas, datos.get("beneficios") or {}, manuales,
                                     anio, int(datos.get("anios_declarando") or 3))
+    # Compras con factura electrónica: las del Excel de la DIAN si son más que las de la exógena (sin sumar dos veces).
+    compras_excel = Decimal(str((datos.get("facturas") or {}).get("compras_base") or 0))
+    if (datos.get("beneficios") or {}).get("compras_fe") and compras_excel > opt.compras_fe:
+        import dataclasses as _dc
+
+        opt = _dc.replace(opt, compras_fe=compras_excel)
+    opt, ajustes_casilla = K.aplicar_ajustes(opt, datos.get("ajustes_casilla") or {})
     comp = comparar(opt, dian)
     L = comp["optimizada"]
     topes = {"ingresos": rep.topes.get(1), "patrimonio": rep.topes.get(2), "consumos_tc": rep.topes.get(3),
@@ -214,16 +294,21 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
         sancion = obligacion.sancion_extemporaneidad(L[129], ingresos_brutos, L[137], venc["fecha"], hoy, anio)
     anterior_patrimonio = sum((c.linea.importe() for c in clas if c.categoria == "anterior_patrimonio"), CERO)
     marcas = C.marcas(clas, rep.topes, opt, anterior_patrimonio, anio)
-    compras = sum((c.linea.importe() for c in clas if c.categoria == "compras_fe"), CERO)
+    compras = max(sum((c.linea.importe() for c in clas if c.categoria == "compras_fe"), CERO), compras_excel)
     beneficios = C.beneficios_posibles(opt, compras)
     casillas = []
     nombres = P.nombres_casillas(anio)
+    ajustadas = {a["casilla"]: a for a in ajustes_casilla}
     for n in sorted(L.casillas):
         if n not in nombres:
             continue
         casillas.append({"casilla": n, "nombre": nombres[n]["nombre"], "seccion": nombres[n]["seccion"],
                          "columna": nombres[n].get("columna", ""), "formula": nombres[n].get("formula", ""),
-                         "dian": comp["dian"][n], "optimizada": L[n], "explicacion": L.explicacion.get(n, "")})
+                         "dian": comp["dian"][n], "optimizada": L[n], "explicacion": L.explicacion.get(n, ""),
+                         "editable": n in K.CASILLA_A_CAMPO,
+                         "ajuste": ({"valor": ajustadas[n]["valor"], "nota": ajustadas[n]["nota"]} if n in ajustadas else None)})
+    for d in comp["diferencias"]:
+        d["por_que"] = K.explicar_diferencia(d["casilla"], d["dian"], d["optimizada"], negocio, d.get("motivo", ""))
     neto = L.neto
     faltantes = [b["soporte"] for b in beneficios if b["id"] in (datos.get("beneficios") or {})]
 
@@ -293,7 +378,21 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
     porcentaje_por_verificar = round((dudosas_total / total_lineas), 2) if total_lineas > 0 else 0.0
     ofrecer_digitar_esencial = bool(porcentaje_por_verificar >= 0.30 or dudosas_total >= 5)
 
+    # 6. «Lo que solo usted sabe»: el negocio (rescate H6).
+    facturacion = sum((c.linea.importe() for c in clas if c.incluida and c.categoria == "facturacion_emitida"), CERO)
+    senales = K.senales_negocio(cliente, topes, facturacion, datos.get("facturas"))
+    # Si el contador ya agregó a mano ingresos o costos no laborales, eso ES la respuesta.
+    agregados = any(m.get("categoria") in ("ingreso_no_laboral", "costo_no_laboral") for m in (datos.get("manuales") or []))
+    negocio_falta = senales if (senales and not negocio and not agregados) else None
+    if negocio_falta:
+        motivos_bloqueo.append(
+            "Faltan los ingresos y costos reales del negocio (" + "; ".join(senales["motivos"]) + "). "
+            + senales["comparacion"])
+
     incompleto = bool(motivos_bloqueo)
+    otros = [m for m in motivos_bloqueo
+             if not m.startswith("Hay ") and not m.startswith("Falta confirmar") and not m.startswith("Faltan los ingresos")]
+    lista_pendientes = K.pendientes(dudosas, preguntas_pendientes, negocio_falta, otros)
 
     if incompleto:
         cifras = {
@@ -347,6 +446,11 @@ def calcular(cliente: dict, anio: int, datos: dict, hoy: date | None = None) -> 
         "maximo_1pct": L.maximo_1pct,
         "ofrecer_digitar_esencial": ofrecer_digitar_esencial,
         "porcentaje_por_verificar": porcentaje_por_verificar,
+        "pendientes": lista_pendientes,
+        "negocio": {"senales": senales, "valor": negocio,
+                    "compras_fe": (senales or {}).get("compras_fe") if senales else None},
+        "ajustes_casilla": ajustes_casilla,
+        "facturas": datos.get("facturas"),
     }
 
 

@@ -125,6 +125,12 @@ class Cambio(BaseModel):
     categoria: str | None = None
     descripcion: str | None = None
     uno_por_ciento: object | None = None
+    # Rescate: «Lo que solo usted sabe» (negocio) y ajustes manuales por casilla.
+    ingresos: object | None = None
+    costos: object | None = None
+    sin_negocio: bool | None = None
+    nota: str | None = None
+    casilla: int | None = None
 
 
 @router.post("/{cliente_id}/{anio}/cambio")

@@ -394,7 +394,10 @@ export type CambioRenta =
   | { tipo: "excluir"; linea: string }
   | { tipo: "confirmar"; lineas: string[] }
   | { tipo: "agregar"; categoria: string; valor: string; descripcion?: string }
-  | { tipo: "quitar_agregado"; id: string };
+  | { tipo: "quitar_agregado"; id: string }
+  | { tipo: "negocio"; ingresos?: string; costos?: string; nota?: string; sin_negocio?: boolean }
+  | { tipo: "ajuste_casilla"; casilla: number; valor: string; nota: string }
+  | { tipo: "quitar_ajuste_casilla"; casilla: number };
 
 export const renta = {
   anios: () => pedir<{ anios: number[]; actual: number }>("/api/renta/anios"),

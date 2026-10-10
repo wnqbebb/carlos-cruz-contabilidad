@@ -109,12 +109,12 @@
                   "workerIndex": 0,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5340,
+                  "duration": 5193,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:09:58.103Z",
+                  "startTime": "2026-10-10T03:35:57.542Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -151,12 +151,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6419,
+                  "duration": 6567,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:10:04.657Z",
+                  "startTime": "2026-10-10T03:36:04.030Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -185,12 +185,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 5677,
+                  "duration": 6195,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:10:11.268Z",
+                  "startTime": "2026-10-10T03:36:10.778Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -227,12 +227,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 6977,
+                  "duration": 6789,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:10:16.988Z",
+                  "startTime": "2026-10-10T03:36:17.051Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -269,12 +269,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 4633,
+                  "duration": 4989,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:10:24.005Z",
+                  "startTime": "2026-10-10T03:36:23.910Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -311,12 +311,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 11143,
+                  "duration": 11141,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:10:28.694Z",
+                  "startTime": "2026-10-10T03:36:28.965Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -353,12 +353,12 @@
                   "workerIndex": 1,
                   "parallelIndex": 0,
                   "status": "passed",
-                  "duration": 12745,
+                  "duration": 17276,
                   "errors": [],
                   "stdout": [],
                   "stderr": [],
                   "retry": 0,
-                  "startTime": "2026-10-10T03:10:39.880Z",
+                  "startTime": "2026-10-10T03:36:40.163Z",
                   "annotations": [],
                   "attachments": []
                 }
@@ -372,13 +372,139 @@
           "column": 1
         }
       ]
+    },
+    {
+      "title": "j7-renta-foto.spec.ts",
+      "file": "j7-renta-foto.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "J7 · renta de la Contribuyente A desde la foto hasta el ZIP",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "recorridos",
+              "projectName": "recorridos",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 42259,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T03:36:57.516Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "abde6d137f3f09b399e3-8e8d85f099bb843edbae",
+          "file": "j7-renta-foto.spec.ts",
+          "line": 34,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "j8-renta-fotos-dificiles.spec.ts",
+      "file": "j8-renta-fotos-dificiles.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "J8 · tres fotos difíciles: sin cifras falsas y digitar lo esencial",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "recorridos",
+              "projectName": "recorridos",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 61477,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T03:37:39.847Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "a30c322f0bc9a17f8b92-633983f8bad972b0b85e",
+          "file": "j8-renta-fotos-dificiles.spec.ts",
+          "line": 11,
+          "column": 1
+        }
+      ]
+    },
+    {
+      "title": "j9-renta-persona-nueva.spec.ts",
+      "file": "j9-renta-persona-nueva.spec.ts",
+      "column": 0,
+      "line": 0,
+      "specs": [
+        {
+          "title": "J9 · exógena de una persona nueva: borrador y fuera de los clientes contables",
+          "ok": true,
+          "tags": [],
+          "tests": [
+            {
+              "timeout": 240000,
+              "annotations": [],
+              "expectedStatus": "passed",
+              "projectId": "recorridos",
+              "projectName": "recorridos",
+              "results": [
+                {
+                  "workerIndex": 1,
+                  "parallelIndex": 0,
+                  "status": "passed",
+                  "duration": 4254,
+                  "errors": [],
+                  "stdout": [],
+                  "stderr": [],
+                  "retry": 0,
+                  "startTime": "2026-10-10T03:38:41.375Z",
+                  "annotations": [],
+                  "attachments": []
+                }
+              ],
+              "status": "expected"
+            }
+          ],
+          "id": "7990c6410899ad5c833d-d8619fe3710b6ded9592",
+          "file": "j9-renta-persona-nueva.spec.ts",
+          "line": 9,
+          "column": 1
+        }
+      ]
     }
   ],
   "errors": [],
   "stats": {
-    "startTime": "2026-10-10T03:09:32.299Z",
-    "duration": 80954.177,
-    "expected": 7,
+    "startTime": "2026-10-10T03:35:31.134Z",
+    "duration": 195143.649,
+    "expected": 10,
     "skipped": 0,
     "unexpected": 0,
     "flaky": 0

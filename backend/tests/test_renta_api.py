@@ -103,9 +103,17 @@ def test_persona_juridica_no_aplica(cliente_api):
     assert "110" in r.json()["detail"]["mensaje"]
 
 
+def _negocio(api, cid, ingresos="65400000", costos="32800000"):
+    r = api.post(f"/api/renta/{cid}/2025/cambio", json={"tipo": "negocio", "ingresos": ingresos, "costos": costos})
+    assert r.status_code == 200, r.text
+    return r.json()["resultado"]
+
+
 def test_descargas(cliente_api):
     cid = _cliente_natural(cliente_api)
     _subir(cliente_api, cid)
+    _negocio(cliente_api, cid)
+    _negocio(cliente_api, cid)
     pdf = cliente_api.get(f"/api/renta/{cid}/2025/descargar/pdf")
     assert pdf.status_code == 200 and pdf.content.startswith(b"%PDF")
     resumen = cliente_api.get(f"/api/renta/{cid}/2025/descargar/resumen")
@@ -125,6 +133,7 @@ def test_descargas(cliente_api):
 def test_marcar_presentada_y_cartera(cliente_api):
     cid = _cliente_natural(cliente_api)
     _subir(cliente_api, cid)
+    _negocio(cliente_api, cid)
     r = cliente_api.post(f"/api/renta/{cid}/2025/estado", json={"estado": "presentada"})
     assert r.status_code == 422
     r = cliente_api.post(f"/api/renta/{cid}/2025/estado",
@@ -176,7 +185,97 @@ def test_un_boton_descarga_los_tres(cliente_api):
 
     cid = _cliente_natural(cliente_api)
     _subir(cliente_api, cid)
+    _negocio(cliente_api, cid)
     r = cliente_api.get(f"/api/renta/{cid}/2025/descargar/todo")
     assert r.status_code == 200
     nombres = zipfile.ZipFile(io.BytesIO(r.content)).namelist()
     assert len(nombres) == 3 and any(n.endswith("borrador-210.pdf") for n in nombres)
+
+
+def test_comerciante_pide_ingresos_y_costos_del_negocio(cliente_api):
+    """Rescate H6: consignaciones 93,1 M y facturación 4,8 M → la app pide lo que solo el contador sabe."""
+    cid = _cliente_natural(cliente_api)
+    res = _subir(cliente_api, cid)["resultado"]
+    assert res["incompleto"] is True and res["cifras"]["neto"] is None
+    tipos = [p["tipo"] for p in res["pendientes"]]
+    assert "negocio" in tipos
+    caja = next(p for p in res["pendientes"] if p["tipo"] == "negocio")
+    assert "Consignaciones 93,1 M" in caja["comparacion"] and "Facturación 4,8 M" in caja["comparacion"]
+    # Con los datos del negocio y el 1 % de compras: las casillas del 210 presentado.
+    _negocio(cliente_api, cid)
+    r = cliente_api.post(f"/api/renta/{cid}/2025/cambio",
+                         json={"tipo": "beneficio", "id": "compras_fe", "valor": True, "uno_por_ciento": "48000"})
+    res = r.json()["resultado"]
+    assert not any(p["tipo"] == "negocio" for p in res["pendientes"])
+    casillas = {c["casilla"]: D(c["optimizada"]) for c in res["casillas"]}
+    for n, valor in CASO_A["esperado_210"].items():
+        assert casillas[int(n)] == D(valor), f"casilla {n}: {casillas[int(n)]} ≠ {valor}"
+    # Las dos columnas explicadas en una línea.
+    d74 = next(d for d in res["diferencias"] if d["casilla"] == 74)
+    assert "facturación" in d74["por_que"] and "ingresos reales del negocio" in d74["por_que"]
+
+
+def test_sin_negocio_se_puede_decir_y_no_bloquea(cliente_api):
+    cid = _cliente_natural(cliente_api)
+    _subir(cliente_api, cid)
+    r = cliente_api.post(f"/api/renta/{cid}/2025/cambio", json={"tipo": "negocio", "sin_negocio": True})
+    assert not any(p["tipo"] == "negocio" for p in r.json()["resultado"]["pendientes"])
+
+
+def test_ajuste_manual_de_casilla_con_nota(cliente_api):
+    cid = _cliente_natural(cliente_api)
+    _subir(cliente_api, cid)
+    _negocio(cliente_api, cid)
+    sin_nota = cliente_api.post(f"/api/renta/{cid}/2025/cambio", json={"tipo": "ajuste_casilla", "casilla": 132, "valor": "9000", "nota": " "})
+    assert sin_nota.status_code == 422 and "nota" in sin_nota.json()["detail"]["mensaje"]
+    formula = cliente_api.post(f"/api/renta/{cid}/2025/cambio",
+                               json={"tipo": "ajuste_casilla", "casilla": 93, "valor": "1", "nota": "x"})
+    assert formula.status_code == 422 and "se calcula" in formula.json()["detail"]["mensaje"]
+    r = cliente_api.post(f"/api/renta/{cid}/2025/cambio",
+                         json={"tipo": "ajuste_casilla", "casilla": 132, "valor": "9000", "nota": "Certificado del banco B"})
+    res = r.json()["resultado"]
+    c132 = next(c for c in res["casillas"] if c["casilla"] == 132)
+    assert D(c132["optimizada"]) == D("9000") and c132["ajuste"]["nota"] == "Certificado del banco B"
+    assert res["ajustes_casilla"][0]["casilla"] == 132
+    r = cliente_api.post(f"/api/renta/{cid}/2025/cambio", json={"tipo": "quitar_ajuste_casilla", "casilla": 132})
+    c132 = next(c for c in r.json()["resultado"]["casillas"] if c["casilla"] == 132)
+    assert D(c132["optimizada"]) == D("5000")
+
+
+def test_pdf_borrador_solo_casillas_con_valor_y_anexo(cliente_api):
+    """Rescate §4.5: el borrador completo muestra solo las casillas con valor; el anexo trae todas.
+    El incompleto empieza por la lista de lo que falta."""
+    import pdfplumber
+
+    cid = _cliente_natural(cliente_api)
+    _subir(cliente_api, cid)
+    pdf = cliente_api.get(f"/api/renta/{cid}/2025/descargar/pdf").content
+    with pdfplumber.open(io.BytesIO(pdf)) as d:
+        primera = d.pages[0].extract_text()
+    assert "Para terminar faltan" in primera and "Ingresos y costos del negocio" in primera
+    _negocio(cliente_api, cid)
+    pdf = cliente_api.get(f"/api/renta/{cid}/2025/descargar/pdf").content
+    with pdfplumber.open(io.BytesIO(pdf)) as d:
+        textos = [pg.extract_text() or "" for pg in d.pages]
+    corte = next(i for i, t in enumerate(textos) if "Anexo · todas las casillas" in t)
+    cuerpo, anexo = "\n".join(textos[:corte]), "\n".join(textos[corte:])
+    assert "Resumen" in cuerpo and "Renta líquida gravable" in cuerpo and "Por qué su declaración" in cuerpo
+    # Las ganancias ocasionales están en cero: no van en el cuerpo, sí en el anexo completo.
+    assert "ganancias ocasionales" not in cuerpo.lower() and "ganancias ocasionales" in anexo.lower()
+
+
+def test_facturas_dian_en_la_renta_alimentan_el_negocio(cliente_api):
+    """Idea central: el Excel de facturas del portal de la DIAN se reconoce solo también en la renta."""
+    from demo import dian_ficticio as F
+
+    cid = _cliente_natural(cliente_api, nit=F.CLIENTE["nit"], nombre="COMERCIANTE FICTICIA")
+    _subir(cliente_api, cid)
+    r = cliente_api.post(f"/api/renta/{cid}/2025/documentos",
+                         files=[("archivos", ("facturas_todas.xlsx", F.archivos()["facturas_todas_enero_2025.xlsx"],
+                                              "application/octet-stream"))])
+    assert r.status_code == 200, r.text
+    res = r.json()["resultado"]
+    assert D(res["facturas"]["ventas_base"]) == D("3300000") and D(res["facturas"]["compras_base"]) == D("1250000")
+    caja = next(p for p in res["pendientes"] if p["tipo"] == "negocio")
+    assert "Facturación" in caja["comparacion"]
+    assert len(res["lineas"]) == 23          # la exógena sigue intacta

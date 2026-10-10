@@ -630,6 +630,8 @@ export interface PreguntaRenta {
   defecto: string;
   respuesta: string | null;
   detalle: string;
+  /** Ya la respondió el contador (no es solo la sugerida). */
+  confirmada?: boolean;
   lineas: string[];
 }
 
@@ -651,6 +653,20 @@ export interface CasillaRenta {
   dian: Monto;
   optimizada: Monto;
   explicacion: string;
+  /** Rescate: casilla de dato (no fórmula): admite ajuste manual con nota. */
+  editable?: boolean;
+  ajuste?: { valor: Monto; nota: string } | null;
+}
+
+/** «Para terminar faltan N cosas»: una entrada por cosa, cada una con su acción. */
+export interface PendienteRenta {
+  tipo: "confirmar_filas" | "preguntas" | "negocio" | "revisar";
+  texto: string;
+  accion: string;
+  lineas?: string[];
+  ids?: string[];
+  comparacion?: string;
+  motivos?: string[];
 }
 
 export interface ResultadoRenta {
@@ -678,7 +694,13 @@ export interface ResultadoRenta {
   vencimiento: { fecha: string | null; dias: number | null; texto: string; vencida?: boolean };
   sancion: { meses: number; valor: Monto; texto: string } | null;
   casillas: CasillaRenta[];
-  diferencias: { casilla: number; dian: Monto; optimizada: Monto; motivo: string }[];
+  diferencias: { casilla: number; dian: Monto; optimizada: Monto; motivo: string; por_que?: string }[];
+  pendientes?: PendienteRenta[];
+  negocio?: {
+    senales: { motivos: string[]; consignaciones: Monto; facturacion: Monto; ingresos_reportados: Monto; comparacion: string } | null;
+    valor: { ingresos?: Monto; costos?: Monto; nota?: string; sin_negocio?: boolean } | null;
+  };
+  ajustes_casilla?: { casilla: number; campo: string; valor: Monto; antes: Monto; nota: string }[];
   preguntas: PreguntaRenta[];
   beneficios: BeneficioRenta[];
   marcas: { tipo: string; texto: string; linea?: string; lineas?: string[] }[];

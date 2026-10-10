@@ -76,39 +76,99 @@ def _documento(buf) -> SimpleDocTemplate:
                              creator="Carlos Cruz", producer="Carlos Cruz", subject="", keywords="")
 
 
+def _tabla_casillas(casillas: list[dict], incompleto: bool) -> Table:
+    seccion = None
+    filas = [["Casilla", "Concepto", "Lo que propondría la DIAN", "Su declaración"]]
+    estilo = [("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 7.5), ("BACKGROUND", (0, 0), (-1, 0), HOJA2),
+              ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINEA), ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
+              ("FONTSIZE", (0, 1), (-1, -1), 7.5), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]
+    for cas in casillas:
+        if cas["seccion"] != seccion:
+            seccion = cas["seccion"]
+            filas.append(["", Paragraph(f"<b>{seccion}</b>", E_CEL), "", ""])
+            estilo.append(("BACKGROUND", (0, len(filas) - 1), (-1, len(filas) - 1), HOJA2))
+        nombre = cas["nombre"] + (f" — {cas['columna']}" if cas.get("columna") else "")
+        if cas.get("ajuste"):
+            nombre += f"  <i>(ajuste manual: {cas['ajuste'].get('nota', '')})</i>"
+        val_dian = pesos(cas["dian"]) if not (incompleto and cas["dian"] is None) else "—"
+        val_opt = pesos(cas["optimizada"]) if not (incompleto and cas["optimizada"] is None) else "—"
+        filas.append([str(cas["casilla"]), Paragraph(nombre, E_CEL), val_dian, val_opt])
+    t = Table(filas, colWidths=[1.4 * cm, 9.6 * cm, 3.5 * cm, 3.5 * cm], repeatRows=1)
+    t.setStyle(TableStyle(estilo))
+    return t
+
+
+def _con_valor(cas: dict) -> bool:
+    return _d(cas.get("dian")) != 0 or _d(cas.get("optimizada")) != 0 or bool(cas.get("ajuste"))
+
+
 def borrador_pdf(v: dict) -> bytes:
+    """Borrador del 210 (rescate §4.5).
+
+    Completo: resumen en una tabla, SOLO las casillas con valor agrupadas por sección, las diferencias
+    con la DIAN explicadas y los ajustes manuales; la lista completa de casillas va en un anexo.
+    Incompleto: primero la lista de lo que falta para terminar; ninguna cifra de impuesto.
+    """
     r = v["resultado"]
     incompleto = bool(r.get("incompleto"))
     buf = io.BytesIO()
     doc = _documento(buf)
     c = v["contribuyente"]
     tit = f"Formulario 210 · Año gravable {v['anio']} · {'BORRADOR INCOMPLETO' if incompleto else 'BORRADOR'}"
-    hist = [Paragraph(tit, E_TIT),
-            Paragraph(f"{c['nombre']} · documento {c['nit']}", E_SUB)]
+    hist = [Paragraph(tit, E_TIT), Paragraph(f"{c['nombre']} · documento {c['nit']}", E_SUB)]
     oblig = r.get("obligacion") or {}
     if oblig:
         hist.append(Paragraph(oblig.get("veredicto", ""), E_SUB))
-    if incompleto:
-        hist.append(Spacer(1, 4))
-        hist.append(Paragraph("<b>ADVERTENCIA:</b> Faltan datos o confirmaciones para liquidar este borrador. Las cifras no son definitivas.", E_SUB))
     hist.append(Spacer(1, 6))
-    seccion = None
-    filas = [["Casilla", "Concepto", "Propuesta DIAN", "Declaración"]]
-    estilo = [("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 7.5), ("BACKGROUND", (0, 0), (-1, 0), HOJA2),
-              ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINEA), ("ALIGN", (2, 0), (-1, -1), "RIGHT"),
-              ("FONTSIZE", (0, 1), (-1, -1), 7.5), ("VALIGN", (0, 0), (-1, -1), "MIDDLE")]
-    for cas in r.get("casillas", []):
-        if cas["seccion"] != seccion:
-            seccion = cas["seccion"]
-            filas.append(["", Paragraph(f"<b>{seccion}</b>", E_CEL), "", ""])
-            estilo.append(("BACKGROUND", (0, len(filas) - 1), (-1, len(filas) - 1), HOJA2))
-        nombre = cas["nombre"] + (f" — {cas['columna']}" if cas.get("columna") else "")
-        val_dian = pesos(cas["dian"]) if not (incompleto and cas["dian"] is None) else "—"
-        val_opt = pesos(cas["optimizada"]) if not (incompleto and cas["optimizada"] is None) else "—"
-        filas.append([str(cas["casilla"]), Paragraph(nombre, E_CEL), val_dian, val_opt])
-    t = Table(filas, colWidths=[1.4 * cm, 10.6 * cm, 3 * cm, 3 * cm], repeatRows=1)
-    t.setStyle(TableStyle(estilo))
-    hist.append(t)
+    casillas = r.get("casillas", [])
+
+    if incompleto:
+        pendientes = r.get("pendientes") or [{"texto": m} for m in r.get("motivos_incompleto") or []]
+        hist.append(Paragraph(f"Para terminar faltan {len(pendientes)} cosa(s)", E_H))
+        for i, pnd in enumerate(pendientes, 1):
+            texto = pnd.get("texto", "")
+            if pnd.get("comparacion"):
+                texto += f" — {pnd['comparacion']}"
+            hist.append(Paragraph(f"{i}. {texto}", E_SUB))
+        hist.append(Spacer(1, 6))
+        hist.append(Paragraph("Mientras falte algo, este borrador no muestra impuesto ni sanción.", E_SUB))
+        hist.append(Spacer(1, 6))
+        hist.append(Paragraph("Lo que ya se sabe (casillas con valor)", E_H))
+        hist.append(_tabla_casillas([x for x in casillas if _con_valor(x)], incompleto))
+    else:
+        cif = r.get("cifras") or {}
+        neto = _d(cif.get("neto"))
+        resumen = [["Resumen", ""],
+                   ["Patrimonio bruto (29)", pesos(next((x["optimizada"] for x in casillas if x["casilla"] == 29), 0))],
+                   ["Deudas (30)", pesos(next((x["optimizada"] for x in casillas if x["casilla"] == 30), 0))],
+                   ["Renta líquida gravable (111)", pesos(next((x["optimizada"] for x in casillas if x["casilla"] == 111), 0))],
+                   ["Impuesto a cargo (129)", pesos(next((x["optimizada"] for x in casillas if x["casilla"] == 129), 0))],
+                   ["Retenciones (132)", pesos(next((x["optimizada"] for x in casillas if x["casilla"] == 132), 0))],
+                   ["Saldo a pagar" if neto > 0 else "Saldo a favor", pesos(abs(neto))],
+                   ["Ahorro frente a la propuesta de la DIAN", pesos(cif.get("ahorro"))]]
+        t = Table(resumen, colWidths=[11 * cm, 7 * cm])
+        t.setStyle(TableStyle([("FONT", (0, 0), (-1, 0), "Helvetica-Bold", 9), ("BACKGROUND", (0, 0), (-1, 0), HOJA2),
+                               ("LINEBELOW", (0, 0), (-1, -1), 0.25, LINEA), ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+                               ("FONTSIZE", (0, 1), (-1, -1), 8.5)]))
+        hist.append(t)
+        hist.append(Paragraph("Casillas con valor", E_H))
+        hist.append(_tabla_casillas([x for x in casillas if _con_valor(x)], incompleto))
+        difs = [d for d in r.get("diferencias") or [] if _d(d.get("dian")) != _d(d.get("optimizada"))]
+        if difs:
+            hist.append(Paragraph("Por qué su declaración es distinta a la propuesta de la DIAN", E_H))
+            for d in difs:
+                hist.append(Paragraph(f"Casilla {d['casilla']}: DIAN {pesos(d['dian'])} · declaración {pesos(d['optimizada'])}. "
+                                      f"{d.get('por_que') or d.get('motivo') or ''}", E_SUB))
+        ajustes = r.get("ajustes_casilla") or []
+        if ajustes:
+            hist.append(Paragraph("Ajustes manuales del contador", E_H))
+            for a in ajustes:
+                hist.append(Paragraph(f"Casilla {a['casilla']}: {pesos(a['valor'])} (antes {pesos(a['antes'])}). Nota: {a.get('nota', '')}", E_SUB))
+    from reportlab.platypus import PageBreak
+
+    hist.append(PageBreak())
+    hist.append(Paragraph("Anexo · todas las casillas del formulario 210", E_H))
+    hist.append(_tabla_casillas(casillas, incompleto))
     marca = _marca_borrador_fabrica(incompleto)
     doc.build(hist, onFirstPage=marca, onLaterPages=marca)
     return buf.getvalue()

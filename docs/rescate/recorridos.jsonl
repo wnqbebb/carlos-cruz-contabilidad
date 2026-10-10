@@ -1,7 +1,10 @@
-{"id":"J1","nombre":"Entrar","segundos":4.7,"clics":2,"url":"http://127.0.0.1:8010/","cuando":"2026-10-10T03:10:03.303Z"}
-{"id":"J2a","nombre":"Subir contabilidad (caso completo)","segundos":5.5,"clics":2,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:10:10.654Z"}
-{"id":"J2b","nombre":"Subir facturas electrónicas DIAN","segundos":5,"clics":2,"url":"http://127.0.0.1:8010/clientes/c820027a-c40a-4762-83c6-eb4371ea6b6f?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:10:16.397Z"}
-{"id":"J3","nombre":"Navegar entre meses","segundos":6.3,"clics":2,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:10:23.412Z"}
-{"id":"J4","nombre":"Editar el cliente","segundos":3.9,"clics":4,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140","cuando":"2026-10-10T03:10:27.973Z"}
-{"id":"J5","nombre":"Editar valores del periodo","segundos":10.7,"clics":8,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01&vista=datos","cuando":"2026-10-10T03:10:39.525Z"}
-{"id":"J6","nombre":"Descargar","segundos":12.1,"clics":4,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:10:52.060Z"}
+{"id":"J1","nombre":"Entrar","segundos":4.7,"clics":2,"url":"http://127.0.0.1:8010/","cuando":"2026-10-10T03:36:02.617Z"}
+{"id":"J2a","nombre":"Subir contabilidad (caso completo)","segundos":5.7,"clics":2,"url":"http://127.0.0.1:8010/clientes/b49e938e-87fe-49a1-abdb-ce7f67c26c0c?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:36:10.098Z"}
+{"id":"J2b","nombre":"Subir facturas electrónicas DIAN","segundos":5.6,"clics":2,"url":"http://127.0.0.1:8010/clientes/3a4fc8ee-5fed-45f9-b36b-3aa9b9f7337d?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:36:16.503Z"}
+{"id":"J3","nombre":"Navegar entre meses","segundos":6.1,"clics":2,"url":"http://127.0.0.1:8010/clientes/b49e938e-87fe-49a1-abdb-ce7f67c26c0c?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:36:23.302Z"}
+{"id":"J4","nombre":"Editar el cliente","segundos":4.2,"clics":4,"url":"http://127.0.0.1:8010/clientes/b49e938e-87fe-49a1-abdb-ce7f67c26c0c","cuando":"2026-10-10T03:36:28.246Z"}
+{"id":"J5","nombre":"Editar valores del periodo","segundos":10.7,"clics":8,"url":"http://127.0.0.1:8010/clientes/b49e938e-87fe-49a1-abdb-ce7f67c26c0c?seccion=contabilidad&periodo=2025-01&vista=datos","cuando":"2026-10-10T03:36:39.762Z"}
+{"id":"J6","nombre":"Descargar","segundos":16.5,"clics":4,"url":"http://127.0.0.1:8010/clientes/b49e938e-87fe-49a1-abdb-ce7f67c26c0c?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:36:56.830Z"}
+{"id":"J7","nombre":"Renta con foto legible","segundos":41.8,"clics":6,"url":"http://127.0.0.1:8010/clientes/adad079f-7407-4bca-a5d2-79d364180663?seccion=renta","cuando":"2026-10-10T03:37:39.463Z"}
+{"id":"J8","nombre":"Renta con fotos difíciles","segundos":60.7,"clics":2,"url":"http://127.0.0.1:8010/clientes/79adff17-bf79-41d9-b7e3-6dc5eefe1515?seccion=renta","cuando":"2026-10-10T03:38:40.817Z","incompleto":false}
+{"id":"J9","nombre":"Renta de una persona nueva","segundos":3.8,"clics":0,"url":"http://127.0.0.1:8010/clientes","cuando":"2026-10-10T03:38:45.284Z"}

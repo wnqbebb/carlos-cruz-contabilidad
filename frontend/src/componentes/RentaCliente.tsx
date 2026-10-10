@@ -1,11 +1,11 @@
 import { Check, Download, FileUp, TriangleAlert } from "lucide-react";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 import { descargarConfirmando, renta, type CambioRenta } from "../api";
 import { clases, esNegativo, fecha, pesos } from "../formato";
-import type { BeneficioRenta, Cliente, DeclaracionRenta, LineaRenta, PreguntaRenta, ResultadoRenta } from "../tipos";
+import type { BeneficioRenta, CasillaRenta, Cliente, DeclaracionRenta, LineaRenta, PreguntaRenta, ResultadoRenta } from "../tipos";
 import { InsigniaEstado, useAvisos } from "../ui";
 import { Procesando } from "./Procesando";
-import { Aviso, Boton, Cargando, Dialogo, Insignia, Vacio, estiloCampo, estiloCampoAuto } from "./ui";
+import { Aviso, Boton, Campo, Cargando, Dialogo, Insignia, Vacio, estiloCampo, estiloCampoAuto } from "./ui";
 
 /**
  * Declaración de renta del cliente (v2.3 · Fase 5): tres pasos y nada más.
@@ -206,6 +206,7 @@ function Revision({
 }) {
   const [presentar, setPresentar] = useState(false);
   const [abiertoEsencial, setAbiertoEsencial] = useState(false);
+  const [confirmando, setConfirmando] = useState<string[] | null>(null);
   const estaIncompleto = Boolean(res.incompleto || res.cifras.bloqueado);
   const neto = res.cifras.neto;
   const paga = neto !== null && !esNegativo(neto) && neto !== "0";
@@ -244,27 +245,13 @@ function Revision({
         </p>
       </section>
 
-      {/* Alerta de borrador incompleto con motivos exactos */}
+      {/* Rescate H5: lo que falta, arriba y siempre visible, con un botón por cada cosa. */}
       {estaIncompleto && (
-        <section aria-label="Motivos de borrador incompleto" className="rounded-hoja border border-ambar/30 bg-ambar/10 p-5 space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-ambar font-semibold">
-              <TriangleAlert size={20} />
-              <h2 className="t-h2 text-tinta">Cálculo bloqueado por seguridad</h2>
-            </div>
-            <Boton variante="solido" tamano="sm" onClick={() => setAbiertoEsencial(true)}>
-              Digitar lo esencial
-            </Boton>
-          </div>
-          <p className="t-body text-grafito">
-            Para evitar liquidar un impuesto o sanción incorrecto, la aplicación no calcula el valor a pagar hasta resolver las siguientes observaciones:
-          </p>
-          <ul className="list-disc pl-5 space-y-1 t-small text-tinta">
-            {(res.motivos_incompleto ?? []).map((m, i) => (
-              <li key={i}>{m}</li>
-            ))}
-          </ul>
-        </section>
+        <CajaPendientes
+          res={res}
+          onConfirmarFilas={(ids) => setConfirmando(ids)}
+          onDigitar={() => setAbiertoEsencial(true)}
+        />
       )}
 
       {/* 2 · tres cifras */}
@@ -323,11 +310,22 @@ function Revision({
         </section>
       )}
 
-      {/* 4 · ¿podemos pagar menos? */}
+      {/* 4 · lo que solo usted sabe: el negocio y los beneficios con soporte */}
+      {(res.negocio?.senales || res.beneficios.length > 0) && (
+        <section aria-labelledby="titulo-solo-usted" className="space-y-4">
+          <div>
+            <h2 id="titulo-solo-usted" className="t-h2 text-tinta">Lo que solo usted sabe</h2>
+            <p className="t-small mt-1 text-grafito">
+              La DIAN solo conoce lo que reportaron terceros. Lo que usted escriba aquí recalcula al instante.
+            </p>
+          </div>
+          {res.negocio?.senales && <Negocio res={res} onCambio={onCambio} />}
+        </section>
+      )}
       {res.beneficios.length > 0 && (
         <section aria-labelledby="titulo-menos" className="space-y-4">
           <div>
-            <h2 id="titulo-menos" className="t-h2 text-tinta">¿Podemos pagar menos?</h2>
+            <h3 id="titulo-menos" className="t-h3 text-tinta">¿Podemos pagar menos?</h3>
             <p className="t-small mt-1 text-grafito">Cada «sí» pide el soporte y recalcula al instante.</p>
           </div>
           <ul className="divide-y divide-linea rounded-hoja border border-linea bg-hoja">
@@ -353,11 +351,12 @@ function Revision({
       )}
 
       {/* 5 · detalle plegado */}
-      <Plegable titulo={`Ver las ${res.lineas.length} líneas leídas y lo agregado a mano`}>
+      <Plegable titulo={`Ver las ${res.lineas.length} líneas leídas y lo agregado a mano`} id="detalle-lineas">
         <DetalleLineas decl={decl} res={res} cliente={cliente} onCambio={onCambio} />
       </Plegable>
-      <Plegable titulo="Ver las casillas del formulario 210: propuesta DIAN y declaración">
-        <Casillas res={res} />
+      <Diferencias res={res} />
+      <Plegable titulo="Ver las casillas del formulario 210: lo que propondría la DIAN y su declaración">
+        <Casillas res={res} onCambio={onCambio} />
       </Plegable>
       {(res.avisos.length > 0 || res.validacion.length > 0) && (
         <Plegable titulo="Ver cómo se leyeron los documentos">
@@ -412,6 +411,17 @@ function Revision({
         />
       )}
 
+      {confirmando && (
+        <ConfirmarFilas
+          res={res}
+          ids={confirmando}
+          cliente={cliente}
+          anio={decl.anio}
+          onCerrar={() => setConfirmando(null)}
+          onCambio={onCambio}
+        />
+      )}
+
       {abiertoEsencial && (
         <ModalDigitarEsencial
           cliente={cliente}
@@ -434,10 +444,10 @@ function CifraGrande({ rotulo, valor, detalle, alerta }: { rotulo: string; valor
   );
 }
 
-function Plegable({ titulo, children }: { titulo: string; children: ReactNode }) {
+function Plegable({ titulo, children, id }: { titulo: string; children: ReactNode; id?: string }) {
   return (
     <details>
-      <summary className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">{titulo}</summary>
+      <summary id={id} className="t-small cursor-pointer select-none text-azul-tinta underline underline-offset-4">{titulo}</summary>
       <div className="mt-4">{children}</div>
     </details>
   );
@@ -454,7 +464,8 @@ function PreguntaUnToque({ q, onResponder }: { q: PreguntaRenta; onResponder: (v
             key={o.id}
             type="button"
             aria-pressed={actual === o.id}
-            onClick={() => actual !== o.id && onResponder(o.id)}
+            // La sugerida también se puede confirmar con un toque (antes solo cambiando de opción).
+            onClick={() => (actual !== o.id || !q.confirmada) && onResponder(o.id)}
             className={clases(
               "t-small rounded-full border px-3.5 py-1.5 transition-colors duration-150",
               actual === o.id ? "border-tinta bg-tinta text-sobre-tinta" : "border-linea text-grafito hover:bg-hoja-2 hover:text-tinta",
@@ -480,7 +491,9 @@ function Beneficio({ b, maximo1, onCambio }: { b: BeneficioRenta; maximo1: strin
       <div className="min-w-0 flex-1">
         <p className="t-body text-tinta">{b.texto}</p>
         <p className="t-small text-grafito">
-          Ahorro posible: hasta <span className="cifras font-semibold text-tinta">{pesos(b.ahorro_hasta)}</span> ·
+          {b.ahorro_hasta && b.ahorro_hasta !== "0"
+            ? <>Ahorro posible: hasta <span className="cifras font-semibold text-tinta">{pesos(b.ahorro_hasta)}</span> · </>
+            : <>Este año no cambia el impuesto · </>}
           soporte: {b.soporte}
         </p>
       </div>
@@ -690,8 +703,200 @@ function AgregarDato({ decl, onCambio }: { decl: DeclaracionRenta; onCambio: (c:
   );
 }
 
-function Casillas({ res }: { res: ResultadoRenta }) {
-  const conValor = res.casillas.filter((c) => c.dian !== "0" || c.optimizada !== "0");
+function irA(id: string) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const plegable = el.closest("details");
+  if (plegable) plegable.open = true;
+  el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+/** «Para terminar faltan N cosas»: arriba y siempre visible, con un botón por cada cosa. */
+function CajaPendientes({ res, onConfirmarFilas, onDigitar }: {
+  res: ResultadoRenta; onConfirmarFilas: (ids: string[]) => void; onDigitar: () => void;
+}) {
+  const lista = res.pendientes ?? [];
+  const n = lista.length || (res.motivos_incompleto ?? []).length;
+  return (
+    <section aria-labelledby="titulo-pendientes" className="space-y-4 rounded-hoja border border-ambar bg-ambar-suave p-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h2 id="titulo-pendientes" className="t-h2 text-tinta">
+          Para terminar {n === 1 ? "falta 1 cosa" : `faltan ${n} cosas`}
+        </h2>
+        {res.ofrecer_digitar_esencial && (
+          <Boton variante="contorno" tamano="sm" onClick={onDigitar}>Digitar lo esencial</Boton>
+        )}
+      </div>
+      <p className="t-small text-grafito">
+        Mientras falte algo, la aplicación no muestra impuesto ni sanción: así nunca hay una cifra equivocada.
+      </p>
+      <ul className="space-y-2">
+        {lista.map((p, i) => (
+          <li key={i} className="flex flex-wrap items-center justify-between gap-3 rounded-control bg-hoja px-4 py-3">
+            <div className="min-w-0 flex-1">
+              <p className="t-body font-medium text-tinta">{p.texto}</p>
+              {p.comparacion && <p className="t-small cifras text-grafito">{p.comparacion}</p>}
+            </div>
+            <Boton
+              variante="solido"
+              tamano="sm"
+              onClick={() => {
+                if (p.tipo === "confirmar_filas") onConfirmarFilas(p.lineas ?? []);
+                else if (p.tipo === "preguntas") irA("titulo-confirmar");
+                else if (p.tipo === "negocio") irA("titulo-solo-usted");
+                else irA("detalle-lineas");
+              }}
+            >
+              {p.accion}
+            </Boton>
+          </li>
+        ))}
+        {!lista.length && (res.motivos_incompleto ?? []).map((m, i) => (
+          <li key={i} className="t-small rounded-control bg-hoja px-4 py-3 text-tinta">{m}</li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
+/** Confirmar las filas dudosas: el recorte de la foto al lado de cada valor; se puede corregir antes. */
+function ConfirmarFilas({ res, ids, cliente, anio, onCerrar, onCambio }: {
+  res: ResultadoRenta; ids: string[]; cliente: Cliente; anio: number; onCerrar: () => void;
+  onCambio: (c: CambioRenta) => Promise<void>;
+}) {
+  const filas = res.lineas.filter((l) => ids.includes(l.id));
+  const [valores, setValores] = useState<Record<string, string>>(() => Object.fromEntries(filas.map((l) => [l.id, l.valor])));
+  const [trabajando, setTrabajando] = useState(false);
+  const confirmar = async () => {
+    setTrabajando(true);
+    try {
+      for (const l of filas) {
+        if (valores[l.id] !== l.valor) await onCambio({ tipo: "valor", linea: l.id, valor: valores[l.id] });
+      }
+      await onCambio({ tipo: "confirmar", lineas: filas.map((l) => l.id) });
+      onCerrar();
+    } finally {
+      setTrabajando(false);
+    }
+  };
+  return (
+    <Dialogo
+      rotulo="Filas leídas de la foto"
+      titulo={`Confirmar ${filas.length} fila(s)`}
+      onCerrar={onCerrar}
+      ancho="max-w-3xl"
+      pie={
+        <>
+          <Boton variante="fantasma" onClick={onCerrar}>Cancelar</Boton>
+          <Boton variante="solido" cargando={trabajando} onClick={confirmar}>Confirmar todas</Boton>
+        </>
+      }
+    >
+      <p className="t-small mb-4 text-grafito">
+        Compare cada valor con el recorte de la foto. Si alguno está mal, corríjalo aquí antes de confirmar.
+      </p>
+      <ul className="divide-y divide-linea">
+        {filas.map((l) => (
+          <li key={l.id} className="grid gap-3 py-3 sm:grid-cols-[1fr_auto] sm:items-center">
+            <div className="min-w-0 space-y-1">
+              {l.recorte ? (
+                <img src={renta.recorte(cliente.id, anio, l.recorte)} alt={`Fila ${l.fila} de ${l.documento}`}
+                  className="max-h-14 w-full rounded-sm border border-linea object-contain object-left" />
+              ) : (
+                <p className="t-meta text-gris">{l.documento} · fila {l.fila}</p>
+              )}
+              <p className="t-small text-tinta">{l.entidad || "—"} · {l.detalle}</p>
+            </div>
+            <input aria-label={`Valor de ${l.detalle}`} inputMode="numeric" value={valores[l.id] ?? ""}
+              onChange={(e) => setValores({ ...valores, [l.id]: e.target.value.replace(/\D/g, "") })}
+              className={clases(estiloCampoAuto, "cifras w-40 text-right")} />
+          </li>
+        ))}
+      </ul>
+    </Dialogo>
+  );
+}
+
+/** «Ingresos y costos del negocio»: con la comparación que explica por qué se piden. */
+function Negocio({ res, onCambio }: { res: ResultadoRenta; onCambio: (c: CambioRenta) => Promise<void> }) {
+  const senales = res.negocio!.senales!;
+  const actual = res.negocio?.valor ?? null;
+  const [ingresos, setIngresos] = useState(String(actual?.ingresos ?? "").replace(/\.0+$/, ""));
+  const [costos, setCostos] = useState(String(actual?.costos ?? "").replace(/\.0+$/, ""));
+  const [nota, setNota] = useState(actual?.nota ?? "");
+  const [trabajando, setTrabajando] = useState(false);
+  const guardar = async (c: CambioRenta) => {
+    setTrabajando(true);
+    try { await onCambio(c); } finally { setTrabajando(false); }
+  };
+  return (
+    <div className="material-hoja space-y-4 p-5">
+      <div>
+        <h3 className="t-h3 text-tinta">Ingresos y costos del negocio</h3>
+        <p className="t-small mt-1 text-grafito">Se piden porque hay {senales.motivos.join("; ")}.</p>
+        <p className="cifras t-body mt-2 text-tinta">{senales.comparacion}</p>
+      </div>
+      {actual?.sin_negocio ? (
+        <p className="t-small text-grafito">Usted indicó que no tiene negocio: se usa lo que reportaron terceros.</p>
+      ) : null}
+      <div className="grid gap-3 sm:grid-cols-3">
+        <Campo etiqueta="Ingresos del negocio en el año">
+          <input inputMode="numeric" value={ingresos} onChange={(e) => setIngresos(e.target.value.replace(/\D/g, ""))}
+            className={clases(estiloCampo, "cifras")} placeholder="65400000" />
+        </Campo>
+        <Campo etiqueta="Costos y gastos del negocio">
+          <input inputMode="numeric" value={costos} onChange={(e) => setCostos(e.target.value.replace(/\D/g, ""))}
+            className={clases(estiloCampo, "cifras")} placeholder="32800000" />
+        </Campo>
+        <Campo etiqueta="Nota (opcional)">
+          <input value={nota} onChange={(e) => setNota(e.target.value)} className={estiloCampo}
+            placeholder="De dónde salen las cifras" />
+        </Campo>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <Boton variante="solido" tamano="sm" cargando={trabajando} disabled={!ingresos}
+          onClick={() => guardar({ tipo: "negocio", ingresos, costos: costos || "0", nota })}>
+          Guardar ingresos y costos
+        </Boton>
+        <Boton variante="fantasma" tamano="sm" disabled={trabajando} onClick={() => guardar({ tipo: "negocio", sin_negocio: true })}>
+          No tiene negocio
+        </Boton>
+      </div>
+    </div>
+  );
+}
+
+/** Las dos columnas explicadas: cada diferencia con su razón en una línea. */
+function Diferencias({ res }: { res: ResultadoRenta }) {
+  const lista = res.diferencias.filter((d) => d.dian !== d.optimizada);
+  if (!lista.length || res.incompleto) return null;
+  return (
+    <section aria-labelledby="titulo-diferencias" className="space-y-3">
+      <h2 id="titulo-diferencias" className="t-h2 text-tinta">Por qué su declaración es distinta a la de la DIAN</h2>
+      <ul className="divide-y divide-linea rounded-hoja border border-linea bg-hoja">
+        {lista.slice(0, 12).map((d) => {
+          const c = res.casillas.find((x) => x.casilla === d.casilla);
+          return (
+            <li key={d.casilla} className="grid gap-1 px-4 py-3 sm:grid-cols-[5rem_1fr_auto] sm:items-baseline sm:gap-4">
+              <span className="codigo text-gris">Casilla {d.casilla}</span>
+              <span className="t-small text-tinta">
+                {c?.nombre}{c?.columna ? ` — ${c.columna}` : ""}
+                <span className="block text-grafito">{d.por_que || d.motivo}</span>
+              </span>
+              <span className="cifras t-small whitespace-nowrap text-right">
+                <span className="text-grafito">DIAN {pesos(d.dian)}</span> · <strong className="text-tinta">Usted {pesos(d.optimizada)}</strong>
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
+  );
+}
+
+function Casillas({ res, onCambio }: { res: ResultadoRenta; onCambio: (c: CambioRenta) => Promise<void> }) {
+  const conValor = res.casillas.filter((c) => c.dian !== "0" || c.optimizada !== "0" || c.ajuste);
+  const [abierta, setAbierta] = useState<number | null>(null);
   return (
     <div className="barra-fina overflow-x-auto rounded-hoja border border-linea bg-hoja">
       <table className="t-tabla min-w-full text-[13px]">
@@ -699,28 +904,86 @@ function Casillas({ res }: { res: ResultadoRenta }) {
           <tr>
             <th className="px-3 py-2">Casilla</th>
             <th className="px-3">Concepto</th>
-            <th className="px-3 text-right">Propuesta DIAN</th>
-            <th className="px-3 text-right">Declaración</th>
+            <th className="px-3 text-right">Lo que propondría la DIAN</th>
+            <th className="px-3 text-right">Su declaración</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-linea">
           {conValor.map((c) => {
             const distinta = c.dian !== c.optimizada;
-            const motivo = res.diferencias.find((d) => d.casilla === c.casilla)?.motivo;
+            const dif = res.diferencias.find((d) => d.casilla === c.casilla);
             return (
-              <tr key={c.casilla} className={clases(distinta && "bg-azul-suave/40")}>
-                <td className="codigo px-3 py-2 text-gris">{c.casilla}</td>
-                <td className="px-3 py-2">
-                  <p className="text-tinta">{c.nombre}{c.columna ? ` — ${c.columna}` : ""}</p>
-                  {(motivo || c.explicacion) && <p className="t-meta text-gris">{motivo || c.explicacion}</p>}
-                </td>
-                <td className="cifras px-3 py-2 text-right text-grafito">{pesos(c.dian)}</td>
-                <td className="cifras px-3 py-2 text-right font-semibold text-tinta">{pesos(c.optimizada)}</td>
-              </tr>
+              <Fragment key={c.casilla}>
+                <tr className={clases("cursor-pointer hover:bg-hoja-2", distinta && "bg-azul-suave/40")}
+                  onClick={() => setAbierta(abierta === c.casilla ? null : c.casilla)}
+                  aria-expanded={abierta === c.casilla}>
+                  <td className="codigo px-3 py-2 text-gris">{c.casilla}</td>
+                  <td className="px-3 py-2">
+                    <p className="text-tinta">
+                      {c.nombre}{c.columna ? ` — ${c.columna}` : ""}
+                      {c.ajuste && <Insignia tono="ambar">Ajuste manual</Insignia>}
+                    </p>
+                    {(dif?.por_que || c.explicacion) && <p className="t-meta text-gris">{dif?.por_que || c.explicacion}</p>}
+                  </td>
+                  <td className="cifras px-3 py-2 text-right text-grafito">{pesos(c.dian)}</td>
+                  <td className="cifras px-3 py-2 text-right font-semibold text-tinta">{pesos(c.optimizada)}</td>
+                </tr>
+                {abierta === c.casilla && (
+                  <tr className="bg-hoja-2">
+                    <td />
+                    <td colSpan={3} className="px-3 py-3">
+                      <DetalleCasilla c={c} res={res} onCambio={onCambio} />
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             );
           })}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+/** Clic en una casilla: de dónde sale y, si es un dato, el ajuste manual con nota obligatoria. */
+function DetalleCasilla({ c, res, onCambio }: { c: CasillaRenta; res: ResultadoRenta; onCambio: (c: CambioRenta) => Promise<void> }) {
+  const [valor, setValor] = useState(String(c.ajuste?.valor ?? c.optimizada).replace(/\.0+$/, ""));
+  const [nota, setNota] = useState(c.ajuste?.nota ?? "");
+  const lineas = res.lineas.filter((l) => l.incluida && l.renglon === c.casilla);
+  return (
+    <div className="space-y-3">
+      <p className="t-small text-grafito">
+        {c.formula ? <>Cómo se calcula: <span className="text-tinta">{c.formula}</span>. </> : null}
+        {c.explicacion}
+      </p>
+      {lineas.length > 0 && (
+        <ul className="t-small space-y-0.5 text-grafito">
+          {lineas.map((l) => <li key={l.id}>{l.entidad} · {l.detalle}: <span className="cifras text-tinta">{pesos(l.valor)}</span></li>)}
+        </ul>
+      )}
+      {c.editable ? (
+        <div className="flex flex-wrap items-end gap-2">
+          <Campo etiqueta="Ajuste manual">
+            <input inputMode="numeric" value={valor} onChange={(e) => setValor(e.target.value.replace(/\D/g, ""))}
+              className={clases(estiloCampoAuto, "cifras w-40 text-right")} aria-label={`Ajuste de la casilla ${c.casilla}`} />
+          </Campo>
+          <Campo etiqueta="Nota (obligatoria)">
+            <input value={nota} onChange={(e) => setNota(e.target.value)} className={clases(estiloCampoAuto, "w-72")}
+              aria-label={`Nota del ajuste de la casilla ${c.casilla}`} placeholder="Por qué se ajusta" />
+          </Campo>
+          <Boton variante="solido" tamano="sm" disabled={!nota.trim() || !valor}
+            onClick={() => onCambio({ tipo: "ajuste_casilla", casilla: c.casilla, valor, nota: nota.trim() })}>
+            Guardar ajuste
+          </Boton>
+          {c.ajuste && (
+            <Boton variante="fantasma" tamano="sm" onClick={() => onCambio({ tipo: "quitar_ajuste_casilla", casilla: c.casilla })}>
+              Quitar ajuste
+            </Boton>
+          )}
+        </div>
+      ) : (
+        <p className="t-meta text-gris">Esta casilla se calcula con otras: ajuste la casilla de donde sale.</p>
+      )}
     </div>
   );
 }
@@ -793,8 +1056,11 @@ function ModalDigitarEsencial({
   const [patrimonio, setPatrimonio] = useState(topesDict["2"] || "");
   const [deudas, setDeudas] = useState("0");
   const [retenciones, setRetenciones] = useState("0");
-  const [saldoFavorAnterior, setSaldoFavorAnterior] = useState("6275000");
-  const [patrimonioAnterior, setPatrimonioAnterior] = useState("181910000");
+  // Rescate: antes venían fijos los valores de un contribuyente real. Ahora salen de lo leído (la nota
+  // «SF» escrita a mano o la línea del año anterior) o quedan vacíos.
+  const sugeridoSaldo = String(res.preguntas.find((q) => q.id === "saldo_favor")?.detalle ?? "").replace(/\D/g, "");
+  const [saldoFavorAnterior, setSaldoFavorAnterior] = useState(sugeridoSaldo);
+  const [patrimonioAnterior, setPatrimonioAnterior] = useState("");
 
   const guardar = async () => {
     setGuardando(true);
@@ -816,9 +1082,7 @@ function ModalDigitarEsencial({
         ],
         anterior_saldo_favor: saldoFavorAnterior.replace(/\D/g, "") || "0",
         anterior_patrimonio: patrimonioAnterior.replace(/\D/g, "") || "0",
-        respuestas: {
-          "saldo_favor": "si",
-        },
+        respuestas: { saldo_favor: saldoFavorAnterior.replace(/\D/g, "") ? "si" : "no" },
       };
       const nueva = await renta.digitarEsencial(cliente.id, ANIO, datos);
       avisar("Datos esenciales validados y liquidados exitosamente.");
@@ -856,23 +1120,23 @@ function ModalDigitarEsencial({
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
             <label className="block">
               <span className="t-meta mb-1 block text-gris">Tope 1 · Ingresos</span>
-              <input className={clases(estiloCampo, "cifras")} value={tope1} onChange={(e) => setTope1(e.target.value)} placeholder="82535904" />
+              <input className={clases(estiloCampo, "cifras")} value={tope1} onChange={(e) => setTope1(e.target.value)} placeholder="Valor del reporte" />
             </label>
             <label className="block">
               <span className="t-meta mb-1 block text-gris">Tope 2 · Patrimonio</span>
-              <input className={clases(estiloCampo, "cifras")} value={tope2} onChange={(e) => setTope2(e.target.value)} placeholder="226543936" />
+              <input className={clases(estiloCampo, "cifras")} value={tope2} onChange={(e) => setTope2(e.target.value)} placeholder="Valor del reporte" />
             </label>
             <label className="block">
               <span className="t-meta mb-1 block text-gris">Tope 3 · Tarjeta crédito</span>
-              <input className={clases(estiloCampo, "cifras")} value={tope3} onChange={(e) => setTope3(e.target.value)} placeholder="19977892" />
+              <input className={clases(estiloCampo, "cifras")} value={tope3} onChange={(e) => setTope3(e.target.value)} placeholder="Valor del reporte" />
             </label>
             <label className="block">
               <span className="t-meta mb-1 block text-gris">Tope 4 · Movimientos</span>
-              <input className={clases(estiloCampo, "cifras")} value={tope4} onChange={(e) => setTope4(e.target.value)} placeholder="125053184" />
+              <input className={clases(estiloCampo, "cifras")} value={tope4} onChange={(e) => setTope4(e.target.value)} placeholder="Valor del reporte" />
             </label>
             <label className="block">
               <span className="t-meta mb-1 block text-gris">Tope 5 · Compras</span>
-              <input className={clases(estiloCampo, "cifras")} value={tope5} onChange={(e) => setTope5(e.target.value)} placeholder="12910068" />
+              <input className={clases(estiloCampo, "cifras")} value={tope5} onChange={(e) => setTope5(e.target.value)} placeholder="Valor del reporte" />
             </label>
             <label className="flex items-center gap-2 pt-6">
               <input type="checkbox" checked={tope6} onChange={(e) => setTope6(e.target.checked)} className="h-4 w-4 rounded border-linea text-azul" />
