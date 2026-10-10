@@ -29,7 +29,7 @@ ENCABEZADOS = ["Tipo de documento", "CUFE/CUDE", "Folio", "Prefijo", "Divisa", "
                "IVA", "ICA", "IC", "INC", "Timbre", "INC Bolsas", "IN Carbono", "IN Combustibles", "IC Datos", "ICL",
                "INPP", "IBUA", "ICUI", "Rete IVA", "Rete Renta", "Rete ICA", "Total", "Estado", "Grupo"]
 
-CLIENTE = {"nit": "901234567", "razon_social": "DROGUERÍA SAN ROQUE S.A.S."}
+CLIENTE = {"nit": "901777888", "razon_social": "DROGUERÍA SAN ROQUE S.A.S."}
 CLIENTE["dv"] = digito_verificacion(CLIENTE["nit"])
 TERCEROS = {
     "cli1": ("900111222", "CLÍNICA LOS ÁLAMOS S.A.S."),

@@ -145,6 +145,11 @@ def leer(archivos: list[tuple[str, bytes]], mapeador: Mapeador | None = None,
                     lectura.fechas += [r.fecha_archivo for b in getattr(det, "bloques", []) for r in b.registros
                                        if r.fecha_archivo]
                 lectura.fechas += [m.fecha for m in det.paquete.movimientos if m.fecha]
+                if det.formato == "facturas_dian" and det.resumen.get("dueno"):
+                    # Los reportes de la DIAN dicen de quién son: el NIT que está en todos los documentos.
+                    origen = f"{nombre} › {hoja.nombre} (NIT en todos los documentos)"
+                    lectura.identidad.poner("nit", det.resumen["dueno"], origen, ident.SEGURO)
+                    lectura.identidad.poner("razon_social", det.resumen.get("dueno_nombre"), origen, ident.SEGURO)
                 lectura.hojas.append(HojaClasificada(hoja, CONTABILIDAD, formato=det.formato, razon=razon,
                                                      filas_datos=filas))
             else:

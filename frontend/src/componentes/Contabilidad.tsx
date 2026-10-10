@@ -1,4 +1,4 @@
-import { ChevronLeft, ChevronRight, Download, MoreHorizontal, Upload } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, MoreHorizontal, PenLine, Upload } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { analisis, descargas, trabajo as apiTrabajo, ErrorApi } from "../api";
@@ -6,6 +6,7 @@ import { clases, periodoCorto } from "../formato";
 import type { Cliente, Importacion, Peticion, Periodo, Resultado } from "../tipos";
 import { InsigniaEstado, useAvisos } from "../ui";
 import { VistaPrevia } from "../paginas/VistaPrevia";
+import { EditorDatos } from "./EditorDatos";
 import { SubirPeriodo } from "./SubirPeriodo";
 import { Aviso, Boton, Cargando, Dialogo, estiloCampo } from "./ui";
 import { GRUPOS_VISTA, VISTAS, VISTA_INICIAL, VistaContable, type VistaId } from "./VistaContable";
@@ -88,6 +89,8 @@ export function Contabilidad({
   const [datos, setDatos] = useState<{ periodoId: string; res: Resultado } | null>(null);
   const [cargando, setCargando] = useState(false);
   const [errorCarga, setErrorCarga] = useState("");
+  // Sube cada vez que el editor guarda: el informe se vuelve a pedir con las cifras nuevas.
+  const [recarga, setRecarga] = useState(0);
 
   const cambiar = useCallback(
     (cambios: Record<string, string | null>, reemplazar = false) => {
@@ -152,7 +155,7 @@ export function Contabilidad({
     return () => {
       vivo = false;
     };
-  }, [periodoId]);
+  }, [periodoId, recarga]);
 
   const calcular = useCallback(
     async (p: Peticion) => {
@@ -300,6 +303,12 @@ export function Contabilidad({
           {cargando && <span className="t-small text-gris" role="status">Abriendo…</span>}
 
           <div className="ml-auto flex flex-wrap items-center gap-2">
+            {vista !== "datos" && (
+              <Boton variante="fantasma" tamano="sm" onClick={() => cambiar({ vista: "datos" })} aria-label="Editar los datos del periodo">
+                <PenLine size={16} strokeWidth={1.5} aria-hidden />
+                <span className="hidden sm:inline">Editar datos</span>
+              </Boton>
+            )}
             <Boton variante="fantasma" tamano="sm" onClick={() => setFase("subir")} aria-label="Subir archivos de otro periodo">
               <Upload size={16} strokeWidth={1.5} aria-hidden />
               <span className="hidden sm:inline">Subir archivos</span>
@@ -339,9 +348,22 @@ export function Contabilidad({
       {errorCarga && <Aviso tono="rojo" titulo="No se pudo abrir el periodo">{errorCarga}</Aviso>}
 
       {/* ── lista agrupada de informes + el informe ──────────────────── */}
-      <div className="grid gap-6 escritorio:grid-cols-[220px_minmax(0,1fr)]">
-        <ListaVistas vista={vista} onVista={(v) => cambiar({ vista: v })} />
+      {/* Al editar los datos, la tabla usa todo el ancho; «Ver los informes» vuelve a la lista. */}
+      <div className={clases("grid gap-6", vista !== "datos" && "escritorio:grid-cols-[220px_minmax(0,1fr)]")}>
+        {vista !== "datos" && <ListaVistas vista={vista} onVista={(v) => cambiar({ vista: v })} />}
         <div className="min-w-0">
+          {vista === "datos" ? (
+            <EditorDatos
+              key={periodo.id}
+              periodoId={periodo.id}
+              onVolver={() => cambiar({ vista: VISTA_INICIAL })}
+              onGuardado={async () => {
+                cache.current.delete(periodo.id);
+                setRecarga((n) => n + 1);
+                await onCambio();
+              }}
+            />
+          ) : (<>
           {!res && !errorCarga && <Cargando texto="Abriendo el periodo" />}
           {res && (
             <VistaContable
@@ -356,6 +378,7 @@ export function Contabilidad({
               }
             />
           )}
+          </>)}
         </div>
       </div>
     </div>

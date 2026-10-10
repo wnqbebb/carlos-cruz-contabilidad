@@ -1,1 +1,4 @@
 .vercel
+e2e/.estado/
+test-results/
+playwright-report/

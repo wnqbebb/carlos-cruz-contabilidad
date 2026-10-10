@@ -721,3 +721,42 @@ export interface FilaCarteraRenta {
   neto: Monto | null;
   ahorro: Monto | null;
 }
+
+/* ── «Datos del periodo»: editar dentro de la aplicación (rescate H7) ───── */
+export type TablaDatos = "movimientos" | "ajustes" | "saldos_iniciales" | "inventario" | "conteo" | "activos_fijos" | "nomina";
+export type FilaDatos = Record<string, string | number | boolean | null | undefined>;
+
+export interface ProblemaDatos {
+  tabla: string;
+  fila?: number;
+  campo?: string;
+  comprobante?: string;
+  mensaje: string;
+}
+
+export interface ValidacionDatos {
+  errores: ProblemaDatos[];
+  avisos: ProblemaDatos[];
+  descuadres: { comprobante: string; debito: Monto; credito: Monto; diferencia: Monto }[];
+  totales: { debito: Monto; credito: Monto; saldos_debito: Monto; saldos_credito: Monto };
+  cuadra: boolean;
+}
+
+export interface ArchivoDelPeriodo {
+  archivo: string;
+  filas: number;
+  tablas: Record<string, number>;
+  debito: Monto;
+}
+
+export interface DatosPeriodo {
+  periodo: Periodo;
+  editable: boolean;
+  motivo_bloqueo: string;
+  tablas: Record<TablaDatos, FilaDatos[]>;
+  validacion: ValidacionDatos;
+  archivos: ArchivoDelPeriodo[];
+  versiones: number;
+  guardado?: boolean;
+  resumen?: Record<string, Monto | number | null>;
+}

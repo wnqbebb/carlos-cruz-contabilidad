@@ -1,0 +1,7 @@
+{"id":"J1","nombre":"Entrar","segundos":4.7,"clics":2,"url":"http://127.0.0.1:8010/","cuando":"2026-10-10T03:10:03.303Z"}
+{"id":"J2a","nombre":"Subir contabilidad (caso completo)","segundos":5.5,"clics":2,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:10:10.654Z"}
+{"id":"J2b","nombre":"Subir facturas electrónicas DIAN","segundos":5,"clics":2,"url":"http://127.0.0.1:8010/clientes/c820027a-c40a-4762-83c6-eb4371ea6b6f?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:10:16.397Z"}
+{"id":"J3","nombre":"Navegar entre meses","segundos":6.3,"clics":2,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01&vista=resultados","cuando":"2026-10-10T03:10:23.412Z"}
+{"id":"J4","nombre":"Editar el cliente","segundos":3.9,"clics":4,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140","cuando":"2026-10-10T03:10:27.973Z"}
+{"id":"J5","nombre":"Editar valores del periodo","segundos":10.7,"clics":8,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01&vista=datos","cuando":"2026-10-10T03:10:39.525Z"}
+{"id":"J6","nombre":"Descargar","segundos":12.1,"clics":4,"url":"http://127.0.0.1:8010/clientes/011138ff-e876-45d2-858f-d60c92241140?seccion=contabilidad&periodo=2025-01","cuando":"2026-10-10T03:10:52.060Z"}

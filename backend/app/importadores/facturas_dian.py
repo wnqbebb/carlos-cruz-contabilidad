@@ -117,18 +117,30 @@ def detectar(h: Hoja) -> tuple[int, dict[str, int], dict[str, int]] | None:
     return None
 
 
+def duenos(h: Hoja, r0: int, cols: dict[str, int]) -> tuple[str, str]:
+    """(NIT, nombre) que se repite en todo el archivo: el contribuyente dueño del reporte."""
+    nombres: dict[str, str] = {}
+    veces: Counter = Counter()
+    for r in range(r0 + 1, h.nfilas):
+        for nit_col, nombre_col in (("nit_emisor", "nombre_emisor"), ("nit_receptor", "nombre_receptor")):
+            nit = _nit_base(h.v(r, cols[nit_col])) if nit_col in cols else ""
+            if nit:
+                veces[nit] += 1
+                if nombre_col in cols and h.v(r, cols[nombre_col]):
+                    nombres.setdefault(nit, str(h.v(r, cols[nombre_col])).strip())
+    if not veces:
+        return "", ""
+    nit = veces.most_common(1)[0][0]
+    return nit, nombres.get(nit, "")
+
+
 def _direcciones(h: Hoja, r0: int, cols: dict[str, int], nit_cliente: str) -> tuple[str, str]:
     """(cómo se decidió, NIT del dueño del archivo)."""
     if "grupo" in cols:
-        return "grupo", nit_cliente
+        return "grupo", nit_cliente or duenos(h, r0, cols)[0]
     if nit_cliente:
         return "nit", nit_cliente
-    emisores = Counter(_nit_base(h.v(r, cols["nit_emisor"])) for r in range(r0 + 1, h.nfilas))
-    receptores = Counter(_nit_base(h.v(r, cols["nit_receptor"])) for r in range(r0 + 1, h.nfilas))
-    emisores.pop("", None)
-    receptores.pop("", None)
-    candidato = (emisores + receptores).most_common(1)
-    return "frecuente", candidato[0][0] if candidato else ""
+    return "frecuente", duenos(h, r0, cols)[0]
 
 
 def importar(h: Hoja, pos: tuple[int, dict[str, int], dict[str, int]], id_: str,
@@ -275,6 +287,7 @@ def importar(h: Hoja, pos: tuple[int, dict[str, int], dict[str, int]], id_: str,
         "ventas_base": sumas["ventas_base"], "ventas_iva": sumas["ventas_iva"], "ventas_total": sumas["ventas_total"],
         "compras_base": sumas["compras_base"], "compras_iva": sumas["compras_iva"],
         "compras_total": sumas["compras_total"], "terceros": len(terceros), "dueno": dueno,
+        "dueno_nombre": duenos(h, r0, cols)[1] if dueno else "",
         "desde": min(fechas).isoformat() if fechas else None, "hasta": max(fechas).isoformat() if fechas else None,
     }
     partes = []

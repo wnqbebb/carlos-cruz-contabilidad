@@ -111,3 +111,12 @@ def test_subir_calcular_y_cuadrar_por_la_api(cliente_api):
     assert D(res["resumen"]["descuadre_esf"]) == 0
     assert D(res["resumen"]["ingresos"]) == D("3300000")
     assert res["periodo"]["desde"] == "2025-01-01" and res["periodo"]["hasta"] == "2025-01-31"
+
+
+def test_la_subida_sabe_de_quien_es_el_reporte(cliente_api):
+    """J2: el Excel de la DIAN trae el NIT del dueño en todos los documentos: no hay que digitarlo."""
+    datos = F.archivos()["facturas_todas_enero_2025.xlsx"]
+    p = cliente_api.post("/api/subir", files=[("archivos", ("facturas_todas_enero_2025.xlsx", datos))]).json()
+    campos = p["identidad"]["campos"]
+    assert campos["nit"]["valor"] == F.CLIENTE["nit"]
+    assert campos["razon_social"]["valor"] == F.CLIENTE["razon_social"]

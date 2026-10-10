@@ -1,5 +1,5 @@
 import { ArrowLeft, ArrowRight, Check, TriangleAlert } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { api } from "../api";
 import { ListaAlertas } from "../componentes/Alertas";
 import { ETAPAS_CALCULO, Procesando } from "../componentes/Procesando";
@@ -96,6 +96,20 @@ export function VistaPrevia({ datos, peticionPrevia, onCalcular, onVolver, calcu
       },
     });
   };
+
+  /* Rescate J2: si no hay nada que decidir (todas las cuentas reconocidas, sin preguntas ni periodos
+     que elegir), se calcula enseguida: el contador ve el resultado sin pulsar «Calcular todo». */
+  const automatico = useRef(false);
+  const nadaQueDecidir = !peticionPrevia && hojasActivas.size > 0 && pendientes.length === 0 && porConfirmar.length === 0
+    && preguntas.length === 0 && !datos.periodizacion?.posible;
+  useEffect(() => {
+    if (nadaQueDecidir && !automatico.current && !calculando) {
+      automatico.current = true;
+      lanzar();
+    }
+    // Solo al abrir la revisión.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className="space-y-6">

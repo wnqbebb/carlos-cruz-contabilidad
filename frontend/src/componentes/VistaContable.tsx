@@ -21,7 +21,8 @@ export type VistaId =
   | "situacion" | "resultados" | "patrimonio" | "flujo"
   | "prueba" | "ajustes" | "hoja" | "definitivo"
   | "diario" | "mayor" | "cuentas_t"
-  | "inventario" | "nomina" | "alertas";
+  | "inventario" | "nomina" | "alertas"
+  | "datos";
 
 export const GRUPOS_VISTA: { titulo: string; vistas: { id: VistaId; texto: string }[] }[] = [
   {
@@ -57,6 +58,10 @@ export const GRUPOS_VISTA: { titulo: string; vistas: { id: VistaId; texto: strin
       { id: "nomina", texto: "Nómina" },
       { id: "alertas", texto: "Alertas" },
     ],
+  },
+  {
+    titulo: "Editar",
+    vistas: [{ id: "datos", texto: "Datos del periodo" }],
   },
 ];
 export const VISTAS: VistaId[] = GRUPOS_VISTA.flatMap((g) => g.vistas.map((v) => v.id));

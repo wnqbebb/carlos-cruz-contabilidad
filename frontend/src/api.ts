@@ -4,6 +4,10 @@ import type {
   Cierre,
   Cliente,
   ComparacionFicha,
+  DatosPeriodo,
+  FilaDatos,
+  TablaDatos,
+  ValidacionDatos,
   DeclaracionRenta,
   FilaCarteraRenta,
   Contador,
@@ -276,6 +280,20 @@ export const clientes = {
 };
 
 /* ── histórico y análisis ──────────────────────────────────────────────── */
+/* ── «Datos del periodo»: editar, deshacer, archivos (rescate H7) ─────────── */
+export const datosPeriodo = {
+  ver: (periodoId: string) => pedir<DatosPeriodo>(`/api/periodos/${periodoId}/datos`),
+  validar: (periodoId: string, tablas: Partial<Record<TablaDatos, FilaDatos[]>>) =>
+    pedir<ValidacionDatos>(`/api/periodos/${periodoId}/datos/validar`, { method: "POST", ...json({ tablas }) }),
+  guardar: (periodoId: string, tablas: Partial<Record<TablaDatos, FilaDatos[]>>) =>
+    pedir<DatosPeriodo>(`/api/periodos/${periodoId}/datos`, { method: "PUT", ...json({ tablas }) }),
+  deshacer: (periodoId: string) => pedir<DatosPeriodo>(`/api/periodos/${periodoId}/deshacer`, { method: "POST" }),
+  recalcular: (periodoId: string) => pedir<DatosPeriodo>(`/api/periodos/${periodoId}/recalcular`, { method: "POST" }),
+  quitarArchivo: (periodoId: string, archivo: string) =>
+    pedir<DatosPeriodo>(`/api/periodos/${periodoId}/archivos/quitar`, { method: "POST", ...json({ archivo }) }),
+  excel: (periodoId: string) => `${BASE}/api/periodos/${periodoId}/datos/excel`,
+};
+
 export const analisis = {
   tablero: () => pedir<Tablero>("/api/tablero"),
   posponerTarea: (clave: string) =>
