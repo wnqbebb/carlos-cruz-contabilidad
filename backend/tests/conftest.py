@@ -18,8 +18,16 @@ os.environ["CC_DATOS_APP"] = str(_TEMPORAL / "datos")
 os.environ["CC_ENV"] = str(_TEMPORAL / "pruebas.env")
 (_TEMPORAL / "pruebas.env").write_text("# configuración de las pruebas\n", encoding="utf-8")
 os.environ["CC_TMP_SUBIDAS"] = str(_TEMPORAL / "subidas")
-os.environ["ALMACENAMIENTO"] = "local"
-os.environ.pop("DATABASE_URL", None)
+# Rescate H1: la nube usa Postgres y nadie lo probaba (la lista de clientes fallaba allá).
+# Con CC_PRUEBAS_POSTGRES=postgresql://… TODA la batería corre contra esa base desechable.
+_PG = (os.getenv("CC_PRUEBAS_POSTGRES") or "").strip()
+if _PG:
+    os.environ["ALMACENAMIENTO"] = "supabase"
+    os.environ["DATABASE_URL"] = _PG
+    os.environ.setdefault("CC_SSL", "require")
+else:
+    os.environ["ALMACENAMIENTO"] = "local"
+    os.environ.pop("DATABASE_URL", None)
 # v2.3 · Fase 6: sin tocar el almacén de credenciales de Windows, sin copias en segundo plano,
 # Argon2 liviano, cliente de pruebas tratado como el mismo equipo y límites holgados.
 os.environ["CC_SIN_LLAVERO"] = "1"

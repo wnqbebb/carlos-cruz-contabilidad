@@ -16,8 +16,10 @@ import os
 import queue
 import time
 
-TIEMPO = 180
-MEMORIA_MB = 2048
+TIEMPO = int(os.getenv("CC_AISLADO_SEGUNDOS") or 180)
+# En el equipo del contador sobra memoria; en Render gratis hay 512 MB para TODO el servidor,
+# así que allá se fija CC_AISLADO_MB=300 (render.yaml) para que un archivo enorme pare solo al lector.
+MEMORIA_MB = int(os.getenv("CC_AISLADO_MB") or 2048)
 
 
 class ArchivoNoProcesable(Exception):
@@ -70,8 +72,15 @@ def ejecutar(ruta: str, *args, tiempo: int = TIEMPO, memoria_mb: int = MEMORIA_M
             except queue.Empty:
                 pass
             if not proceso.is_alive():
-                raise ArchivoNoProcesable("archivo_no_procesable",
-                                          "El archivo no se pudo leer: el lector se detuvo. Revise que no esté dañado.")
+                # El lector pudo terminar BIEN justo después de la última espera: su resultado ya está
+                # en la cola. Sin esta última lectura se avisaba «el lector se detuvo» con un archivo
+                # bueno (pasaba con el equipo ocupado; en la nube gratuita, con CPU lenta, a menudo).
+                try:
+                    estado, valor = cola.get(timeout=2)
+                    break
+                except queue.Empty:
+                    raise ArchivoNoProcesable("archivo_no_procesable",
+                                              "El archivo no se pudo leer: el lector se detuvo. Revise que no esté dañado.")
             if time.monotonic() > limite:
                 raise ArchivoNoProcesable("tiempo_agotado",
                                           "Leer el archivo tardó demasiado y se detuvo por seguridad. Revise que no "

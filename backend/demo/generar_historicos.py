@@ -251,9 +251,14 @@ def rut_pdf(c: dict) -> bytes:
 # ── API ─────────────────────────────────────────────────────────────────────
 class Api:
     def __init__(self, url: str, usuario: str = "", clave: str = ""):
-        self.c = httpx.Client(base_url=url.rstrip("/"), timeout=900)
+        base = url.rstrip("/")
+        # Desde la v2.3 todo lo que modifica datos pide el Origin de la propia aplicación y el token
+        # CSRF de la sesión (seguridad/http.py). Sin esto la carga fallaba con 403 «csrf».
+        self.c = httpx.Client(base_url=base, timeout=900, headers={"Origin": base})
         if usuario:
-            self._ok(self.c.post("/api/sesion", json={"usuario": usuario, "clave": clave}))
+            r = self._ok(self.c.post("/api/sesion", json={"usuario": usuario, "clave": clave}))
+            if r.get("csrf"):
+                self.c.headers["X-CSRF"] = r["csrf"]
 
     @staticmethod
     def _ok(r: httpx.Response):

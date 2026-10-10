@@ -43,5 +43,10 @@ services:
         value: "0"
       - key: CC_SIN_RESPALDO
         value: "1"
+      # 512 MB para todo el servidor: el lector de archivos aislado se detiene a los 300 MB.
+      - key: CC_AISLADO_MB
+        value: "300"
+      - key: CC_AISLADO_SEGUNDOS
+        value: "300"
       - key: CORS_ORIGENES
         value: https://carlos-cruz-contabilidad.vercel.app,http://localhost:5173,http://localhost:8000

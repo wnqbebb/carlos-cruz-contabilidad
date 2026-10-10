@@ -15,7 +15,7 @@ from ..exactitud import a_json
 from ..exportar import excel, pdf
 from ..exportar import casos
 from ..exportar import plantilla as gen_plantilla
-from ..contabilidad import periodizar
+from ..contabilidad import entrada, periodizar
 from ..importadores import auxiliares
 from ..importadores.detector import detectar_conjunto
 from ..modelos import Alerta, Empresa
@@ -297,10 +297,11 @@ def _saldos_de_apertura(paquete, alertas: list[Alerta], cliente_id: str | None, 
             "empezar el periodo, cargue un balance de apertura (hoja SALDOS INICIALES de la plantilla)."))
 
 
-def _guardar(cliente_id: str, resultado: dict, salida: dict, peticion: dict, empresa: Empresa) -> dict:
+def _guardar(cliente_id: str, resultado: dict, salida: dict, peticion: dict, empresa: Empresa,
+             datos_entrada: bytes | None = None) -> dict:
     """Guarda un periodo calculado. Lanza las HTTPException de periodo cerrado o vacío."""
     try:
-        periodo = repo_periodos.guardar_resultado(cliente_id, salida, peticion)
+        periodo = repo_periodos.guardar_resultado(cliente_id, salida, peticion, entrada=datos_entrada)
     except repo_periodos.PeriodoCerrado as ex:
         existente = repo_periodos.asegurar(cliente_id, empresa.periodo_desde, empresa.periodo_hasta)
         repo_bitacora.registrar("calculo_rechazado", cliente_id,
@@ -325,10 +326,7 @@ def _guardar(cliente_id: str, resultado: dict, salida: dict, peticion: dict, emp
 
 
 def _salida(resultado: dict, origenes: dict[str, list[str]]) -> dict:
-    salida = a_json({k: v for k, v in resultado.items() if k != "mayor_ajustado"})
-    usados = {m["origen"] for m in _movs_json(resultado) if m.get("origen")}
-    salida["origenes"] = {k: v for k, v in origenes.items() if k in usados}
-    return salida
+    return entrada.salida(resultado, origenes)
 
 
 @router.post("/calcular")
@@ -364,6 +362,9 @@ def calcular(peticion: dict = Body(...)):
                                       config, decisiones, origenes)
 
     _saldos_de_apertura(paquete, alertas, cliente_id, empresa.periodo_desde)
+    # La entrada se toma ANTES de calcular (el motor no debe cambiarla, pero así es seguro).
+    datos_entrada = entrada.comprimir(entrada.empaquetar(paquete, empresa, config, decisiones, alertas,
+                                                         aud_nom, aud_ef, origenes)) if cliente_id else None
     try:
         resultado = motor.calcular(paquete, empresa, config, decisiones, alertas, aud_nom, aud_ef)
     except Exception as ex:  # se informa en español sin tumbar el servidor; el detalle va al registro
@@ -379,7 +380,7 @@ def calcular(peticion: dict = Body(...)):
     # Se guarda en la base solo si el trabajo pertenece a un cliente del directorio.
     if cliente_id:
         try:
-            salida.update(_guardar(cliente_id, resultado, salida, peticion, empresa))
+            salida.update(_guardar(cliente_id, resultado, salida, peticion, empresa, datos_entrada))
             salida["guardado"] = True
         except HTTPException:
             raise
@@ -423,6 +424,8 @@ def _calcular_por_periodos(s, peticion, cliente_id, empresa, paquete, alertas, a
             continue
         alertas_i = [a for a in alertas]
         _saldos_de_apertura(sub, alertas_i, cliente_id, desde)
+        datos_entrada = entrada.comprimir(entrada.empaquetar(sub, emp_i, config, decisiones, alertas_i,
+                                                             aud_nom, aud_ef, origenes))
         try:
             resultado = motor.calcular(sub, emp_i, config, decisiones, alertas_i, aud_nom, aud_ef)
         except Exception as ex:
@@ -434,7 +437,7 @@ def _calcular_por_periodos(s, peticion, cliente_id, empresa, paquete, alertas, a
         pet_i = {**peticion, "empresa": {**(peticion.get("empresa") or {}),
                                         "periodo_desde": desde.isoformat(), "periodo_hasta": hasta.isoformat()}}
         salida = _salida(resultado, origenes)
-        guardado = _guardar(cliente_id, resultado, salida, pet_i, emp_i)
+        guardado = _guardar(cliente_id, resultado, salida, pet_i, emp_i, datos_entrada)
         periodo = guardado["periodo"]
         es_ultimo = i == len(partes) - 1
         estado = "calculado"
@@ -461,21 +464,7 @@ def _calcular_por_periodos(s, peticion, cliente_id, empresa, paquete, alertas, a
 
 
 def _movs_json(resultado: dict) -> list[dict]:
-    """Movimientos del libro mayor ajustado, para guardarlos como libro diario."""
-    mayor = resultado.get("mayor_ajustado") or {}
-    filas = []
-    for cuenta in mayor.values():
-        for m in getattr(cuenta, "movimientos", []) or []:
-            filas.append({
-                "cuenta": getattr(m, "cuenta", ""),
-                "nombre_cuenta": getattr(m, "nombre_cuenta", ""),
-                "debito": getattr(m, "debito", 0), "credito": getattr(m, "credito", 0),
-                "fecha": getattr(m, "fecha", None), "comprobante": getattr(m, "comprobante", ""),
-                "tipo": getattr(m, "tipo", ""), "tercero_id": getattr(m, "tercero_id", ""),
-                "tercero_nombre": getattr(m, "tercero_nombre", ""),
-                "descripcion": getattr(m, "descripcion", ""), "origen": getattr(m, "origen", ""),
-            })
-    return a_json(filas)
+    return entrada.movimientos_del_resultado(resultado)
 
 
 # ── 3. resultado, cierre y exportación ──────────────────────────────────────

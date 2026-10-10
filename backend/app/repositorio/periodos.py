@@ -11,6 +11,7 @@ Los importes viajan como CADENA decimal, nunca como float. Ver `exactitud.py`.
 from __future__ import annotations
 
 import uuid
+from collections import OrderedDict
 from datetime import date, datetime, timezone
 from decimal import Decimal
 from typing import Iterable
@@ -21,6 +22,7 @@ from ..db import conexion, lectura
 from ..esquema import cierres as TC
 from ..esquema import historial_periodos as TH
 from ..esquema import movimientos as TM
+from ..esquema import periodo_entradas as TE
 from ..esquema import periodos as TP
 from ..esquema import resultados as TR
 from ..modelos import SaldoInicial
@@ -98,15 +100,21 @@ def _instantanea(cn, periodo_id: str, motivo: str) -> int | None:
     if not fila:
         return None
     res = cn.execute(select(TR.c.payload, TR.c.peticion).where(TR.c.periodo_id == periodo_id)).first()
-    movs = cn.execute(select(TM).where(TM.c.periodo_id == periodo_id).order_by(TM.c.id)).all()
+    ent = cn.execute(select(TE.c.contenido).where(TE.c.periodo_id == periodo_id)).scalar()
     cie = cn.execute(select(TC.c.fecha_corte, TC.c.saldos, TC.c.cuentas)
                      .where(TC.c.periodo_id == periodo_id)).first()
-    if not res and not movs and not cie:
+    n_movs = cn.execute(select(func.count()).select_from(TM).where(TM.c.periodo_id == periodo_id)).scalar_one()
+    if not res and not n_movs and not cie and not ent:
         return None   # nada que preservar
 
-    movimientos = [{k: _json_llano(v) for k, v in dict(m._mapping).items()} for m in movs]
+    if ent:
+        # Con la entrada basta: el resultado y el libro diario se rearman al restaurar (pocos KB por versión).
+        movimientos = []
+    else:
+        movs = cn.execute(select(TM).where(TM.c.periodo_id == periodo_id).order_by(TM.c.id)).all()
+        movimientos = [{k: _json_llano(v) for k, v in dict(m._mapping).items()} for m in movs]
     periodo = {k: _json_llano(v) for k, v in dict(fila._mapping).items()}
-    periodo["_movimientos_n"] = len(movimientos)   # para listar versiones sin abrir el JSON
+    periodo["_movimientos_n"] = int(n_movs)   # para listar versiones sin abrir el JSON
     cierre = None
     if cie:
         cierre = {"fecha_corte": cie.fecha_corte.isoformat(), "saldos": cie.saldos, "cuentas": cie.cuentas}
@@ -116,11 +124,12 @@ def _instantanea(cn, periodo_id: str, motivo: str) -> int | None:
         cliente_id=str(fila.cliente_id),
         motivo=motivo,
         periodo=periodo,
-        resultado=res.payload if res else None,
+        resultado=(res.payload if res else None) if not ent else None,
         peticion=res.peticion if res else None,
         movimientos=movimientos,
         cierre=cierre,
         cuentas=int(fila.cuentas or 0),
+        entrada=ent,
     ).returning(TH.c.id)).scalar()
     return int(nuevo) if nuevo is not None else None
 
@@ -195,14 +204,27 @@ def restaurar_version(version_id: int) -> dict:
         cn.execute(update(TP).where(TP.c.id == periodo_id).values(**valores))
 
         cn.execute(delete(TR).where(TR.c.periodo_id == periodo_id))
-        if v.resultado:
+        cn.execute(delete(TE).where(TE.c.periodo_id == periodo_id))
+        movs_version = list(v.movimientos or [])
+        if v.entrada:
+            from ..contabilidad import entrada as E
+
+            datos_ent = E.descomprimir(v.entrada)
+            crudo = E.recalcular(datos_ent)
+            salida_v = E.salida(crudo, datos_ent.get("origenes") or {})
+            cn.execute(insert(TR).values(periodo_id=periodo_id, cliente_id=str(v.cliente_id),
+                                         payload=E.ligera(salida_v), peticion=v.peticion or {}))
+            cn.execute(insert(TE).values(periodo_id=periodo_id, cliente_id=str(v.cliente_id),
+                                         contenido=v.entrada, bytes=len(v.entrada)))
+            movs_version = E.movimientos_del_resultado(crudo)
+        elif v.resultado:
             cn.execute(insert(TR).values(
                 periodo_id=periodo_id, cliente_id=str(v.cliente_id),
                 payload=v.resultado, peticion=v.peticion or {},
             ))
 
         cn.execute(delete(TM).where(TM.c.periodo_id == periodo_id))
-        for m in (v.movimientos or []):
+        for m in movs_version:
             datos = {k: m.get(k) for k in (
                 "fecha", "cuenta", "nombre_cuenta", "debito", "credito", "comprobante",
                 "tipo", "tercero_id", "tercero_nombre", "descripcion", "origen", "base_retencion")}
@@ -220,6 +242,7 @@ def restaurar_version(version_id: int) -> dict:
                 saldos=v.cierre.get("saldos") or [], cuentas=int(v.cierre.get("cuentas") or 0),
             ))
         fila = cn.execute(select(TP).where(TP.c.id == periodo_id)).one()
+    _cache_resultado.pop(periodo_id, None)
     return _a_dict(fila)
 
 
@@ -306,7 +329,8 @@ def eliminar(periodo_id: str) -> dict:
 
 
 # ── resultado del motor ─────────────────────────────────────────────────────
-def guardar_resultado(cliente_id: str, resultado_json: dict, peticion: dict | None = None) -> dict:
+def guardar_resultado(cliente_id: str, resultado_json: dict, peticion: dict | None = None,
+                      entrada: bytes | None = None, motivo: str = "recalculo") -> dict:
     """Guarda (o reemplaza) el resultado calculado y actualiza los indicadores.
 
     `resultado_json` debe ser la salida de `motor.calcular` ya pasada por
@@ -343,28 +367,68 @@ def guardar_resultado(cliente_id: str, resultado_json: dict, peticion: dict | No
     with conexion() as cn:
         # Antes de reemplazar: copia completa de lo que había (resultado,
         # movimientos y cierre) para poder volver a ella desde la ficha.
-        _instantanea(cn, periodo["id"], "recalculo")
+        _instantanea(cn, periodo["id"], motivo)
         cn.execute(update(TP).where(TP.c.id == periodo["id"]).values(
             **ind,
             estado="cerrado" if periodo["estado"] == "cerrado" else "calculado",
             calculado_en=datetime.now(timezone.utc),
         ))
         cn.execute(delete(TR).where(TR.c.periodo_id == periodo["id"]))
+        cn.execute(delete(TE).where(TE.c.periodo_id == periodo["id"]))
+        if entrada:
+            from ..contabilidad.entrada import ligera
+
+            cn.execute(insert(TE).values(periodo_id=periodo["id"], cliente_id=cliente_id,
+                                         contenido=entrada, bytes=len(entrada)))
         cn.execute(insert(TR).values(
             periodo_id=periodo["id"], cliente_id=cliente_id,
-            payload=resultado_json, peticion=peticion or {},
+            payload=ligera(resultado_json) if entrada else resultado_json, peticion=peticion or {},
         ))
         fila = cn.execute(select(TP).where(TP.c.id == periodo["id"])).one()
+    _cache_resultado.pop(periodo["id"], None)
     return _a_dict(fila)
 
 
+# Los últimos resultados rearmados, para no recalcular al cambiar de pestaña. Se vacía al guardar.
+_cache_resultado: OrderedDict = OrderedDict()
+_CACHE_MAX = 24
+
+
+def entrada(periodo_id: str) -> dict | None:
+    """La entrada guardada del periodo (descomprimida), o None si es de antes del rescate."""
+    from ..contabilidad import entrada as E
+
+    with lectura() as cn:
+        contenido = cn.execute(select(TE.c.contenido).where(TE.c.periodo_id == periodo_id)).scalar()
+    return E.descomprimir(contenido) if contenido else None
+
+
 def resultado(periodo_id: str) -> dict | None:
+    """El resultado COMPLETO del periodo. Si se guardó ligero, se rearma desde la entrada."""
     with lectura() as cn:
         fila = cn.execute(select(TR.c.payload, TR.c.peticion, TR.c.creado)
                           .where(TR.c.periodo_id == periodo_id)).first()
     if not fila:
         return None
-    return {"resultado": fila.payload, "peticion": fila.peticion, "creado": fila.creado.isoformat()}
+    payload = fila.payload
+    creado = fila.creado.isoformat()
+    if isinstance(payload, dict) and payload.get("_derivados_fuera"):
+        guardado = _cache_resultado.get(periodo_id)
+        if guardado and guardado[0] == creado:
+            _cache_resultado.move_to_end(periodo_id)
+            payload = guardado[1]
+        else:
+            from ..contabilidad import entrada as E
+
+            datos = entrada(periodo_id)
+            if datos:
+                completo = E.salida(E.recalcular(datos), datos.get("origenes") or {})
+                payload = {**completo, **{k: v for k, v in payload.items() if k not in E.DERIVADOS}}
+                payload.pop("_derivados_fuera", None)
+                _cache_resultado[periodo_id] = (creado, payload)
+                while len(_cache_resultado) > _CACHE_MAX:
+                    _cache_resultado.popitem(last=False)
+    return {"resultado": payload, "peticion": fila.peticion, "creado": creado}
 
 
 # ── movimientos ─────────────────────────────────────────────────────────────

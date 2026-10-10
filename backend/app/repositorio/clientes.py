@@ -283,6 +283,14 @@ def _condicion_busqueda(q: str):
     return and_(*condiciones)
 
 
+def _etiquetas_pg():
+    """`etiquetas` es text[] en Postgres, pero la columna se declara como JSON con variante:
+    su comparador no trae `.any()`. Sin este ajuste la lista de clientes fallaba en la nube."""
+    from sqlalchemy import ARRAY, type_coerce
+
+    return type_coerce(T.c.etiquetas, ARRAY(Text))
+
+
 def listar(
     q: str = "",
     estado: str = "activo",
@@ -302,12 +310,12 @@ def listar(
         filtros.append(T.c.estado == estado)
     if etiqueta:
         if ES_POSTGRES:
-            filtros.append(T.c.etiquetas.any(etiqueta))
+            filtros.append(_etiquetas_pg().any(etiqueta))
         else:
             filtros.append(T.c.etiquetas.cast(Text).like(f'%"{etiqueta}"%'))
     elif not incluir_solo_renta:
         if ES_POSTGRES:
-            filtros.append(~T.c.etiquetas.any("solo_renta"))
+            filtros.append(~_etiquetas_pg().any("solo_renta"))
         else:
             filtros.append(~T.c.etiquetas.cast(Text).like('%"solo_renta"%'))
     cond = _condicion_busqueda(q)

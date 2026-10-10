@@ -372,8 +372,26 @@ historial_periodos = Table(
     Column("movimientos", Json, nullable=False, default=list),
     Column("cierre", Json),
     Column("cuentas", Integer, nullable=False, default=0),
+    # Rescate: la entrada comprimida (contabilidad/entrada.py). Cuando está, `resultado` y
+    # `movimientos` quedan vacíos: se vuelven a armar al restaurar. Una versión pesa pocos KB.
+    Column("entrada", LargeBinary),
     Column("creado", DateTime(timezone=True), nullable=False, server_default=AHORA),
     Index("historial_periodo_idx", "periodo_id", "creado"),
+)
+
+# ── 13b. ENTRADA DE CADA PERIODO (rescate) ──────────────────────────────────
+# Lo que recibió el motor (movimientos, saldos, inventario, nómina…) en JSON comprimido.
+# Permite editar dentro de la aplicación y recalcular sin volver a subir archivos, y no
+# guardar los reportes formateados (se recalculan). Ver contabilidad/entrada.py.
+periodo_entradas = Table(
+    "periodo_entradas",
+    metadatos,
+    Column("periodo_id", Id, ForeignKey("periodos.id", ondelete="CASCADE"), primary_key=True),
+    Column("cliente_id", Id, ForeignKey("clientes.id", ondelete="CASCADE"), nullable=False),
+    Column("contenido", LargeBinary, nullable=False),
+    Column("bytes", Integer, nullable=False, default=0),
+    Column("actualizado", DateTime(timezone=True), nullable=False, server_default=AHORA),
+    Index("periodo_entradas_cliente_idx", "cliente_id"),
 )
 
 # ── 14. DECLARACIÓN DE RENTA (v2.3 · Fase 5) ────────────────────────────────

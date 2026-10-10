@@ -505,3 +505,47 @@ def test_clave_de_datos_de_la_nube_es_estable(monkeypatch):
     assert cifrado.descifrar(caja, contexto=b"prueba") == b"hola"
     monkeypatch.setenv("CC_CLAVE_DATOS", "ab" * 32)
     assert secretos.clave_datos() == bytes.fromhex("ab" * 32)
+
+
+def test_lector_que_termina_justo_a_tiempo_no_da_falso_error(monkeypatch):
+    """Rescate: el lector terminó bien entre dos revisiones; antes se avisaba «el lector se detuvo»."""
+    import queue as q
+
+    class Cola:
+        def __init__(self):
+            self.veces = 0
+
+        def get(self, timeout=None):
+            self.veces += 1
+            if self.veces == 1:
+                raise q.Empty          # la primera espera no alcanzó a ver el resultado…
+            return ("ok", 42)          # …pero ya estaba en la cola cuando el proceso terminó
+
+    class Proceso:
+        pid = 0
+
+        def __init__(self, *a, **k):
+            pass
+
+        def start(self):
+            pass
+
+        def is_alive(self):
+            return False
+
+        def kill(self):
+            pass
+
+        def join(self, timeout=None):
+            pass
+
+    class Contexto:
+        def Queue(self):
+            return Cola()
+
+        def Process(self, *a, **k):
+            return Proceso()
+
+    monkeypatch.setenv("CC_AISLAR", "1")
+    monkeypatch.setattr(aislado.mp, "get_context", lambda _: Contexto())
+    assert aislado.ejecutar("cualquier.cosa") == 42

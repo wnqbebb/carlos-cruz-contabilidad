@@ -1,0 +1,25 @@
+........................................................................ [ 19%]
+..ssssssss.....s....ssssss...................................s.......... [ 39%]
+..............................................s......................... [ 59%]
+.............................................s.s..............ss........ [ 79%]
+...................................................sss........s......... [ 99%]
+...                                                                      [100%]
+============================== warnings summary ===============================
+tests/test_archivos_variados.py: 2 warnings
+tests/test_clientes.py: 17 warnings
+tests/test_ficha_api.py: 5 warnings
+tests/test_libros.py: 1 warning
+tests/test_renta_casos_aceptacion.py: 1 warning
+tests/test_seguridad.py: 6 warnings
+tests/test_sesion.py: 1 warning
+tests/test_subidas_disco.py: 12 warnings
+tests/test_subir.py: 5 warnings
+  C:\Users\Admin\Documents\DON CARLOS\carlos-cruz-contabilidad\backend\app\repositorio\clientes.py:318: SADeprecationWarning: The ARRAY.Comparator.any() and ARRAY.Comparator.all() methods for arrays are deprecated for removal, along with the PG-specific Any() and All() functions. See any_() and all_() functions for modern use. (deprecated since: 2.1)
+    filtros.append(~_etiquetas_pg().any("solo_renta"))
+
+tests/test_seguridad.py::test_imagen_gigante_rechazada
+  C:\Users\Admin\Documents\DON CARLOS\carlos-cruz-contabilidad\.venv\Lib\site-packages\PIL\Image.py:3578: DecompressionBombWarning: Image size (72000000 pixels) exceeds limit of 60000000 pixels, could be decompression bomb DOS attack.
+    warnings.warn(
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+338 passed, 25 skipped, 51 warnings in 94.40s (0:01:34)
